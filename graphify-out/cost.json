@@ -1,0 +1,13 @@
+{
+  "runs": [
+    {
+      "date": "2026-08-29T08:38:13.414556+00:00",
+      "input_tokens": 110000,
+      "output_tokens": 46000,
+      "files": 431,
+      "usage_note": "approximate agent-reported totals"
+    }
+  ],
+  "total_input_tokens": 110000,
+  "total_output_tokens": 46000
+}
