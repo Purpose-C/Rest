@@ -442,7 +442,7 @@ export const zhCN: Record<string, string> = {
   "system.tray": "托盘倒计时",
   "system.trayCountdown": "在系统托盘图标旁显示下次休息倒计时",
   "system.trayCountdownTip":
-    "在托盘图标旁实时显示 mm:ss 倒计时。仅支持 macOS 和 Linux —— Windows 托盘不支持文字显示。",
+    "在托盘图标旁显示距下次休息还有多少分钟。仅支持 macOS 和 Linux —— Windows 托盘不支持文字显示。",
   "system.countdownTo": "倒计时目标",
   "system.plugins": "插件",
   "system.showAdvancedHooks": "显示高级设置（事件钩子）",

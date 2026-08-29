@@ -611,6 +611,18 @@ fn spawn_countdown_ticker(app: AppHandle, tray: Arc<TrayIcon<tauri::Wry>>) {
     });
 }
 
+/// Tray title size as a fraction of the system menu-bar font. The default
+/// (1.0) renders the countdown at full menu-bar size, which reads large
+/// next to the padded glyph. Lower to shrink the number.
+#[cfg(target_os = "macos")]
+const TRAY_TITLE_FONT_SCALE: f64 = 0.82;
+
+/// Vertical nudge for the tray title, in points. AppKit centres the title
+/// on the button's baseline, which sits high against the glyph's optical
+/// centre. Negative moves the number down; raise toward 0 to move it up.
+#[cfg(target_os = "macos")]
+const TRAY_TITLE_BASELINE_OFFSET: f64 = -1.0;
+
 #[cfg(target_os = "macos")]
 fn apply_monospaced_status_titles() {
     use objc2::msg_send;
@@ -618,8 +630,9 @@ fn apply_monospaced_status_titles() {
     use objc2::runtime::AnyObject;
     use objc2::AnyThread;
     use objc2_app_kit::{
-        NSFont, NSFontAttributeName, NSFontFeatureSelectorIdentifierKey,
-        NSFontFeatureSettingsAttribute, NSFontFeatureTypeIdentifierKey, NSStatusBar,
+        NSBaselineOffsetAttributeName, NSFont, NSFontAttributeName,
+        NSFontFeatureSelectorIdentifierKey, NSFontFeatureSettingsAttribute,
+        NSFontFeatureTypeIdentifierKey, NSStatusBar,
     };
     use objc2_foundation::{
         MainThreadMarker, NSArray, NSAttributedString, NSDictionary, NSNumber, NSString,
@@ -663,13 +676,15 @@ fn apply_monospaced_status_titles() {
         let base_size = base_font.pointSize();
         let base_desc = base_font.fontDescriptor();
         let mono_desc = base_desc.fontDescriptorByAddingAttributes(&desc_attrs);
-        let Some(mono_font) = NSFont::fontWithDescriptor_size(&mono_desc, base_size) else {
+        let title_size = base_size * TRAY_TITLE_FONT_SCALE;
+        let Some(mono_font) = NSFont::fontWithDescriptor_size(&mono_desc, title_size) else {
             return;
         };
 
+        let baseline = NSNumber::new_f64(TRAY_TITLE_BASELINE_OFFSET);
         let attrs = NSDictionary::from_slices::<NSString>(
-            &[NSFontAttributeName],
-            &[&*mono_font as &AnyObject],
+            &[NSFontAttributeName, NSBaselineOffsetAttributeName],
+            &[&*mono_font as &AnyObject, &*baseline as &AnyObject],
         );
 
         for i in 0..n {

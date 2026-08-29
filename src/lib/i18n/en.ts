@@ -460,7 +460,7 @@ export const en: Record<string, string> = {
   "system.tray": "Tray countdown",
   "system.trayCountdown": "Show countdown to next break in the tray",
   "system.trayCountdownTip":
-    "Shows a live mm:ss next to the tray icon. macOS and Linux only — Windows doesn't support tray text.",
+    "Shows the minutes until the next break next to the tray icon. macOS and Linux only — Windows doesn't support tray text.",
   "system.countdownTo": "Count down to",
   "system.plugins": "Plugins",
   "system.showAdvancedHooks": "Show advanced (hooks)",
