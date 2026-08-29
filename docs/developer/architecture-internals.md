@@ -209,7 +209,7 @@ To bound that failure, `fire_break` arms a monotonic epoch in [`scheduler::overl
 
 ## Accessibility contract
 
-The renderer has two windows and each has a documented assistive-technology surface. Keep these contracts intact when touching the relevant files — they're tested at the unit level and gated by [`scripts/audit-a11y.mjs`](https://github.com/drmowinckels/entracte/blob/main/scripts/audit-a11y.mjs) at the structural level.
+The renderer has four windows (`main`, `overlay`, `pause`, `quick`) and each has a documented assistive-technology surface. Keep these contracts intact when touching the relevant files. Settings tabs × scheme and the break overlay are gated by [`scripts/audit-a11y.mjs`](https://github.com/drmowinckels/entracte/blob/main/scripts/audit-a11y.mjs); the pause picker and quick panel are covered at the unit level (accessible names, live regions, keyboard shortcuts).
 
 ### Document titles
 
@@ -248,9 +248,13 @@ When a long break is enforceable it intentionally renders no Skip control. In th
 
 On a skippable break, **Escape** dismisses the overlay (the same action as Skip) via [`use-escape-to-dismiss.ts`](https://github.com/drmowinckels/entracte/blob/main/src/views/break-overlay/hooks/use-escape-to-dismiss.ts). The Skip button carries `aria-keyshortcuts="Escape"` so assistive tech announces the shortcut on the equivalent control. An enforceable break has no Escape handler and no Skip button, so there's no shortcut to advertise.
 
+### Quick panel
+
+The quick panel (`?window=quick`) provides an at-a-glance countdown and fast pause triggers from the system tray. The ticking digits are `aria-hidden`; an `aria-live="polite"` region announces the status (`Next break` / `Paused` / `On break`, etc.) so assistive tech is not spoken every second. Those attributes are asserted in the quick-panel unit tests; `audit-a11y.mjs` does not load this window.
+
 ### Keyboard shortcuts and the VoiceOver modifier
 
-In-app keyboard shortcuts are surfaced to assistive tech via `aria-keyshortcuts` on the control they activate (currently only the overlay's Skip → `Escape`). The global hotkeys on the System tab are different: they're OS-level accelerators registered natively, user-defined, and **off by default** — Entracte ships no pre-bound chord. When choosing any default or example accelerator, avoid `Ctrl+Option` (the "VO keys" — VoiceOver's default modifier on macOS); a `Ctrl+Option` chord would be swallowed by VoiceOver before it reached the app. The current example placeholder is `CmdOrCtrl+Alt+P`, which resolves to `Cmd+Option` on macOS and so doesn't collide.
+In-app keyboard shortcuts are surfaced to assistive tech via `aria-keyshortcuts` on the control they activate (the overlay's Skip → `Escape`, and the Settings search input → `Control+F Meta+F`). The global hotkeys on the System tab are different: they're OS-level accelerators registered natively, user-defined, and **off by default** — Entracte ships no pre-bound chord. When choosing any default or example accelerator, avoid `Ctrl+Option` (the "VO keys" — VoiceOver's default modifier on macOS); a `Ctrl+Option` chord would be swallowed by VoiceOver before it reached the app. The current example placeholder is `CmdOrCtrl+Alt+P`, which resolves to `Cmd+Option` on macOS and so doesn't collide.
 
 ### Audit infrastructure
 

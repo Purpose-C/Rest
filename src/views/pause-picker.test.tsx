@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -12,7 +13,8 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 import { invoke } from "@tauri-apps/api/core";
 const invokeMock = vi.mocked(invoke);
 
-const { PausePicker } = await import("./pause-picker");
+const { PausePicker, secondsUntilTomorrowMorning } =
+  await import("./pause-picker");
 
 function mockBackend(opts: { locale?: string; clock?: string } = {}) {
   invokeMock.mockImplementation(async (cmd: string) => {
@@ -24,6 +26,7 @@ function mockBackend(opts: { locale?: string; clock?: string } = {}) {
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   invokeMock.mockReset();
 });
 
@@ -35,6 +38,40 @@ const pauseBtn = () =>
 const nextYear = () => new Date().getFullYear() + 1;
 
 describe("PausePicker", () => {
+  it.each([
+    ["2 hours", 2 * 60 * 60],
+    ["4 hours", 4 * 60 * 60],
+  ])("pauses for the %s preset, then closes", async (label, durationSecs) => {
+    mockBackend();
+    render(<PausePicker />);
+
+    fireEvent.click(screen.getByRole("button", { name: label }));
+
+    await waitFor(() =>
+      expect(invokeMock).toHaveBeenCalledWith("pause", { durationSecs }),
+    );
+    expect(invokeMock).toHaveBeenCalledWith("close_pause_window");
+  });
+
+  it("computes and applies the tomorrow at 6 AM preset", async () => {
+    vi.useFakeTimers();
+    const now = new Date(2026, 0, 15, 22, 0, 0);
+    vi.setSystemTime(now);
+    expect(secondsUntilTomorrowMorning(now)).toBe(8 * 60 * 60);
+
+    mockBackend();
+    render(<PausePicker />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Tomorrow at 6 AM" }));
+      await Promise.resolve();
+    });
+
+    expect(invokeMock).toHaveBeenCalledWith("pause", {
+      durationSecs: 8 * 60 * 60,
+    });
+    expect(invokeMock).toHaveBeenCalledWith("close_pause_window");
+  });
+
   it("orders the date fields by the detected OS locale", async () => {
     mockBackend({ locale: "en-GB" }); // day / month / year
     render(<PausePicker />);

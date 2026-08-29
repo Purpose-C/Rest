@@ -20,7 +20,14 @@ function clampDay(year: number, month: number, day: number): number {
   return Math.min(day, new Date(year, month + 1, 0).getDate());
 }
 
-/** Standalone popup launched from the tray's "Pause until…" item. Renders
+export function secondsUntilTomorrowMorning(now: Date = new Date()): number {
+  const target = new Date(now);
+  target.setDate(target.getDate() + 1);
+  target.setHours(6, 0, 0, 0);
+  return Math.floor((target.getTime() - now.getTime()) / 1000);
+}
+
+/** Standalone popup launched from the Quick panel's "More…" button. Renders
  * its own date (locale-ordered) and time (honouring the app's 12h/24h
  * setting) fields rather than a native `datetime-local`, whose format the
  * WebView locks to its own locale (en-US in a non-localised app) regardless
@@ -84,10 +91,13 @@ export function PausePicker() {
   const secs = target ? secondsUntil(target) : null;
 
   const close = () => void invoke("close_pause_window");
+  const pauseFor = async (durationSecs: number) => {
+    await invoke("pause", { durationSecs });
+    close();
+  };
   const submit = async () => {
     if (secs === null) return;
-    await invoke("pause", { durationSecs: secs });
-    close();
+    await pauseFor(secs);
   };
 
   const fieldFor = (field: DateField) => {
@@ -142,9 +152,34 @@ export function PausePicker() {
   return (
     <main className="pause-picker">
       <h1 className="pause-picker-title">{t("pausePicker.title")}</h1>
-      <p className="pause-picker-hint">
-        {t("pausePicker.hint")}
-      </p>
+      <p className="pause-picker-hint">{t("pausePicker.hint")}</p>
+      <div
+        className="pause-picker-presets"
+        role="group"
+        aria-label={t("pausePicker.presets")}
+      >
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => void pauseFor(2 * 60 * 60)}
+        >
+          {t("pausePicker.pause2h")}
+        </button>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => void pauseFor(4 * 60 * 60)}
+        >
+          {t("pausePicker.pause4h")}
+        </button>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => void pauseFor(secondsUntilTomorrowMorning())}
+        >
+          {t("pausePicker.tomorrowMorning")}
+        </button>
+      </div>
       <div className="pause-picker-date">{order.map(fieldFor)}</div>
       <label className="pause-picker-time">
         <span>{t("pausePicker.time")}</span>

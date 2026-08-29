@@ -347,25 +347,25 @@ export function BreaksTab({
           value={settings.show_current_time}
           onChange={(v) => update("show_current_time", v)}
         />
+        <label className="row">
+          <span>
+            {t("breaks.showBreakOn")}
+            <InfoTip text={t("breaks.showBreakOnTip")} />
+          </span>
+          <select
+            value={settings.monitor_placement}
+            onChange={(e) =>
+              update("monitor_placement", e.target.value as MonitorPlacement)
+            }
+          >
+            {MONITOR_PLACEMENTS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <Advanced label={t("breaks.showAdvancedOverlay")}>
-          <label className="row">
-            <span>
-              {t("breaks.showBreakOn")}
-              <InfoTip text={t("breaks.showBreakOnTip")} />
-            </span>
-            <select
-              value={settings.monitor_placement}
-              onChange={(e) =>
-                update("monitor_placement", e.target.value as MonitorPlacement)
-              }
-            >
-              {MONITOR_PLACEMENTS.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </label>
           <WindowedSizeRow
             label={t("breaks.windowedSize")}
             tip={t("breaks.windowedSizeTip")}

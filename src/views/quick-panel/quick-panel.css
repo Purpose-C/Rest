@@ -1,0 +1,124 @@
+.quick-panel {
+  --quick-bg: #1c1f25;
+  --quick-fg: #f4f6fb;
+  --quick-muted-fg: rgb(244 246 251 / 70%);
+  --quick-input-bg: #2a2e36;
+  --quick-input-border: #3a3f4a;
+  --quick-input-hover: #353944;
+  --quick-accent: #81989d;
+  --quick-accent-hover: #3d6a73;
+  --quick-accent-strong: #2e545d;
+  --quick-on-accent: #ffffff;
+  box-sizing: border-box;
+  padding: 1.25rem 1.25rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  user-select: none;
+  background: var(--bg, var(--quick-bg));
+  color: var(--fg, var(--quick-fg));
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: light) {
+  .quick-panel {
+    --quick-bg: #f6f7fa;
+    --quick-fg: #1f2228;
+    --quick-muted-fg: rgb(31 34 40 / 85%);
+    --quick-input-bg: #ffffff;
+    --quick-input-border: #d0d4dc;
+    --quick-input-hover: #eef1f6;
+    --quick-accent: #2e545d;
+    --quick-accent-hover: #3d6a73;
+    --quick-accent-strong: #2e545d;
+    --quick-on-accent: #ffffff;
+  }
+}
+
+.quick-panel-countdown {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.quick-panel-time {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg, var(--quick-fg));
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.quick-panel-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted-fg, var(--quick-muted-fg));
+  margin-top: 0.35rem;
+}
+
+.quick-panel-status-text {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--muted-fg, var(--quick-muted-fg));
+}
+
+.quick-panel-actions {
+  margin-top: 0.75rem;
+}
+
+.quick-panel-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.quick-panel-actions .full-width {
+  width: 100%;
+}
+
+.quick-panel-more {
+  width: 100%;
+  margin-top: 0.6rem;
+}
+
+.quick-panel-btn {
+  padding: 0.55rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--input-border, var(--quick-input-border));
+  background: var(--input-bg, var(--quick-input-bg));
+  color: var(--fg, var(--quick-fg));
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 100ms ease,
+    border-color 100ms ease;
+}
+
+.quick-panel-btn:hover {
+  background: var(--input-hover, var(--quick-input-hover));
+  border-color: var(--accent, var(--quick-accent));
+}
+
+.quick-panel-btn:focus-visible {
+  outline: 2px solid var(--accent, var(--quick-accent));
+  outline-offset: 1px;
+}
+
+.quick-panel-btn.primary {
+  background: var(--accent-strong, var(--quick-accent-strong));
+  color: var(--on-accent, var(--quick-on-accent));
+  border: none;
+  padding: 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.quick-panel-btn.primary:hover {
+  background: var(--accent-hover, var(--quick-accent-hover));
+}

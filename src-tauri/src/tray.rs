@@ -16,8 +16,14 @@ use crate::scheduler::{
 const TRAY_ICON_BYTES: &[u8] = include_bytes!("../icons/trayIconTemplate.png");
 #[cfg_attr(target_os = "windows", allow(dead_code))]
 const TRAY_ICON_PAUSED_BYTES: &[u8] = include_bytes!("../icons/trayIconPausedTemplate.png");
+// Fork: a standalone crescent instead of upstream's arch-with-moon-inside.
+// Upstream's own icon set is already inconsistent here — the Paused glyph is a
+// bare `‖` with no arch — so nesting the moon inside the brand arch was the odd
+// one out. A lone crescent also renders narrower, which the menu bar cares about.
+// Kept as a separate asset so upstream's PNG stays untouched: binary conflicts
+// can't be resolved with text tooling, and a new file never conflicts at all.
 #[cfg_attr(target_os = "windows", allow(dead_code))]
-const TRAY_ICON_BEDTIME_BYTES: &[u8] = include_bytes!("../icons/trayIconBedtimeTemplate.png");
+const TRAY_ICON_BEDTIME_BYTES: &[u8] = include_bytes!("../icons/trayIconBedtimeMoonTemplate.png");
 // Distinct icon for the auto-suppressed state (DND / camera / video /
 // app-pause / idle / out-of-work-window). Previously this state shared
 // the Paused icon, which made every webcam call or video tab look like
@@ -125,46 +131,10 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         false,
         None::<&str>,
     )?;
-    let long_break_now = MenuItem::with_id(
-        app,
-        "long_break_now",
-        "立即进行长休息",
-        true,
-        None::<&str>,
-    )?;
-
-    let pause_15m = MenuItem::with_id(app, "pause_15m", "15 分钟", true, None::<&str>)?;
-    let pause_30m = MenuItem::with_id(app, "pause_30m", "30 分钟", true, None::<&str>)?;
-    let pause_1h = MenuItem::with_id(app, "pause_1h", "1 小时", true, None::<&str>)?;
-    let pause_2h = MenuItem::with_id(app, "pause_2h", "2 小时", true, None::<&str>)?;
-    let pause_4h = MenuItem::with_id(app, "pause_4h", "4 小时", true, None::<&str>)?;
-    let pause_tomorrow = MenuItem::with_id(
-        app,
-        "pause_tomorrow",
-        "直到明早 6 点",
-        true,
-        None::<&str>,
-    )?;
-    let pause_indef = MenuItem::with_id(app, "pause_indef", "无限期", true, None::<&str>)?;
-    let pause_sep = PredefinedMenuItem::separator(app)?;
-    let pause_until = MenuItem::with_id(app, "pause_until", "暂停直到…", true, None::<&str>)?;
-
-    let pause_submenu = Submenu::with_items(
-        app,
-        "暂停…",
-        true,
-        &[
-            &pause_15m,
-            &pause_30m,
-            &pause_1h,
-            &pause_2h,
-            &pause_4h,
-            &pause_tomorrow,
-            &pause_indef,
-            &pause_sep,
-            &pause_until,
-        ],
-    )?;
+    let micro_break_now =
+        MenuItem::with_id(app, "micro_break_now", "立即进行短休息", true, None::<&str>)?;
+    let long_break_now =
+        MenuItem::with_id(app, "long_break_now", "立即进行长休息", true, None::<&str>)?;
 
     let (initial_profiles, initial_active) = read_profiles_blocking(app);
     let profile_submenu = build_profile_submenu(app, &initial_profiles, &initial_active)?;
@@ -181,20 +151,18 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
             &prefs,
             &sep1,
             &resume,
-            &pause_submenu,
             &sep2,
             &profile_submenu,
             &sep3,
             &resume_break,
+            &micro_break_now,
             &long_break_now,
             &sep4,
             &quit,
         ],
     )?;
 
-    let pause_submenu_for_event = pause_submenu.clone();
     let resume_for_event = resume.clone();
-    let pause_submenu_for_click = pause_submenu.clone();
     let resume_for_click = resume.clone();
     let resume_break_for_event = resume_break.clone();
 
@@ -205,7 +173,20 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         .icon_as_template(icon_is_template(std::env::consts::OS))
         .menu(&menu)
         .tooltip(tooltip_for(&initial_active))
-        .show_menu_on_left_click(true)
+        .show_menu_on_left_click(false)
+        .on_tray_icon_event(|tray, event| {
+            if let tauri::tray::TrayIconEvent::Click {
+                button,
+                button_state,
+                rect,
+                ..
+            } = event
+            {
+                if is_quick_panel_tray_click(button, button_state) {
+                    crate::window::show_quick_window(tray.app_handle(), rect);
+                }
+            }
+        })
         .on_menu_event(move |app, event| {
             let id = event.id.as_ref();
             if let Some(profile_name) = id.strip_prefix("profile:") {
@@ -225,28 +206,19 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
             match id {
                 "quit" => {
                     app.exit(0);
-                    return;
                 }
                 "preferences" => {
                     crate::window::show_main_window(app);
-                    return;
-                }
-                "pause_until" => {
-                    crate::window::show_pause_window(app);
-                    return;
                 }
                 "resume" => {
                     let scheduler = app.state::<Scheduler>().inner().clone();
                     let app_handle = app.clone();
-                    let pause_submenu = pause_submenu_for_click.clone();
                     let resume = resume_for_click.clone();
                     tauri::async_runtime::spawn(async move {
                         crate::scheduler::resume_impl(&scheduler).await;
-                        let _ = pause_submenu.set_enabled(true);
                         let _ = resume.set_enabled(false);
                         let _ = app_handle.emit("pause:changed", false);
                     });
-                    return;
                 }
                 "resume_break" => {
                     let app_handle = app.clone();
@@ -255,7 +227,18 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                         let _ =
                             crate::scheduler::resume_last_break_impl(&app_handle, &scheduler).await;
                     });
-                    return;
+                }
+                "micro_break_now" => {
+                    let app_handle = app.clone();
+                    tauri::async_runtime::spawn(async move {
+                        let scheduler = app_handle.state::<Scheduler>().inner().clone();
+                        crate::scheduler::execute_hotkey_action(
+                            &app_handle,
+                            &scheduler,
+                            crate::scheduler::HotkeyAction::TriggerMicro,
+                        )
+                        .await;
+                    });
                 }
                 "long_break_now" => {
                     let app_handle = app.clone();
@@ -263,38 +246,8 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                         let scheduler = app_handle.state::<Scheduler>().inner().clone();
                         crate::scheduler::start_long_break_now_impl(&app_handle, &scheduler).await;
                     });
-                    return;
                 }
                 _ => {}
-            }
-
-            let duration: Option<Option<u64>> = match id {
-                "pause_15m" => Some(Some(15 * 60)),
-                "pause_30m" => Some(Some(30 * 60)),
-                "pause_1h" => Some(Some(60 * 60)),
-                "pause_2h" => Some(Some(2 * 60 * 60)),
-                "pause_4h" => Some(Some(4 * 60 * 60)),
-                "pause_tomorrow" => Some(Some(seconds_until_tomorrow_morning())),
-                "pause_indef" => Some(None),
-                _ => None,
-            };
-
-            if let Some(d) = duration {
-                let scheduler = app.state::<Scheduler>().inner().clone();
-                let app_handle = app.clone();
-                let pause_submenu = pause_submenu_for_click.clone();
-                let resume = resume_for_click.clone();
-                tauri::async_runtime::spawn(async move {
-                    // `d` is the inner `Option<u64>`: `None` = indefinite,
-                    // `Some(secs)` = timed. Route through the canonical
-                    // `pause_impl` so the pause persists, logs `PauseStart`,
-                    // and fires `pause_start` hooks like the Settings button
-                    // (#218).
-                    crate::scheduler::pause_impl(&scheduler, d).await;
-                    let _ = pause_submenu.set_enabled(false);
-                    let _ = resume.set_enabled(true);
-                    let _ = app_handle.emit("pause:changed", true);
-                });
             }
         })
         .build(app)?;
@@ -306,7 +259,6 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
 
     app.listen("pause:changed", move |event| {
         let paused: bool = serde_json::from_str(event.payload()).unwrap_or(false);
-        let _ = pause_submenu_for_event.set_enabled(!paused);
         let _ = resume_for_event.set_enabled(paused);
     });
 
@@ -323,8 +275,8 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let tray_for_profile = tray_holder.clone();
     let prefs_for_rebuild = prefs.clone();
     let resume_for_rebuild = resume.clone();
-    let pause_submenu_for_rebuild = pause_submenu.clone();
     let resume_break_for_rebuild = resume_break.clone();
+    let micro_break_now_for_rebuild = micro_break_now.clone();
     let long_break_now_for_rebuild = long_break_now.clone();
     let sep1_for_rebuild = sep1.clone();
     let sep2_for_rebuild = sep2.clone();
@@ -338,8 +290,8 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         let tray = tray_for_profile.clone();
         let prefs = prefs_for_rebuild.clone();
         let resume = resume_for_rebuild.clone();
-        let pause_submenu = pause_submenu_for_rebuild.clone();
         let resume_break = resume_break_for_rebuild.clone();
+        let micro_break_now = micro_break_now_for_rebuild.clone();
         let long_break_now = long_break_now_for_rebuild.clone();
         let sep1 = sep1_for_rebuild.clone();
         let sep2 = sep2_for_rebuild.clone();
@@ -365,11 +317,11 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                     &prefs,
                     &sep1,
                     &resume,
-                    &pause_submenu,
                     &sep2,
                     &new_submenu,
                     &sep3,
                     &resume_break,
+                    &micro_break_now,
                     &long_break_now,
                     &sep4,
                     &quit,
@@ -588,8 +540,8 @@ fn spawn_countdown_ticker(app: AppHandle, tray: Arc<TrayIcon<tauri::Wry>>) {
             // width — the menu would become unreachable. Windows renders no
             // title at all, so the glyph is unconditional there.
             #[cfg(not(target_os = "windows"))]
-            let show_icon = scheduler.tray_icon_enabled().await
-                || title.as_deref().unwrap_or("").is_empty();
+            let show_icon =
+                scheduler.tray_icon_enabled().await || title.as_deref().unwrap_or("").is_empty();
             #[cfg(target_os = "windows")]
             let show_icon = true;
 
@@ -627,9 +579,8 @@ fn spawn_countdown_ticker(app: AppHandle, tray: Arc<TrayIcon<tauri::Wry>>) {
                     let _ = tray.set_title(title.clone());
                     #[cfg(target_os = "macos")]
                     {
-                        let _ = app.run_on_main_thread(move || {
-                            apply_monospaced_status_titles(standalone)
-                        });
+                        let _ = app
+                            .run_on_main_thread(move || apply_monospaced_status_titles(standalone));
                     }
                     last_title = title;
                     last_standalone = Some(standalone);
@@ -760,6 +711,19 @@ fn apply_monospaced_status_titles(standalone: bool) {
     }
 }
 
+fn is_quick_panel_tray_click(
+    button: tauri::tray::MouseButton,
+    state: tauri::tray::MouseButtonState,
+) -> bool {
+    matches!(
+        (button, state),
+        (
+            tauri::tray::MouseButton::Left,
+            tauri::tray::MouseButtonState::Up
+        )
+    )
+}
+
 fn read_profiles_blocking(app: &AppHandle) -> (Vec<String>, String) {
     let scheduler = app.state::<Scheduler>().inner().clone();
     tauri::async_runtime::block_on(async move {
@@ -795,6 +759,23 @@ mod tests {
     }
 
     #[test]
+    fn left_click_up_opens_quick_panel_other_buttons_do_not() {
+        use tauri::tray::{MouseButton, MouseButtonState};
+        assert!(is_quick_panel_tray_click(
+            MouseButton::Left,
+            MouseButtonState::Up
+        ));
+        assert!(!is_quick_panel_tray_click(
+            MouseButton::Left,
+            MouseButtonState::Down
+        ));
+        assert!(!is_quick_panel_tray_click(
+            MouseButton::Right,
+            MouseButtonState::Up
+        ));
+    }
+
+    #[test]
     fn tooltip_format_includes_profile_name() {
         assert_eq!(tooltip_for("Default"), "Entracte · Default");
         assert_eq!(tooltip_for("Work"), "Entracte · Work");
@@ -815,22 +796,28 @@ mod tests {
     }
 
     #[test]
-    fn tray_icons_are_pngs_with_matching_dimensions() {
-        let running = png_dimensions(TRAY_ICON_BYTES);
-        let paused = png_dimensions(TRAY_ICON_PAUSED_BYTES);
-        let bedtime = png_dimensions(TRAY_ICON_BEDTIME_BYTES);
-        let inactive = png_dimensions(TRAY_ICON_INACTIVE_BYTES);
+    fn tray_icons_are_pngs_with_matching_heights() {
+        // Height is the invariant that matters: the OS scales a tray asset to
+        // the menu-bar height, and `pad_glyph` only ever pads vertically. Equal
+        // heights therefore keep every glyph the same rendered size across a
+        // swap. Width is deliberately *not* constrained — a narrow glyph (the
+        // fork's lone crescent) should occupy less menu-bar width, not be
+        // padded out to a square with dead transparent pixels on both sides.
+        let (_, running) = png_dimensions(TRAY_ICON_BYTES);
+        let (_, paused) = png_dimensions(TRAY_ICON_PAUSED_BYTES);
+        let (_, bedtime) = png_dimensions(TRAY_ICON_BEDTIME_BYTES);
+        let (_, inactive) = png_dimensions(TRAY_ICON_INACTIVE_BYTES);
         assert_eq!(
             running, paused,
-            "running and paused tray icons must share dimensions so the swap is seamless"
+            "running and paused tray icons must share a height so the swap is seamless"
         );
         assert_eq!(
             running, bedtime,
-            "bedtime tray icon must share dimensions with the running icon"
+            "bedtime tray icon must share a height with the running icon"
         );
         assert_eq!(
             running, inactive,
-            "inactive (auto-suppressed) tray icon must share dimensions with the running icon"
+            "inactive (auto-suppressed) tray icon must share a height with the running icon"
         );
     }
 

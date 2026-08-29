@@ -20,6 +20,16 @@
   color: var(--muted-fg);
 }
 
+.pause-picker-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.pause-picker-presets button {
+  padding-inline: 0.35rem;
+}
+
 .pause-picker-date {
   display: flex;
   gap: 0.4rem;

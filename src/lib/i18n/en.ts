@@ -736,12 +736,30 @@ export const en: Record<string, string> = {
   // window-kind
   "windowTitle.overlay": "Entracte — Break",
   "windowTitle.pause": "Entracte — Pause",
+  "windowTitle.quick": "Entracte — Quick Panel",
   "windowTitle.settings": "Entracte — Settings",
 
   // app areas
   "app.areaOverlay": "Break overlay",
   "app.areaPause": "Pause picker",
+  "app.areaQuick": "Quick panel",
   "app.areaSettings": "Settings",
+
+  // quick-panel
+  "quickPanel.nextBreak": "Next break",
+  "quickPanel.paused": "Paused",
+  "quickPanel.pausedLabel": "Paused",
+  "quickPanel.onBreak": "On break",
+  "quickPanel.bedtime": "Bedtime",
+  "quickPanel.suppressed": "Suppressed",
+  "quickPanel.disabled": "Breaks disabled",
+  "quickPanel.idle": "Idle",
+  "quickPanel.resume": "Resume",
+  "quickPanel.pause15m": "15m",
+  "quickPanel.pause30m": "30m",
+  "quickPanel.pause1h": "1h",
+  "quickPanel.pauseIndef": "Indefinitely",
+  "quickPanel.more": "More…",
 
   // error-boundary
   "error.areaHitError": "{area} hit an error",
@@ -758,6 +776,10 @@ export const en: Record<string, string> = {
   "pausePicker.title": "Pause until",
   "pausePicker.hint":
     "Suppress all breaks until the chosen date and time, shown in your region's format.",
+  "pausePicker.presets": "Quick pause options",
+  "pausePicker.pause2h": "2 hours",
+  "pausePicker.pause4h": "4 hours",
+  "pausePicker.tomorrowMorning": "Tomorrow at 6 AM",
   "pausePicker.time": "Time",
   "pausePicker.cancel": "Cancel",
   "pausePicker.pause": "Pause",

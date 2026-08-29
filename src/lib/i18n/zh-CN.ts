@@ -445,7 +445,7 @@ export const zhCN: Record<string, string> = {
     "在托盘图标旁显示距下次休息还有多少分钟。仅支持 macOS 和 Linux —— Windows 托盘不支持文字显示。",
   "system.trayIcon": "显示托盘图标",
   "system.trayIconTip":
-    "关闭后菜单栏只保留倒计时数字。在没有数字可显示时图标会自动出现——已暂停、就寝时段、正在休息——以保证菜单始终可点击。需先开启上方的倒计时：没有数字时，图标是菜单栏上唯一的内容。",
+    "关闭后菜单栏只保留倒计时数字。在没有数字可显示时图标会自动出现——已暂停、就寝提醒、正在休息——以保证菜单始终可点击。需先开启上方的倒计时：没有数字时，图标是菜单栏上唯一的内容。",
   "system.countdownTo": "倒计时目标",
   "system.plugins": "插件",
   "system.showAdvancedHooks": "显示高级设置（事件钩子）",
@@ -714,12 +714,30 @@ export const zhCN: Record<string, string> = {
   // window-kind
   "windowTitle.overlay": "Entracte — 休息",
   "windowTitle.pause": "Entracte — 暂停",
+  "windowTitle.quick": "Entracte — 快速面板",
   "windowTitle.settings": "Entracte — 设置",
 
   // app areas
   "app.areaOverlay": "休息界面",
   "app.areaPause": "暂停选择器",
+  "app.areaQuick": "快速面板",
   "app.areaSettings": "设置",
+
+  // quick-panel
+  "quickPanel.nextBreak": "下次休息",
+  "quickPanel.paused": "已暂停",
+  "quickPanel.pausedLabel": "已暂停",
+  "quickPanel.onBreak": "正在休息",
+  "quickPanel.bedtime": "就寝提醒",
+  "quickPanel.suppressed": "已拦截",
+  "quickPanel.disabled": "已关闭休息",
+  "quickPanel.idle": "空闲中",
+  "quickPanel.resume": "恢复",
+  "quickPanel.pause15m": "15 分钟",
+  "quickPanel.pause30m": "30 分钟",
+  "quickPanel.pause1h": "1 小时",
+  "quickPanel.pauseIndef": "无限期",
+  "quickPanel.more": "更多…",
 
   // error-boundary
   "error.areaHitError": "{area}发生错误",
@@ -736,6 +754,10 @@ export const zhCN: Record<string, string> = {
   "pausePicker.title": "暂停直到",
   "pausePicker.hint":
     "在选定的日期和时间之前拦截所有休息，按您所在地区的格式显示。",
+  "pausePicker.presets": "快捷暂停选项",
+  "pausePicker.pause2h": "2 小时",
+  "pausePicker.pause4h": "4 小时",
+  "pausePicker.tomorrowMorning": "明早 6 点",
   "pausePicker.time": "时间",
   "pausePicker.cancel": "取消",
   "pausePicker.pause": "暂停",

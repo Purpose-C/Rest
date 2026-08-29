@@ -164,23 +164,20 @@ pub fn show_main_window<R: Runtime>(app: &tauri::AppHandle<R>) {
     }
 }
 
-/// Show the small "Pause until…" picker, creating it on first use. Launched
-/// from the tray; mirrors the overlay's on-demand window creation. The
-/// renderer closes the window after pausing or cancelling, so the next
-/// launch builds a fresh one.
-pub fn show_pause_window<R: Runtime>(app: &tauri::AppHandle<R>) {
+#[tauri::command]
+pub fn show_pause_window<R: Runtime>(app: tauri::AppHandle<R>) {
     if let Some(window) = app.get_webview_window("pause") {
         let _ = window.show();
         let _ = window.set_focus();
         return;
     }
     match tauri::WebviewWindowBuilder::new(
-        app,
+        &app,
         "pause",
         tauri::WebviewUrl::App("index.html?window=pause".into()),
     )
     .title("暂停 Entracte")
-    .inner_size(360.0, 220.0)
+    .inner_size(360.0, 280.0)
     .resizable(false)
     .maximizable(false)
     .minimizable(false)
@@ -201,6 +198,213 @@ pub fn show_pause_window<R: Runtime>(app: &tauri::AppHandle<R>) {
 pub fn close_pause_window<R: Runtime>(app: tauri::AppHandle<R>) {
     if let Some(window) = app.get_webview_window("pause") {
         let _ = window.close();
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct QuickPanelGeometry {
+    pub x: i32,
+    pub y: i32,
+    pub width: u32,
+    pub height: u32,
+}
+
+pub fn compute_quick_panel_geometry(
+    icon_rect: (f64, f64, f64, f64),
+    monitor_rect: (f64, f64, f64, f64),
+    scale_factor: f64,
+    logical_width: f64,
+    logical_height: f64,
+) -> QuickPanelGeometry {
+    let scale = if scale_factor > 0.0 {
+        scale_factor
+    } else {
+        1.0
+    };
+    let panel_w = (logical_width * scale).round();
+    let panel_h = (logical_height * scale).round();
+    let gap = (4.0 * scale).round();
+    let margin = (8.0 * scale).round();
+
+    let (icon_x, icon_y, icon_w, icon_h) = icon_rect;
+    let (mon_x, mon_y, mon_w, mon_h) = monitor_rect;
+
+    let icon_center_x = icon_x + (icon_w / 2.0);
+    let mut target_x = icon_center_x - (panel_w / 2.0);
+
+    let min_x = mon_x + margin;
+    let max_x = (mon_x + mon_w - panel_w - margin).max(min_x);
+    target_x = target_x.clamp(min_x, max_x);
+
+    let mut target_y = if icon_y + (icon_h / 2.0) < mon_y + (mon_h / 2.0) {
+        icon_y + icon_h + gap
+    } else {
+        icon_y - panel_h - gap
+    };
+    let min_y = mon_y + margin;
+    let max_y = (mon_y + mon_h - panel_h - margin).max(min_y);
+    target_y = target_y.clamp(min_y, max_y);
+
+    QuickPanelGeometry {
+        x: target_x.round() as i32,
+        y: target_y.round() as i32,
+        width: panel_w.max(1.0) as u32,
+        height: panel_h.max(1.0) as u32,
+    }
+}
+
+const QUICK_PANEL_LOGICAL_WIDTH: f64 = 280.0;
+const QUICK_PANEL_LOGICAL_HEIGHT: f64 = 320.0;
+
+/// Same GNOME/Wayland HiDPI correction as overlay.rs `scale_corrected_rect`:
+/// tao reports `monitor.size()` already multiplied by the scale factor, and
+/// `set_position`/`set_size` divide by scale again.
+pub fn scale_corrected_monitor_rect(
+    rect: (f64, f64, f64, f64),
+    scale: f64,
+    wayland: bool,
+) -> (f64, f64, f64, f64) {
+    if !wayland || scale <= 1.0 {
+        return rect;
+    }
+    let (x, y, w, h) = rect;
+    (
+        (x / scale).round(),
+        (y / scale).round(),
+        (w / scale).round().max(1.0),
+        (h / scale).round().max(1.0),
+    )
+}
+
+/// Show the quick panel window positioned under the tray icon.
+pub fn show_quick_window<R: Runtime>(app: &tauri::AppHandle<R>, rect: tauri::Rect) {
+    let (icon_x, icon_y, icon_w, icon_h) = match (rect.position, rect.size) {
+        (tauri::Position::Physical(p), tauri::Size::Physical(s)) => {
+            (p.x as f64, p.y as f64, s.width as f64, s.height as f64)
+        }
+        (tauri::Position::Logical(p), tauri::Size::Logical(s)) => (p.x, p.y, s.width, s.height),
+        (tauri::Position::Physical(p), tauri::Size::Logical(s)) => {
+            (p.x as f64, p.y as f64, s.width, s.height)
+        }
+        (tauri::Position::Logical(p), tauri::Size::Physical(s)) => {
+            (p.x, p.y, s.width as f64, s.height as f64)
+        }
+    };
+
+    let monitors = app.available_monitors().unwrap_or_default();
+    let icon_center_x = icon_x + (icon_w / 2.0);
+    let icon_center_y = icon_y + (icon_h / 2.0);
+
+    let matching_monitor = monitors
+        .iter()
+        .find(|m| {
+            let pos = m.position();
+            let size = m.size();
+            icon_center_x >= pos.x as f64
+                && icon_center_x < (pos.x + size.width as i32) as f64
+                && icon_center_y >= pos.y as f64
+                && icon_center_y < (pos.y + size.height as i32) as f64
+        })
+        .or_else(|| monitors.first());
+
+    let (mon_rect, scale) = if let Some(m) = matching_monitor {
+        let p = m.position();
+        let s = m.size();
+        (
+            (p.x as f64, p.y as f64, s.width as f64, s.height as f64),
+            m.scale_factor(),
+        )
+    } else {
+        ((0.0, 0.0, 1920.0, 1080.0), 1.0)
+    };
+
+    #[cfg(target_os = "linux")]
+    let wayland = is_wayland_session();
+    #[cfg(not(target_os = "linux"))]
+    let wayland = false;
+
+    let mon_rect = scale_corrected_monitor_rect(mon_rect, scale, wayland);
+    let (icon_x, icon_y, icon_w, icon_h) =
+        scale_corrected_monitor_rect((icon_x, icon_y, icon_w, icon_h), scale, wayland);
+
+    let geom = compute_quick_panel_geometry(
+        (icon_x, icon_y, icon_w, icon_h),
+        mon_rect,
+        scale,
+        QUICK_PANEL_LOGICAL_WIDTH,
+        QUICK_PANEL_LOGICAL_HEIGHT,
+    );
+
+    if let Some(window) = app.get_webview_window("quick") {
+        let _ = window.set_position(tauri::PhysicalPosition::new(geom.x, geom.y));
+        let _ = window.set_size(tauri::PhysicalSize::new(geom.width, geom.height));
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    match tauri::WebviewWindowBuilder::new(
+        app,
+        "quick",
+        tauri::WebviewUrl::App("index.html?window=quick".into()),
+    )
+    .title("Entracte — 快速面板")
+    .inner_size(QUICK_PANEL_LOGICAL_WIDTH, QUICK_PANEL_LOGICAL_HEIGHT)
+    .resizable(false)
+    .maximizable(false)
+    .minimizable(false)
+    .decorations(false)
+    .always_on_top(true)
+    .build()
+    {
+        Ok(window) => {
+            let w_clone = window.clone();
+            let seen_focus = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+            let seen_clone = seen_focus.clone();
+            window.on_window_event(move |event| {
+                let focused = match event {
+                    tauri::WindowEvent::Focused(focused) => *focused,
+                    _ => return,
+                };
+                match quick_panel_focus_action(
+                    seen_clone.load(std::sync::atomic::Ordering::SeqCst),
+                    focused,
+                ) {
+                    QuickPanelFocusAction::RememberFocus => {
+                        seen_clone.store(true, std::sync::atomic::Ordering::SeqCst);
+                    }
+                    QuickPanelFocusAction::Close => {
+                        let _ = w_clone.close();
+                    }
+                    QuickPanelFocusAction::Ignore => {}
+                }
+            });
+            let _ = window.set_position(tauri::PhysicalPosition::new(geom.x, geom.y));
+            let _ = window.set_size(tauri::PhysicalSize::new(geom.width, geom.height));
+            let _ = window.set_focus();
+            if window.is_focused().unwrap_or(false) {
+                seen_focus.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
+            log::debug!("quick: created quick panel window at {:?}", geom);
+        }
+        Err(e) => log::error!("quick: failed to create quick panel window: {e}"),
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum QuickPanelFocusAction {
+    Ignore,
+    RememberFocus,
+    Close,
+}
+
+pub(crate) fn quick_panel_focus_action(seen_focus: bool, focused: bool) -> QuickPanelFocusAction {
+    if focused {
+        QuickPanelFocusAction::RememberFocus
+    } else if seen_focus {
+        QuickPanelFocusAction::Close
+    } else {
+        QuickPanelFocusAction::Ignore
     }
 }
 
@@ -284,5 +488,99 @@ mod tests {
         assert!(!wayland_session_from_env(Some("x11"), false));
         assert!(!wayland_session_from_env(Some("tty"), false));
         assert!(!wayland_session_from_env(None, false));
+    }
+
+    #[test]
+    fn quick_panel_geometry_centers_on_icon_with_retina_scale() {
+        // macOS Retina 2x: monitor 3024x1964, icon at top (x=2700, y=0, w=48, h=48)
+        let geom = super::compute_quick_panel_geometry(
+            (2700.0, 0.0, 48.0, 48.0),
+            (0.0, 0.0, 3024.0, 1964.0),
+            2.0,
+            super::QUICK_PANEL_LOGICAL_WIDTH,
+            super::QUICK_PANEL_LOGICAL_HEIGHT,
+        );
+        assert_eq!(geom.width, 560);
+        assert_eq!(geom.height, 640);
+        // Icon center is 2700 + 24 = 2724. Target x = 2724 - 280 = 2444
+        assert_eq!(geom.x, 2444);
+        // Icon y=0, h=48, gap = 4*2 = 8. Target y = 0 + 48 + 8 = 56
+        assert_eq!(geom.y, 56);
+    }
+
+    #[test]
+    fn quick_panel_geometry_clamps_to_monitor_bounds() {
+        let geom = super::compute_quick_panel_geometry(
+            (1900.0, 0.0, 20.0, 20.0),
+            (0.0, 0.0, 1920.0, 1080.0),
+            1.0,
+            super::QUICK_PANEL_LOGICAL_WIDTH,
+            super::QUICK_PANEL_LOGICAL_HEIGHT,
+        );
+        // Right margin is 8px: max_x = 1920 - 280 - 8 = 1632
+        assert_eq!(geom.x, 1632);
+        assert_eq!(geom.y, 24);
+    }
+
+    #[test]
+    fn quick_panel_geometry_places_above_for_bottom_taskbar() {
+        let geom = super::compute_quick_panel_geometry(
+            (1800.0, 1040.0, 40.0, 40.0),
+            (0.0, 0.0, 1920.0, 1080.0),
+            1.0,
+            super::QUICK_PANEL_LOGICAL_WIDTH,
+            super::QUICK_PANEL_LOGICAL_HEIGHT,
+        );
+        // target_y = 1040 - 320 - 4 = 716
+        assert_eq!(geom.y, 716);
+    }
+
+    #[test]
+    fn scale_corrected_monitor_rect_divides_out_doubled_wayland_geometry() {
+        let reported = (7680.0, 0.0, 7680.0, 4320.0);
+        let r = super::scale_corrected_monitor_rect(reported, 2.0, true);
+        assert_eq!(r, (3840.0, 0.0, 3840.0, 2160.0));
+    }
+
+    #[test]
+    fn scale_corrected_monitor_rect_noop_off_wayland() {
+        let reported = (0.0, 0.0, 3840.0, 2160.0);
+        assert_eq!(
+            super::scale_corrected_monitor_rect(reported, 2.0, false),
+            reported
+        );
+    }
+
+    #[test]
+    fn scale_corrected_monitor_rect_noop_at_unity_scale() {
+        let reported = (1920.0, 0.0, 1920.0, 1080.0);
+        assert_eq!(
+            super::scale_corrected_monitor_rect(reported, 1.0, true),
+            reported
+        );
+    }
+
+    #[test]
+    fn quick_panel_focus_action_ignores_blur_before_first_focus() {
+        assert_eq!(
+            super::quick_panel_focus_action(false, false),
+            super::QuickPanelFocusAction::Ignore
+        );
+    }
+
+    #[test]
+    fn quick_panel_focus_action_remembers_focus_then_closes_on_blur() {
+        assert_eq!(
+            super::quick_panel_focus_action(false, true),
+            super::QuickPanelFocusAction::RememberFocus
+        );
+        assert_eq!(
+            super::quick_panel_focus_action(true, true),
+            super::QuickPanelFocusAction::RememberFocus
+        );
+        assert_eq!(
+            super::quick_panel_focus_action(true, false),
+            super::QuickPanelFocusAction::Close
+        );
     }
 }

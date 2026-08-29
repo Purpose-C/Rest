@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "quick",
+  "description": "Minimal capability for the tray-launched Quick panel window.",
+  "windows": ["quick"],
+  "permissions": ["core:default", "core:event:default", "log:default"]
+}

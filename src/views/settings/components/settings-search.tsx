@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { t } from "../../../lib/i18n";
 import { TABS } from "../constants";
 import { filterSettingsIndex, type SettingsSearchEntry } from "../search-index";
@@ -12,9 +12,29 @@ export function SettingsSearch({
   onNavigate: (entry: SettingsSearchEntry) => void;
 }) {
   const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
   const results = useMemo(() => filterSettingsIndex(query), [query]);
   const hasQuery = query.trim().length > 0;
+
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        (e.key === "f" || e.key === "F") &&
+        !e.shiftKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const select = (entry: SettingsSearchEntry) => {
     onNavigate(entry);
@@ -24,10 +44,12 @@ export function SettingsSearch({
   return (
     <div className="settings-search">
       <input
+        ref={inputRef}
         type="search"
         className="settings-search-input"
         placeholder={t("search.inputPlaceholder")}
         aria-label={t("search.inputAria")}
+        aria-keyshortcuts="Control+F Meta+F"
         aria-controls={hasQuery ? listId : undefined}
         value={query}
         onChange={(e) => setQuery(e.target.value)}

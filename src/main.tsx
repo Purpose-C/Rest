@@ -4,6 +4,7 @@ import App from "./App";
 import { installGlobalRendererErrorReporters } from "./error-boundary";
 import { setLocale } from "./lib/i18n";
 import "./brand.css";
+import "./theme-zh.css";
 
 setLocale("zh-CN");
 installGlobalRendererErrorReporters();

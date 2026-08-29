@@ -3,6 +3,7 @@ import { t } from "./lib/i18n";
 import Settings from "./views/settings";
 import BreakOverlay from "./views/break-overlay";
 import { PausePicker } from "./views/pause-picker";
+import { QuickPanel } from "./views/quick-panel";
 import { ErrorBoundary } from "./error-boundary";
 import { titleForWindow, windowKind } from "./lib/window-kind";
 
@@ -29,6 +30,13 @@ function App() {
     return (
       <ErrorBoundary area={t("app.areaPause")}>
         <PausePicker />
+      </ErrorBoundary>
+    );
+  }
+  if (windowKind === "quick") {
+    return (
+      <ErrorBoundary area={t("app.areaQuick")}>
+        <QuickPanel />
       </ErrorBoundary>
     );
   }
