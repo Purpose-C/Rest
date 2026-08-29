@@ -1,3 +1,4 @@
+import { t } from "../../../lib/i18n";
 import {
   buildHeatmapWeeks,
   heatmapLevel,
@@ -21,14 +22,14 @@ export function Heatmap({ days }: { days: DayBucket[] }) {
         ))}
       </div>
       <div className="heatmap-days" aria-hidden="true">
-        <span className="heatmap-day-mon">Mon</span>
-        <span className="heatmap-day-wed">Wed</span>
-        <span className="heatmap-day-fri">Fri</span>
+        <span className="heatmap-day-mon">{t("stats.heatmapDay.mon")}</span>
+        <span className="heatmap-day-wed">{t("stats.heatmapDay.wed")}</span>
+        <span className="heatmap-day-fri">{t("stats.heatmapDay.fri")}</span>
       </div>
       <div
         className="heatmap"
         role="img"
-        aria-label="Breaks taken per day, last 12 weeks"
+        aria-label={t("stats.heatmapAria")}
       >
         {weeks.map((week, wi) => (
           <div key={wi} className="heatmap-week">
@@ -39,7 +40,11 @@ export function Heatmap({ days }: { days: DayBucket[] }) {
                 data-level={day ? heatmapLevel(day.taken, max) : 0}
                 title={
                   day
-                    ? `${day.date}\n${day.taken} taken, ${day.dismissed} dismissed`
+                    ? t("stats.heatmapTooltip", {
+                        date: day.date,
+                        taken: day.taken,
+                        dismissed: day.dismissed,
+                      })
                     : undefined
                 }
               />
@@ -48,11 +53,11 @@ export function Heatmap({ days }: { days: DayBucket[] }) {
         ))}
       </div>
       <div className="heatmap-legend" aria-hidden="true">
-        <span className="heatmap-legend-label">Less</span>
+        <span className="heatmap-legend-label">{t("stats.less")}</span>
         {[0, 1, 2, 3, 4].map((lvl) => (
           <span key={lvl} className="heatmap-cell" data-level={lvl} />
         ))}
-        <span className="heatmap-legend-label">More</span>
+        <span className="heatmap-legend-label">{t("stats.more")}</span>
       </div>
     </div>
   );

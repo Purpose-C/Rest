@@ -84,9 +84,9 @@ pub fn update_notification(info: &UpdateInfo) -> Option<(String, String)> {
         return None;
     }
     Some((
-        "Update available".to_string(),
+        "发现新版本".to_string(),
         format!(
-            "Entracte {} is available (you have {}). Open Preferences \u{2192} About to update.",
+            "Entracte {} 已发布（当前版本为 {}）。请打开 偏好设置 → 关于 进行更新。",
             info.latest, info.current
         ),
     ))
@@ -134,7 +134,7 @@ mod tests {
             }),
         );
         let (title, body) = update_notification(&info).expect("an update should be announced");
-        assert!(title.contains("Update"));
+        assert_eq!(title, "发现新版本");
         assert!(body.contains("0.0.9"), "body names the new version: {body}");
         assert!(
             body.contains("0.0.8"),

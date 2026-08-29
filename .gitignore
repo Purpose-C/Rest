@@ -44,6 +44,9 @@ README_files/
 # Local-only setup notes
 SIGNPATH_SETUP.md
 
+# Local issue tracker (docs/agents/issue-tracker.md)
+.scratch/
+
 
 # Lychee link-checker cache
 .lycheecache

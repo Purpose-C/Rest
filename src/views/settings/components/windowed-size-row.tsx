@@ -1,3 +1,4 @@
+import { t } from "../../../lib/i18n";
 import { InfoTip } from "./info-tip";
 
 // Preset stops mirrored on the select. The slider below covers any value
@@ -55,20 +56,20 @@ export function WindowedSizeRow({
             onChange(next === "inherit" ? null : Number(next));
           }}
         >
-          {allowInherit && <option value="inherit">Same as global</option>}
+          {allowInherit && <option value="inherit">{t("windowedSize.sameAsGlobal")}</option>}
           {PRESETS.map((p) => (
             <option key={p} value={String(p)}>
               {toPct(p)}%
             </option>
           ))}
           <option value="custom" disabled>
-            Custom
+            {t("windowedSize.custom")}
           </option>
         </select>
       </label>
       {!isInherit && (
         <label className="row">
-          <span>Custom size</span>
+          <span>{t("windowedSize.customSize")}</span>
           <span className="range-wrap">
             <input
               type="range"

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { t } from "../../../lib/i18n";
 import {
   TRAY_COUNTDOWN_TARGETS,
   type TrayCountdownTarget,
@@ -80,41 +81,41 @@ export function SystemTab({
 
   return (
     <>
-      <h2 id="settings-startup">Startup</h2>
+      <h2 id="settings-startup">{t("system.startup")}</h2>
       <section>
         <CheckboxRow
-          label="Start Entracte at login"
+          label={t("system.autostart")}
           value={settings.autostart_enabled}
           onChange={(v) => setAutostart(v)}
         />
       </section>
 
-      <h2 id="settings-display">Display</h2>
+      <h2 id="settings-display">{t("system.display")}</h2>
       <section>
         <label className="row">
-          <span>Time format</span>
+          <span>{t("system.timeFormat")}</span>
           <select
             value={settings.clock_format}
             onChange={(e) =>
               update("clock_format", e.target.value as ClockFormat)
             }
           >
-            <option value="24h">24-hour (14:30)</option>
-            <option value="12h">12-hour (2:30 PM)</option>
+            <option value="24h">{t("system.format24h")}</option>
+            <option value="12h">{t("system.format12h")}</option>
           </select>
         </label>
       </section>
 
-      <h2 id="settings-notifications">Notifications</h2>
+      <h2 id="settings-notifications">{t("system.notifications")}</h2>
       <section>
         <CheckboxRow
-          label="Notify before a break starts"
+          label={t("system.prebreakNotify")}
           value={settings.prebreak_notification_enabled}
           onChange={(v) => update("prebreak_notification_enabled", v)}
-          tip="Posts a heads-up system notification N seconds before the overlay appears, so a break doesn't catch you mid-thought."
+          tip={t("system.prebreakNotifyTip")}
         />
         <NumberRow
-          label="Lead time (seconds)"
+          label={t("system.leadTimeSeconds")}
           value={settings.prebreak_notification_seconds}
           min={5}
           multiplier={1}
@@ -122,24 +123,24 @@ export function SystemTab({
         />
       </section>
 
-      <h2 id="settings-hotkeys">Global hotkeys</h2>
+      <h2 id="settings-hotkeys">{t("system.hotkeys")}</h2>
       <section>
         <HotkeysSection settings={settings} update={update} />
       </section>
 
-      <h2 id="settings-tray">Tray countdown</h2>
+      <h2 id="settings-tray">{t("system.tray")}</h2>
       <section>
         <CheckboxRow
-          label="Show countdown to next break in the tray"
+          label={t("system.trayCountdown")}
           value={settings.tray_countdown_enabled}
           onChange={(v) => update("tray_countdown_enabled", v)}
           onlyOn={["macos", "linux"]}
-          tip="Shows a live mm:ss next to the tray icon. macOS and Linux only — Windows doesn't support tray text."
+          tip={t("system.trayCountdownTip")}
         />
         <label
           className={`row${settings.tray_countdown_enabled ? "" : " disabled"}`}
         >
-          <span>Count down to</span>
+          <span>{t("system.countdownTo")}</span>
           <select
             value={settings.tray_countdown_target}
             disabled={!settings.tray_countdown_enabled}
@@ -150,37 +151,27 @@ export function SystemTab({
               )
             }
           >
-            {TRAY_COUNTDOWN_TARGETS.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
+            {TRAY_COUNTDOWN_TARGETS.map((target) => (
+              <option key={target.id} value={target.id}>
+                {target.label}
               </option>
             ))}
           </select>
         </label>
       </section>
 
-      <h2 id="settings-plugins">Plugins</h2>
+      <h2 id="settings-plugins">{t("system.plugins")}</h2>
       <section>
         <Plugins reload={reload} />
       </section>
 
-      <Advanced label="Show advanced (hooks)">
-        <h3 id="settings-hooks">Event hooks</h3>
+      <Advanced label={t("system.showAdvancedHooks")}>
+        <h3 id="settings-hooks">{t("system.eventHooks")}</h3>
         <p className="placeholder hook-warning">
-          ⚠ Hooks run shell commands on your machine with your full user
-          permissions — a hostile command can read or delete your files, send
-          data over the network, or run other programs. Only add commands you
-          wrote or fully understand. Use <strong>Test</strong> to see exactly
-          what a command does before relying on it. Off by default; changes only
-          take effect after <strong>Save hooks</strong> and a confirmation
-          dialog. Commands run via argv (no shell), so pipes, redirects and{" "}
-          <code>$ENV</code> expansion need an explicit <code>sh -c "…"</code>{" "}
-          wrapper. Available variables: <code>$ENTRACTE_EVENT</code>,{" "}
-          <code>$ENTRACTE_KIND</code>, <code>$ENTRACTE_DURATION_SECS</code>,{" "}
-          <code>$ENTRACTE_OUTCOME</code>.
+          {t("system.hooksWarning")}
         </p>
         <label className="row">
-          <span>Run shell commands on break events</span>
+          <span>{t("system.runShellCommands")}</span>
           <input
             type="checkbox"
             checked={hooks.draftEnabled}
@@ -199,7 +190,7 @@ export function SystemTab({
             ))}
             <div className="actions inline">
               <button className="secondary" onClick={addHook}>
-                Add hook
+                {t("system.addHook")}
               </button>
             </div>
           </div>
@@ -210,14 +201,14 @@ export function SystemTab({
             disabled={hooks.saving || !hooks.isDirty(settings)}
             onClick={hooks.save}
           >
-            {hooks.saving ? "Waiting for confirmation…" : "Save hooks"}
+            {hooks.saving ? t("system.waitingConfirmation") : t("system.saveHooks")}
           </button>
           <button
             className="secondary"
             disabled={hooks.saving}
             onClick={() => hooks.reset(settings)}
           >
-            Reset
+            {t("system.reset")}
           </button>
         </div>
         {hooks.error && <p className="placeholder">{hooks.error}</p>}

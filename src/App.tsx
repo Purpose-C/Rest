@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { t } from "./lib/i18n";
 import Settings from "./views/settings";
 import BreakOverlay from "./views/break-overlay";
 import { PausePicker } from "./views/pause-picker";
@@ -19,20 +20,20 @@ function App() {
 
   if (windowKind === "overlay") {
     return (
-      <ErrorBoundary area="Break overlay">
+      <ErrorBoundary area={t("app.areaOverlay")}>
         <BreakOverlay />
       </ErrorBoundary>
     );
   }
   if (windowKind === "pause") {
     return (
-      <ErrorBoundary area="Pause picker">
+      <ErrorBoundary area={t("app.areaPause")}>
         <PausePicker />
       </ErrorBoundary>
     );
   }
   return (
-    <ErrorBoundary area="Settings">
+    <ErrorBoundary area={t("app.areaSettings")}>
       <Settings />
     </ErrorBoundary>
   );

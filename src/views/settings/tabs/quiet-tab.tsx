@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../../../lib/i18n";
 import {
   hasToken,
   suggestionsForPlatform,
@@ -40,69 +41,68 @@ export function QuietTab({
 
   return (
     <>
-      <h2 id="settings-auto-pause">Auto-pause</h2>
+      <h2 id="settings-auto-pause">{t("quiet.autoPause")}</h2>
       <section>
         <p className="placeholder">
-          Breaks are automatically suppressed while these conditions apply.
+          {t("quiet.autoPauseDesc")}
         </p>
         <CheckboxRow
-          label="Do Not Disturb is on"
+          label={t("quiet.dnd")}
           value={settings.pause_during_dnd}
           onChange={(v) => update("pause_during_dnd", v)}
           tip={
             caps.supportsDndRead
-              ? "Reads your OS-level DnD / Focus state (macOS, Windows, and GNOME/KDE on Linux). When on, scheduled breaks are suppressed until DnD turns off."
-              : "Reads your OS-level DnD / Focus state where available. When on, scheduled breaks are suppressed until DnD turns off."
+              ? t("quiet.dndTipSupported")
+              : t("quiet.dndTipFallback")
           }
         />
         <CheckboxRow
-          label="Camera is in use"
+          label={t("quiet.camera")}
           value={settings.pause_during_camera}
           onChange={(v) => update("pause_during_camera", v)}
-          tip="Suppresses breaks while another app is using your webcam — keeps video meetings uninterrupted."
+          tip={t("quiet.cameraTip")}
         />
         <CheckboxRow
-          label="Fullscreen video is playing"
+          label={t("quiet.fullscreenVideo")}
           value={settings.pause_during_video}
           onChange={(v) => update("pause_during_video", v)}
           tipWarn={!caps.videoPauseReliable}
           tip={
             caps.videoPauseReliable
-              ? "Suppresses breaks while a fullscreen video is detected. Confirms a real fullscreen window, so a small background video won't hold your breaks."
-              : "Suppresses breaks while a fullscreen video is detected. On Wayland there is no way to confirm a fullscreen window, so detection is unreliable: it falls back to any media keeping the display awake, which may suppress breaks for a small background video."
+              ? t("quiet.fullscreenVideoTipReliable")
+              : t("quiet.fullscreenVideoTipUnreliable")
           }
         />
       </section>
 
-      <h2 id="settings-during-breaks">During breaks</h2>
+      <h2 id="settings-during-breaks">{t("quiet.duringBreaks")}</h2>
       <section>
         <CheckboxRow
-          label="Pause media while a break is showing"
+          label={t("quiet.pauseMedia")}
           value={settings.pause_media_during_breaks}
           onChange={(v) => update("pause_media_during_breaks", v)}
           tipWarn={!caps.mediaPauseGranular}
           tip={
             caps.mediaPauseGranular
-              ? "When a break starts, pauses whatever is playing (video or audio) and resumes it when the break ends. This targets your media players precisely."
-              : "When a break starts, pauses whatever is playing and resumes it when the break ends. It can only send a best-effort play/pause media key, so it is unreliable: it may miss the player you meant, and it will never resume anything it did not itself pause."
+              ? t("quiet.pauseMediaTipGranular")
+              : t("quiet.pauseMediaTipFallback")
           }
         />
       </section>
 
-      <h2 id="settings-app-pause">Pause for specific apps</h2>
+      <h2 id="settings-app-pause">{t("quiet.appPause")}</h2>
       <section>
         <CheckboxRow
-          label="Pause when any of these apps are running"
+          label={t("quiet.appPauseCheckbox")}
           value={settings.app_pause_enabled}
           onChange={(v) => update("app_pause_enabled", v)}
-          tip="Matches partial app names case-insensitively. Whenever any listed app is running, breaks are suppressed."
+          tip={t("quiet.appPauseTip")}
         />
         {settings.app_pause_enabled && (
           <>
             <label className="row stacked">
               <span>
-                One app name per line — partial, case-insensitive match (e.g.
-                zoom, obs, keynote)
+                {t("quiet.appPausePlaceholder")}
               </span>
               <textarea
                 className="textarea"
@@ -115,7 +115,7 @@ export function QuietTab({
               />
             </label>
             <div className="row stacked">
-              <span className="hint-label">Quick add</span>
+              <span className="hint-label">{t("quiet.quickAdd")}</span>
               <div className="app-suggestion-chips">
                 {suggestionsForPlatform(platform).map((s) => {
                   const token = tokenFor(s, platform)!;
@@ -145,7 +145,7 @@ export function QuietTab({
         )}
       </section>
 
-      <h2 id="settings-manual-pause">Manual pause</h2>
+      <h2 id="settings-manual-pause">{t("quiet.manualPause")}</h2>
       <section>
         {pauseInfo.paused ? (
           <div className="pause-control">
@@ -155,23 +155,23 @@ export function QuietTab({
                 await invoke("resume");
               }}
             >
-              Resume
+              {t("quiet.resume")}
             </button>
             <span className="pause-status">
               {pauseInfo.remaining_secs != null
-                ? `Paused — ${formatRemaining(pauseInfo.remaining_secs)} left`
-                : "Paused indefinitely"}
+                ? t("quiet.pausedRemaining", {
+                    remaining: formatRemaining(pauseInfo.remaining_secs),
+                  })
+                : t("quiet.pausedIndefinitely")}
             </span>
           </div>
         ) : (
           <>
             <p className="placeholder">
-              Pause from the menu bar icon for a quick duration, or until a
-              specific date and time below — handy over a holiday when you're on
-              the computer but not working.
+              {t("quiet.manualPauseDesc")}
             </p>
             <label className="row">
-              <span>Pause until</span>
+              <span>{t("quiet.pauseUntil")}</span>
               <input
                 type="datetime-local"
                 className="pause-until-input"
@@ -190,7 +190,7 @@ export function QuietTab({
                   setPauseUntil("");
                 }}
               >
-                Pause until then
+                {t("quiet.pauseUntilThen")}
               </button>
             </div>
           </>

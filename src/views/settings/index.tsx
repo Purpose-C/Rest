@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { t } from "../../lib/i18n";
 import { useCustomStylesheet } from "../../lib/use-custom-stylesheet";
 import { useTauriListen } from "../../lib/use-tauri-listen";
 import { OnboardingWizard } from "./components/onboarding/onboarding-wizard";
@@ -88,7 +89,7 @@ export default function Settings() {
   return (
     <>
       <a className="skip-link" href={`#${tabPanelId(tab)}`}>
-        Skip to settings content
+        {t("settings.skipToContent")}
       </a>
       <main className="settings">
         {settings && onboarding.needed && (
@@ -103,25 +104,25 @@ export default function Settings() {
         <header className="settings-header">
           <div
             className="tabs"
-            aria-label="Settings sections"
+            aria-label={t("settings.sectionsAria")}
             {...tablistProps}
           >
-            {TABS.map((t) => (
+            {TABS.map((tabItem) => (
               <button
-                key={t.id}
-                id={tabButtonId(t.id)}
-                aria-controls={tabPanelId(t.id)}
-                className={tab === t.id ? "active" : ""}
-                {...tabProps(t.id)}
+                key={tabItem.id}
+                id={tabButtonId(tabItem.id)}
+                aria-controls={tabPanelId(tabItem.id)}
+                className={tab === tabItem.id ? "active" : ""}
+                {...tabProps(tabItem.id)}
               >
-                {t.label}
+                {tabItem.label}
               </button>
             ))}
           </div>
         </header>
 
         {!settings ? (
-          <p className="loading">Loading…</p>
+          <p className="loading">{t("settings.loading")}</p>
         ) : (
           <>
             <div

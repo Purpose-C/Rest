@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../../../lib/i18n";
 import { HOOK_TEMPLATES } from "../../../lib/hook-templates";
 import { HOOK_EVENTS } from "../constants";
 import type { HookConfig, HookEvent, HookTestOutcome } from "../types";
@@ -22,8 +23,10 @@ function HookTestResult({ result }: { result: HookTestOutcome }) {
         <>
           <p className={succeeded ? "hook-test-ok" : "hook-test-fail"}>
             {succeeded
-              ? "✓ Exited 0"
-              : `Exited with code ${result.exit_code ?? "unknown"}`}
+              ? t("hooks.testSuccess")
+              : t("hooks.testFail", {
+                  code: result.exit_code ?? "unknown",
+                })}
           </p>
           {result.stdout && (
             <pre className="hook-test-stream" aria-label="stdout">
@@ -36,7 +39,7 @@ function HookTestResult({ result }: { result: HookTestOutcome }) {
             </pre>
           )}
           {!result.stdout && !result.stderr && (
-            <p className="hook-test-empty">No output.</p>
+            <p className="hook-test-empty">{t("hooks.noOutput")}</p>
           )}
         </>
       )}
@@ -84,7 +87,7 @@ export function HookRow({ hook, onChange, onRemove, testHook }: HookRowProps) {
     <div className="hook-row-wrap" aria-busy={running || undefined}>
       <div className="hook-row">
         <select
-          aria-label="Hook event"
+          aria-label={t("hooks.eventAria")}
           value={hook.event}
           onChange={(e) => onChange({ event: e.target.value as HookEvent })}
         >
@@ -96,9 +99,9 @@ export function HookRow({ hook, onChange, onRemove, testHook }: HookRowProps) {
         </select>
         <input
           type="text"
-          aria-label="Hook command"
+          aria-label={t("hooks.commandAria")}
           className="hook-command"
-          placeholder={`e.g. sh -c "osascript -e 'tell app \\"Music\\" to pause'"`}
+          placeholder={t("hooks.commandPlaceholder")}
           value={hook.command}
           onChange={(e) => {
             onChange({ command: e.target.value });
@@ -113,7 +116,7 @@ export function HookRow({ hook, onChange, onRemove, testHook }: HookRowProps) {
             checked={hook.enabled}
             onChange={(e) => onChange({ enabled: e.target.checked })}
           />
-          <span>On</span>
+          <span>{t("hooks.on")}</span>
         </label>
         <button
           type="button"
@@ -121,25 +124,25 @@ export function HookRow({ hook, onChange, onRemove, testHook }: HookRowProps) {
           disabled={running || hook.command.trim().length === 0}
           onClick={onTest}
         >
-          {running ? "Testing…" : "Test"}
+          {running ? t("hooks.testing") : t("hooks.test")}
         </button>
         <button
           type="button"
           className="secondary hook-remove"
           onClick={onRemove}
         >
-          Remove
+          {t("hooks.remove")}
         </button>
       </div>
       <div className="hook-templates">
         {/* A controlled "action" select: it always shows the prompt and
             inserts on pick, so it never holds a stale selection. */}
         <select
-          aria-label="Insert template"
+          aria-label={t("hooks.insertTemplateAria")}
           value=""
           onChange={(e) => insertTemplate(e.target.value)}
         >
-          <option value="">Insert template…</option>
+          <option value="">{t("hooks.insertTemplate")}</option>
           {HOOK_TEMPLATES.map((t) => (
             <option key={t.id} value={t.id}>
               {t.label}

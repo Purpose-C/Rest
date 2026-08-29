@@ -47,7 +47,7 @@ pub async fn set_active_profile_impl<R: Runtime>(
             .iter()
             .find(|p| p.name == name)
             .map(|p| p.settings.clone())
-            .ok_or_else(|| format!("profile not found: {name}"))?
+            .ok_or_else(|| format!("未找到情景：{name}"))?
     };
     {
         let current = scheduler.active_profile_name.lock().await.clone();
@@ -106,7 +106,7 @@ fn validate_delete(profiles: &[Profile], active: &str, target: &str) -> Result<(
         return Err("cannot delete the active profile".to_string());
     }
     if !profiles.iter().any(|p| p.name == target) {
-        return Err(format!("profile not found: {target}"));
+        return Err(format!("未找到情景：{target}"));
     }
     Ok(())
 }
@@ -116,10 +116,10 @@ fn validate_rename(profiles: &[Profile], from: &str, to: &str) -> Result<(), Str
         return Ok(());
     }
     if !profiles.iter().any(|p| p.name == from) {
-        return Err(format!("profile not found: {from}"));
+        return Err(format!("未找到情景：{from}"));
     }
     if profiles.iter().any(|p| p.name == to) {
-        return Err(format!("profile already exists: {to}"));
+        return Err(format!("情景已存在：{to}"));
     }
     Ok(())
 }
@@ -134,10 +134,10 @@ fn validate_reorder(profiles: &[Profile], desired: &[String]) -> Result<(), Stri
     }
     for (i, name) in desired.iter().enumerate() {
         if desired[..i].iter().any(|other| other == name) {
-            return Err(format!("duplicate profile in reorder list: {name}"));
+            return Err(format!("排序列表中存在重复情景：{name}"));
         }
         if !profiles.iter().any(|p| &p.name == name) {
-            return Err(format!("profile not found: {name}"));
+            return Err(format!("未找到情景：{name}"));
         }
     }
     Ok(())
@@ -152,7 +152,7 @@ pub async fn create_profile_impl(scheduler: &Scheduler, name: String) -> Result<
     {
         let profiles = scheduler.profiles.lock().await;
         if profiles.iter().any(|p| p.name == name) {
-            return Err(format!("profile already exists: {name}"));
+            return Err(format!("情景已存在：{name}"));
         }
     }
     let source = {
@@ -195,13 +195,13 @@ pub async fn duplicate_profile_impl(
     let source_settings = {
         let profiles = scheduler.profiles.lock().await;
         if profiles.iter().any(|p| p.name == name) {
-            return Err(format!("profile already exists: {name}"));
+            return Err(format!("情景已存在：{name}"));
         }
         profiles
             .iter()
             .find(|p| p.name == source)
             .map(|p| p.settings.clone())
-            .ok_or_else(|| format!("profile not found: {source}"))?
+            .ok_or_else(|| format!("未找到情景：{source}"))?
     };
     scheduler.profiles.lock().await.push(Profile {
         name: name.clone(),
@@ -349,7 +349,7 @@ pub async fn reset_profile_to_defaults_impl(
     {
         let profiles = scheduler.profiles.lock().await;
         if !profiles.iter().any(|p| p.name == name) {
-            return Err(format!("profile not found: {name}"));
+            return Err(format!("未找到情景：{name}"));
         }
     }
     let defaults = Settings::default();
@@ -411,7 +411,7 @@ mod tests {
     fn validate_delete_rejects_missing() {
         let profiles = vec![named_profile("Default"), named_profile("Work")];
         let err = validate_delete(&profiles, "Default", "Missing").unwrap_err();
-        assert!(err.contains("not found"));
+        assert!(err.contains("未找到情景"));
     }
 
     #[test]
@@ -424,14 +424,14 @@ mod tests {
     fn validate_rename_rejects_collision() {
         let profiles = vec![named_profile("Default"), named_profile("Work")];
         let err = validate_rename(&profiles, "Default", "Work").unwrap_err();
-        assert!(err.contains("already exists"));
+        assert!(err.contains("情景已存在"));
     }
 
     #[test]
     fn validate_rename_rejects_missing_source() {
         let profiles = vec![named_profile("Default")];
         let err = validate_rename(&profiles, "Missing", "Other").unwrap_err();
-        assert!(err.contains("not found"));
+        assert!(err.contains("未找到情景"));
     }
 
     #[test]
@@ -463,14 +463,14 @@ mod tests {
     fn validate_reorder_rejects_duplicate() {
         let profiles = vec![named_profile("a"), named_profile("b")];
         let err = validate_reorder(&profiles, &["a".to_string(), "a".to_string()]).unwrap_err();
-        assert!(err.contains("duplicate"));
+        assert!(err.contains("重复情景"));
     }
 
     #[test]
     fn validate_reorder_rejects_unknown() {
         let profiles = vec![named_profile("a"), named_profile("b")];
         let err = validate_reorder(&profiles, &["a".to_string(), "c".to_string()]).unwrap_err();
-        assert!(err.contains("not found"));
+        assert!(err.contains("未找到情景"));
     }
 
     #[test]
@@ -616,7 +616,7 @@ mod tests {
         let err = create_profile_impl(&sched, "Work".to_string())
             .await
             .unwrap_err();
-        assert!(err.contains("already exists"));
+        assert!(err.contains("情景已存在"));
     }
 
     #[tokio::test]
@@ -641,7 +641,7 @@ mod tests {
         let err = duplicate_profile_impl(&sched, "Missing".to_string(), "Focus".to_string())
             .await
             .unwrap_err();
-        assert!(err.contains("not found"));
+        assert!(err.contains("未找到情景"));
         assert_eq!(sched.profiles.lock().await.len(), 1);
     }
 
@@ -753,7 +753,7 @@ mod tests {
         let err = reorder_profiles_impl(&sched, vec!["Work".into(), "Missing".into()])
             .await
             .unwrap_err();
-        assert!(err.contains("not found"));
+        assert!(err.contains("未找到情景"));
     }
 
     #[tokio::test]
@@ -795,7 +795,7 @@ mod tests {
         let err = reset_profile_to_defaults_impl(&sched, "Missing".to_string())
             .await
             .unwrap_err();
-        assert!(err.contains("not found"));
+        assert!(err.contains("未找到情景"));
     }
 
     #[tokio::test]

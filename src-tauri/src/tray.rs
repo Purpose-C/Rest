@@ -59,10 +59,10 @@ pub fn seconds_until_tomorrow_morning() -> u64 {
 
 fn resume_break_label(kind: Option<BreakKind>) -> String {
     match kind {
-        Some(BreakKind::Micro) => "Resume last skipped Micro break".to_string(),
-        Some(BreakKind::Long) => "Resume last skipped Long break".to_string(),
-        Some(BreakKind::Sleep) => "Resume last skipped Bedtime reminder".to_string(),
-        None => "Resume last skipped break".to_string(),
+        Some(BreakKind::Micro) => "恢复上次跳过的短休息".to_string(),
+        Some(BreakKind::Long) => "恢复上次跳过的长休息".to_string(),
+        Some(BreakKind::Sleep) => "恢复上次跳过的就寝提醒".to_string(),
+        None => "恢复上次跳过的休息".to_string(),
     }
 }
 
@@ -77,10 +77,10 @@ fn tooltip_for(profile: &str) -> String {
 fn tooltip_for_state(profile: &str, snapshot: &TrayCountdownSnapshot) -> String {
     let base = tooltip_for(profile);
     match snapshot {
-        TrayCountdownSnapshot::Suppressed(r) => format!("{base}\nInactive: {}", r.human()),
-        TrayCountdownSnapshot::Paused => format!("{base}\nPaused"),
-        TrayCountdownSnapshot::Bedtime => format!("{base}\nBedtime"),
-        TrayCountdownSnapshot::OnBreak => format!("{base}\nOn break"),
+        TrayCountdownSnapshot::Suppressed(r) => format!("{base}\n拦截：{}", r.human()),
+        TrayCountdownSnapshot::Paused => format!("{base}\n已暂停"),
+        TrayCountdownSnapshot::Bedtime => format!("{base}\n就寝提醒"),
+        TrayCountdownSnapshot::OnBreak => format!("{base}\n正在休息"),
         TrayCountdownSnapshot::Disabled
         | TrayCountdownSnapshot::Idle
         | TrayCountdownSnapshot::Running(_) => base,
@@ -112,12 +112,12 @@ fn build_profile_submenu(
         .iter()
         .map(|i| i as &dyn tauri::menu::IsMenuItem<tauri::Wry>)
         .collect();
-    Submenu::with_items(app, "Active profile", true, &item_refs)
+    Submenu::with_items(app, "当前情景", true, &item_refs)
 }
 
 pub fn setup(app: &AppHandle) -> tauri::Result<()> {
-    let prefs = MenuItem::with_id(app, "preferences", "Preferences…", true, None::<&str>)?;
-    let resume = MenuItem::with_id(app, "resume", "Resume", false, None::<&str>)?;
+    let prefs = MenuItem::with_id(app, "preferences", "偏好设置…", true, None::<&str>)?;
+    let resume = MenuItem::with_id(app, "resume", "恢复", false, None::<&str>)?;
     let resume_break = MenuItem::with_id(
         app,
         "resume_break",
@@ -128,30 +128,30 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let long_break_now = MenuItem::with_id(
         app,
         "long_break_now",
-        "Take a long break now",
+        "立即进行长休息",
         true,
         None::<&str>,
     )?;
 
-    let pause_15m = MenuItem::with_id(app, "pause_15m", "15 minutes", true, None::<&str>)?;
-    let pause_30m = MenuItem::with_id(app, "pause_30m", "30 minutes", true, None::<&str>)?;
-    let pause_1h = MenuItem::with_id(app, "pause_1h", "1 hour", true, None::<&str>)?;
-    let pause_2h = MenuItem::with_id(app, "pause_2h", "2 hours", true, None::<&str>)?;
-    let pause_4h = MenuItem::with_id(app, "pause_4h", "4 hours", true, None::<&str>)?;
+    let pause_15m = MenuItem::with_id(app, "pause_15m", "15 分钟", true, None::<&str>)?;
+    let pause_30m = MenuItem::with_id(app, "pause_30m", "30 分钟", true, None::<&str>)?;
+    let pause_1h = MenuItem::with_id(app, "pause_1h", "1 小时", true, None::<&str>)?;
+    let pause_2h = MenuItem::with_id(app, "pause_2h", "2 小时", true, None::<&str>)?;
+    let pause_4h = MenuItem::with_id(app, "pause_4h", "4 小时", true, None::<&str>)?;
     let pause_tomorrow = MenuItem::with_id(
         app,
         "pause_tomorrow",
-        "Until tomorrow 6 am",
+        "直到明早 6 点",
         true,
         None::<&str>,
     )?;
-    let pause_indef = MenuItem::with_id(app, "pause_indef", "Indefinitely", true, None::<&str>)?;
+    let pause_indef = MenuItem::with_id(app, "pause_indef", "无限期", true, None::<&str>)?;
     let pause_sep = PredefinedMenuItem::separator(app)?;
-    let pause_until = MenuItem::with_id(app, "pause_until", "Pause until…", true, None::<&str>)?;
+    let pause_until = MenuItem::with_id(app, "pause_until", "暂停直到…", true, None::<&str>)?;
 
     let pause_submenu = Submenu::with_items(
         app,
-        "Pause for…",
+        "暂停…",
         true,
         &[
             &pause_15m,
@@ -173,7 +173,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let sep2 = PredefinedMenuItem::separator(app)?;
     let sep3 = PredefinedMenuItem::separator(app)?;
     let sep4 = PredefinedMenuItem::separator(app)?;
-    let quit = MenuItem::with_id(app, "quit", "Quit Entracte", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "退出 Entracte", true, None::<&str>)?;
 
     let menu = Menu::with_items(
         app,
@@ -404,7 +404,7 @@ fn tray_title_for(snapshot: &TrayCountdownSnapshot, text_enabled: bool) -> Optio
     }
     let body = match snapshot {
         TrayCountdownSnapshot::Disabled => return Some(String::new()),
-        TrayCountdownSnapshot::Paused => "paused".to_string(),
+        TrayCountdownSnapshot::Paused => "已暂停".to_string(),
         TrayCountdownSnapshot::Bedtime => return Some(String::new()),
         TrayCountdownSnapshot::OnBreak => return Some(String::new()),
         TrayCountdownSnapshot::Suppressed(r) => return Some(format!(" {}", r.short_label())),
@@ -744,7 +744,7 @@ mod tests {
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Paused, on),
-            Some(" paused".to_string())
+            Some(" 已暂停".to_string())
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Bedtime, on),
@@ -756,21 +756,21 @@ mod tests {
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Suppressed(SuppressReason::Dnd), on),
-            Some(" DND".to_string())
+            Some(" 勿扰".to_string())
         );
         assert_eq!(
             tray_title_for(
                 &TrayCountdownSnapshot::Suppressed(SuppressReason::Camera),
                 on
             ),
-            Some(" camera".to_string())
+            Some(" 摄像头".to_string())
         );
         assert_eq!(
             tray_title_for(
                 &TrayCountdownSnapshot::Suppressed(SuppressReason::Video),
                 on
             ),
-            Some(" video".to_string())
+            Some(" 视频".to_string())
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Idle, on),
@@ -827,15 +827,15 @@ mod tests {
                 "Default",
                 &TrayCountdownSnapshot::Suppressed(SuppressReason::Dnd)
             ),
-            format!("{base}\nInactive: {}", SuppressReason::Dnd.human()),
+            format!("{base}\n拦截：{}", SuppressReason::Dnd.human()),
         );
         assert_eq!(
             tooltip_for_state("Default", &TrayCountdownSnapshot::Paused),
-            format!("{base}\nPaused"),
+            format!("{base}\n已暂停"),
         );
         assert_eq!(
             tooltip_for_state("Default", &TrayCountdownSnapshot::Bedtime),
-            format!("{base}\nBedtime"),
+            format!("{base}\n就寝提醒"),
         );
         // No second line for transient/normal states.
         assert_eq!(

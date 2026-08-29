@@ -33,7 +33,7 @@ pub fn get_arch() -> &'static str {
 /// to `Intl`. Falls back to `"en-US"` when the OS reports nothing usable.
 /// Pure so the fallback is unit-testable without the platform locale source.
 fn locale_or_default(raw: Option<String>) -> String {
-    raw.map(|s| s.trim().to_string())
+    raw.map(|s| s.trim().replace('_', "-"))
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "en-US".to_string())
 }
@@ -132,6 +132,7 @@ mod tests {
     fn locale_or_default_passes_through_and_trims_a_real_tag() {
         assert_eq!(locale_or_default(Some("nb-NO".into())), "nb-NO");
         assert_eq!(locale_or_default(Some(" en-GB ".into())), "en-GB");
+        assert_eq!(locale_or_default(Some("zh_CN".into())), "zh-CN");
     }
 
     #[test]

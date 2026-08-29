@@ -37,13 +37,13 @@ pub enum GuardReason {
 impl GuardReason {
     fn label(self) -> &'static str {
         match self {
-            GuardReason::Dnd => "Do Not Disturb",
-            GuardReason::Camera => "Camera in use",
-            GuardReason::Idle => "Idle",
-            GuardReason::AppPause => "Paused-app running",
-            GuardReason::Typing => "Actively typing",
-            GuardReason::Video => "Video playing",
-            GuardReason::Plugin => "Plugin detector",
+            GuardReason::Dnd => "勿扰模式",
+            GuardReason::Camera => "摄像头正在使用",
+            GuardReason::Idle => "空闲",
+            GuardReason::AppPause => "暂停应用正在运行",
+            GuardReason::Typing => "正在打字",
+            GuardReason::Video => "正在播放视频",
+            GuardReason::Plugin => "插件检测器",
         }
     }
 }
@@ -926,7 +926,7 @@ mod tests {
         let typing = d.suppressions.iter().find(|s| s.reason == "typing");
         let typing = typing.expect("typing suppression present");
         assert_eq!(typing.count, 2);
-        assert_eq!(typing.label, "Actively typing");
+        assert_eq!(typing.label, "正在打字");
     }
 
     #[test]

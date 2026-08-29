@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { t } from "../../../lib/i18n";
 import { dayActive, toggleDay, WEEKDAYS } from "../../../lib/weekdays";
 import { InfoTip } from "./info-tip";
 
@@ -30,7 +31,7 @@ export function WeekdayToggle({
       <div
         className="weekday-toggle"
         role="group"
-        aria-label="Days the work window applies to"
+        aria-label={t("weekdayToggle.groupAria")}
       >
         {WEEKDAYS.map((day) => {
           const active = dayActive(mask, day.bit);

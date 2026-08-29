@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../../../lib/i18n";
 import { formatClockList, parseClockList } from "../../../lib/clock-list";
 import { useLocalDraft } from "../../../lib/use-local-draft";
 import { formatScreenTime, progressPercent } from "../../../lib/screen-time";
@@ -29,49 +30,49 @@ export function ScheduleTab({
 
   return (
     <>
-      <h2 id="settings-active-hours">Active hours</h2>
+      <h2 id="settings-active-hours">{t("schedule.activeHours")}</h2>
       <section>
         <CheckboxRow
-          label="Only fire breaks within set hours"
+          label={t("schedule.onlyWithinHours")}
           value={settings.work_window_enabled}
           onChange={(v) => update("work_window_enabled", v)}
-          tip="Outside this window, breaks won't fire. Bedtime reminders ignore this and use their own window below."
+          tip={t("schedule.onlyWithinHoursTip")}
         />
         <TimeRow
-          label="Start"
+          label={t("schedule.start")}
           value={settings.work_start_minutes}
           onChange={(v) => update("work_start_minutes", v)}
           disabled={!settings.work_window_enabled}
           format={settings.clock_format}
         />
         <TimeRow
-          label="End"
+          label={t("schedule.end")}
           value={settings.work_end_minutes}
           onChange={(v) => update("work_end_minutes", v)}
           disabled={!settings.work_window_enabled}
           format={settings.clock_format}
         />
         <WeekdayToggle
-          label="On these days"
+          label={t("schedule.onTheseDays")}
           mask={settings.work_days_mask}
           onChange={(v) => update("work_days_mask", v)}
           disabled={!settings.work_window_enabled}
-          tip="Breaks only fire within the hours above on the selected days — turn off weekends so Entracte stays quiet while you game or relax. A window that runs past midnight (e.g. 22:00–06:00) counts the early-morning hours as part of the day it started."
+          tip={t("schedule.onTheseDaysTip")}
         />
       </section>
 
-      <h2 id="settings-micro-breaks">Micro breaks</h2>
+      <h2 id="settings-micro-breaks">{t("schedule.microBreaks")}</h2>
       <section>
         <CheckboxRow
-          label="Enable micro breaks"
+          label={t("schedule.enableMicro")}
           value={settings.micro_enabled}
           onChange={(v) => update("micro_enabled", v)}
-          tip="Short, frequent breaks. Set how they're delivered (overlay, windowed, or notification) on the Breaks tab."
+          tip={t("schedule.enableMicroTip")}
         />
         {settings.micro_enabled && (
           <>
             <label className="row">
-              <span>Schedule</span>
+              <span>{t("schedule.scheduleMode")}</span>
               <select
                 value={settings.micro_schedule_mode}
                 onChange={(e) =>
@@ -81,15 +82,15 @@ export function ScheduleTab({
                   )
                 }
               >
-                <option value="interval">Interval</option>
-                <option value="fixed">Fixed times</option>
-                <option value="both">Both</option>
+                <option value="interval">{t("schedule.modeInterval")}</option>
+                <option value="fixed">{t("schedule.modeFixed")}</option>
+                <option value="both">{t("schedule.modeBoth")}</option>
               </select>
             </label>
             {(settings.micro_schedule_mode === "interval" ||
               settings.micro_schedule_mode === "both") && (
               <NumberRow
-                label="Interval (minutes)"
+                label={t("schedule.intervalMinutes")}
                 value={settings.micro_interval_secs}
                 min={1}
                 multiplier={60}
@@ -100,8 +101,10 @@ export function ScheduleTab({
               settings.micro_schedule_mode === "both") && (
               <label className="row">
                 <span>
-                  Fixed times (comma-separated,{" "}
-                  {settings.clock_format === "12h" ? "h:mm AM/PM" : "hh:mm"})
+                  {t("schedule.fixedTimes", {
+                    format:
+                      settings.clock_format === "12h" ? "h:mm AM/PM" : "hh:mm",
+                  })}
                 </span>
                 <input
                   type="text"
@@ -118,38 +121,38 @@ export function ScheduleTab({
               </label>
             )}
             <NumberRow
-              label="Duration (seconds)"
+              label={t("schedule.durationSeconds")}
               value={settings.micro_duration_secs}
               min={5}
               multiplier={1}
               onChange={(v) => update("micro_duration_secs", v)}
             />
-            <Advanced label="Advanced micro timing">
+            <Advanced label={t("schedule.advancedMicroTiming")}>
               <NumberRow
-                label="Idle reset threshold (minutes)"
+                label={t("schedule.idleResetMinutes")}
                 value={settings.micro_idle_reset_secs}
                 min={1}
                 multiplier={60}
                 onChange={(v) => update("micro_idle_reset_secs", v)}
-                tip="If you've been idle longer than this, the next-break timer resets when you come back — Entracte assumes you already took a break."
+                tip={t("schedule.idleResetTip")}
               />
             </Advanced>
           </>
         )}
       </section>
 
-      <h2 id="settings-long-breaks">Long breaks</h2>
+      <h2 id="settings-long-breaks">{t("schedule.longBreaks")}</h2>
       <section>
         <CheckboxRow
-          label="Enable long breaks"
+          label={t("schedule.enableLong")}
           value={settings.long_enabled}
           onChange={(v) => update("long_enabled", v)}
-          tip="Longer, less frequent breaks. Set how they're delivered (overlay, windowed, or notification) on the Breaks tab."
+          tip={t("schedule.enableLongTip")}
         />
         {settings.long_enabled && (
           <>
             <label className="row">
-              <span>Schedule</span>
+              <span>{t("schedule.scheduleMode")}</span>
               <select
                 value={settings.long_schedule_mode}
                 onChange={(e) =>
@@ -159,15 +162,15 @@ export function ScheduleTab({
                   )
                 }
               >
-                <option value="interval">Interval</option>
-                <option value="fixed">Fixed times</option>
-                <option value="both">Both</option>
+                <option value="interval">{t("schedule.modeInterval")}</option>
+                <option value="fixed">{t("schedule.modeFixed")}</option>
+                <option value="both">{t("schedule.modeBoth")}</option>
               </select>
             </label>
             {(settings.long_schedule_mode === "interval" ||
               settings.long_schedule_mode === "both") && (
               <NumberRow
-                label="Interval (minutes)"
+                label={t("schedule.intervalMinutes")}
                 value={settings.long_interval_secs}
                 min={5}
                 multiplier={60}
@@ -178,8 +181,10 @@ export function ScheduleTab({
               settings.long_schedule_mode === "both") && (
               <label className="row">
                 <span>
-                  Fixed times (comma-separated,{" "}
-                  {settings.clock_format === "12h" ? "h:mm AM/PM" : "hh:mm"})
+                  {t("schedule.fixedTimes", {
+                    format:
+                      settings.clock_format === "12h" ? "h:mm AM/PM" : "hh:mm",
+                  })}
                 </span>
                 <input
                   type="text"
@@ -196,57 +201,57 @@ export function ScheduleTab({
               </label>
             )}
             <NumberRow
-              label="Duration (minutes)"
+              label={t("schedule.durationMinutes")}
               value={settings.long_duration_secs}
               min={1}
               multiplier={60}
               onChange={(v) => update("long_duration_secs", v)}
             />
-            <Advanced label="Advanced long timing">
+            <Advanced label={t("schedule.advancedLongTiming")}>
               <NumberRow
-                label="Idle reset threshold (minutes)"
+                label={t("schedule.idleResetMinutes")}
                 value={settings.long_idle_reset_secs}
                 min={1}
                 multiplier={60}
                 onChange={(v) => update("long_idle_reset_secs", v)}
-                tip="If you've been idle longer than this, the next-break timer resets when you come back — Entracte assumes you already took a break."
+                tip={t("schedule.idleResetTip")}
               />
             </Advanced>
           </>
         )}
       </section>
 
-      <h2 id="settings-bedtime">Bedtime</h2>
+      <h2 id="settings-bedtime">{t("schedule.bedtime")}</h2>
       <section>
         <CheckboxRow
-          label="Persistent sleep reminders within window"
+          label={t("schedule.persistentSleepReminders")}
           value={settings.bedtime_enabled}
           onChange={(v) => update("bedtime_enabled", v)}
-          tip="Inside the bedtime window, Entracte fires a Sleep prompt instead of micro or long breaks. Sleep prompts always show — they ignore DnD and camera-in-use."
+          tip={t("schedule.persistentSleepRemindersTip")}
         />
         {settings.bedtime_enabled && (
           <>
             <TimeRow
-              label="Start"
+              label={t("schedule.start")}
               value={settings.bedtime_start_minutes}
               onChange={(v) => update("bedtime_start_minutes", v)}
               format={settings.clock_format}
             />
             <TimeRow
-              label="End"
+              label={t("schedule.end")}
               value={settings.bedtime_end_minutes}
               onChange={(v) => update("bedtime_end_minutes", v)}
               format={settings.clock_format}
             />
             <NumberRow
-              label="Reminder interval (minutes)"
+              label={t("schedule.reminderIntervalMinutes")}
               value={settings.bedtime_interval_secs}
               min={1}
               multiplier={60}
               onChange={(v) => update("bedtime_interval_secs", v)}
             />
             <NumberRow
-              label="Reminder duration (seconds)"
+              label={t("schedule.reminderDurationSeconds")}
               value={settings.bedtime_duration_secs}
               min={5}
               multiplier={1}
@@ -261,32 +266,32 @@ export function ScheduleTab({
                   })
                 }
               >
-                Test now (15s)
+                {t("schedule.testNow15s")}
               </button>
             </div>
           </>
         )}
       </section>
 
-      <h2 id="settings-screen-time">Daily screen time</h2>
+      <h2 id="settings-screen-time">{t("schedule.dailyScreenTime")}</h2>
       <section>
         <CheckboxRow
-          label="Remind me to wrap up after a daily budget"
+          label={t("schedule.remindWrapUp")}
           value={settings.daily_screen_time_enabled}
           onChange={(v) => update("daily_screen_time_enabled", v)}
-          tip="Counts only active typing/clicking. Resets at local midnight. The reminder is a system notification, not a forced break."
+          tip={t("schedule.remindWrapUpTip")}
         />
         {settings.daily_screen_time_enabled && (
           <>
             <NumberRow
-              label="Daily budget (hours)"
+              label={t("schedule.dailyBudgetHours")}
               value={settings.daily_screen_time_budget_minutes}
               min={1}
               multiplier={60}
               onChange={(v) => update("daily_screen_time_budget_minutes", v)}
             />
             <NumberRow
-              label="Remind again after (minutes, 0 = once per day)"
+              label={t("schedule.remindAgainAfter")}
               value={settings.daily_screen_time_remind_again_minutes}
               min={0}
               multiplier={1}
@@ -295,7 +300,7 @@ export function ScheduleTab({
               }
             />
             <div className="screen-time-progress">
-              <span className="screen-time-label">Today</span>
+              <span className="screen-time-label">{t("schedule.today")}</span>
               <span className="screen-time-value">
                 {formatScreenTime(screenTime?.seconds ?? 0)} /{" "}
                 {formatScreenTime(
@@ -305,7 +310,7 @@ export function ScheduleTab({
               <div
                 className="screen-time-bar"
                 role="progressbar"
-                aria-label="Daily screen time progress"
+                aria-label={t("schedule.screenTimeProgressAria")}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={progressPercent(
@@ -330,25 +335,25 @@ export function ScheduleTab({
         )}
       </section>
 
-      <Advanced label="Show advanced scheduling">
-        <h3>Input-aware scheduling</h3>
+      <Advanced label={t("schedule.showAdvancedScheduling")}>
+        <h3>{t("schedule.inputAwareScheduling")}</h3>
         <CheckboxRow
-          label="Delay break if I'm typing"
+          label={t("schedule.delayBreakIfTyping")}
           value={settings.delay_break_if_typing}
           onChange={(v) => update("delay_break_if_typing", v)}
-          tip="If you're mid-keystroke when a break is due, it waits until you pause typing — up to the maximum deferral below."
+          tip={t("schedule.delayBreakIfTypingTip")}
         />
         {settings.delay_break_if_typing && (
           <>
             <NumberRow
-              label="Treat input within (seconds) as typing"
+              label={t("schedule.typingGraceSeconds")}
               value={settings.typing_grace_secs}
               min={1}
               multiplier={1}
               onChange={(v) => update("typing_grace_secs", v)}
             />
             <NumberRow
-              label="Maximum deferral (seconds)"
+              label={t("schedule.typingMaxDeferralSeconds")}
               value={settings.typing_max_deferral_secs}
               min={1}
               multiplier={1}
@@ -357,10 +362,10 @@ export function ScheduleTab({
           </>
         )}
         <CheckboxRow
-          label="Pause break countdown while I'm typing"
+          label={t("schedule.pauseCountdownIfTyping")}
           value={settings.pause_countdown_if_typing}
           onChange={(v) => update("pause_countdown_if_typing", v)}
-          tip={`During a break, the countdown only ticks while you're not typing. Useful with "Wait for manual finish" off.`}
+          tip={t("schedule.pauseCountdownIfTypingTip")}
         />
       </Advanced>
     </>

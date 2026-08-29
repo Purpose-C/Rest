@@ -1,3 +1,5 @@
+import { t } from "./i18n";
+
 /** Frontend mirror of Rust's `format_countdown` — `"M:SS"` (or
  * `"MM:SS"` past ten minutes). Used in tests and previews; the live
  * tray text is rendered by Rust. */
@@ -19,9 +21,24 @@ export type TrayCountdownTarget = "next" | "short" | "long";
 /** Options for the tray-countdown target dropdown on the System tab. */
 export const TRAY_COUNTDOWN_TARGETS: {
   id: TrayCountdownTarget;
-  label: string;
+  readonly label: string;
 }[] = [
-  { id: "next", label: "Next break (soonest)" },
-  { id: "short", label: "Next micro break" },
-  { id: "long", label: "Next long break" },
+  {
+    id: "next",
+    get label() {
+      return t("trayCountdown.next");
+    },
+  },
+  {
+    id: "short",
+    get label() {
+      return t("trayCountdown.short");
+    },
+  },
+  {
+    id: "long",
+    get label() {
+      return t("trayCountdown.long");
+    },
+  },
 ];

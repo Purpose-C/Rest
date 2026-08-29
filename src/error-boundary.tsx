@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "./lib/i18n";
 import { redactRendererPayload } from "./lib/redact";
 
 type Props = {
@@ -54,22 +55,22 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.error) return this.props.children;
     const heading = this.props.area
-      ? `${this.props.area} hit an error`
-      : "Something went wrong";
+      ? t("error.areaHitError", { area: this.props.area })
+      : t("error.somethingWentWrong");
     return (
       <div className="error-boundary" role="alert">
         <h2>{heading}</h2>
-        <p>The window can usually recover. If it doesn't, reload.</p>
+        <p>{t("error.recoveryHint")}</p>
         <details className="error-boundary-details">
-          <summary>Technical details</summary>
+          <summary>{t("error.technicalDetails")}</summary>
           <pre className="error-boundary-message">
             {this.state.error.message}
           </pre>
         </details>
         <div className="error-boundary-actions">
-          <button onClick={this.reset}>Try again</button>
+          <button onClick={this.reset}>{t("error.tryAgain")}</button>
           <button className="secondary" onClick={this.reload}>
-            Reload
+            {t("error.reload")}
           </button>
         </div>
       </div>

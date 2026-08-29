@@ -1,8 +1,5 @@
 import type { BreakEvent } from "./types";
 
-export const ENFORCEABLE_LONG_BREAK_HINT =
-  "Long breaks are set to enforceable — change in Settings → Schedule.";
-
 type SkipHintInput = Pick<
   BreakEvent,
   "kind" | "enforceable" | "postpone_available"

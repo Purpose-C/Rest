@@ -1,9 +1,7 @@
 import { useId, useMemo, useState } from "react";
+import { t } from "../../../lib/i18n";
 import { TABS } from "../constants";
 import { filterSettingsIndex, type SettingsSearchEntry } from "../search-index";
-import type { Tab } from "../types";
-
-const TAB_LABELS = new Map<Tab, string>(TABS.map((t) => [t.id, t.label]));
 
 /** Header search box that jumps to any setting across all tabs. Filters the
  * static {@link SETTINGS_INDEX} and reports the chosen destination via
@@ -28,8 +26,8 @@ export function SettingsSearch({
       <input
         type="search"
         className="settings-search-input"
-        placeholder="Search settings…"
-        aria-label="Search settings"
+        placeholder={t("search.inputPlaceholder")}
+        aria-label={t("search.inputAria")}
         aria-controls={hasQuery ? listId : undefined}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -45,7 +43,7 @@ export function SettingsSearch({
       {hasQuery && (
         <ul id={listId} className="settings-search-results">
           {results.length === 0 ? (
-            <li className="settings-search-empty">No matching settings</li>
+            <li className="settings-search-empty">{t("search.empty")}</li>
           ) : (
             results.map((entry) => (
               <li key={entry.id}>
@@ -58,7 +56,7 @@ export function SettingsSearch({
                     {entry.label}
                   </span>
                   <span className="settings-search-result-tab">
-                    {TAB_LABELS.get(entry.tabId) ?? entry.tabId}
+                    {TABS.find((tab) => tab.id === entry.tabId)?.label ?? entry.tabId}
                   </span>
                 </button>
               </li>

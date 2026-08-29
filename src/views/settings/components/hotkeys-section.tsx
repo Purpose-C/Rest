@@ -1,3 +1,4 @@
+import { t } from "../../../lib/i18n";
 import {
   HOTKEY_ACTIONS,
   acceleratorFor,
@@ -28,10 +29,10 @@ export function HotkeysSection({
   return (
     <>
       <CheckboxRow
-        label="Enable global hotkeys"
+        label={t("hotkeys.enable")}
         value={settings.hotkeys_enabled}
         onChange={(v) => update("hotkeys_enabled", v)}
-        tip="Register OS-level keyboard shortcuts for the actions below. They fire whether or not this window is focused. Format example: CmdOrCtrl+Alt+P."
+        tip={t("hotkeys.enableTip")}
       />
       {settings.hotkeys_enabled && (
         <div className="hotkeys-list">
@@ -44,8 +45,8 @@ export function HotkeysSection({
             // Invalid syntax is the more fundamental problem, so it wins the
             // message when both would apply.
             const problemText = invalid
-              ? "Not a recognised shortcut. Use one or more modifiers (CmdOrCtrl, Alt, Shift) plus a single key, e.g. CmdOrCtrl+Alt+P."
-              : "This shortcut is also bound to another action. Give each action a unique chord.";
+              ? t("hotkeys.invalidSyntax")
+              : t("hotkeys.conflict");
             const problem = invalid || conflicting;
             return (
               // A plain div, not a <label>: the row holds two controls (the
@@ -62,7 +63,7 @@ export function HotkeysSection({
                     type="text"
                     aria-label={label}
                     spellCheck={false}
-                    placeholder="e.g. CmdOrCtrl+Alt+P"
+                    placeholder={t("hotkeys.placeholder")}
                     value={accelerator}
                     aria-invalid={problem || undefined}
                     onChange={(e) =>
@@ -79,7 +80,7 @@ export function HotkeysSection({
                   <button
                     type="button"
                     className="secondary"
-                    aria-label={`Clear ${label} shortcut`}
+                    aria-label={t("hotkeys.clearAria", { label })}
                     disabled={accelerator.length === 0}
                     onClick={() =>
                       update(
@@ -88,7 +89,7 @@ export function HotkeysSection({
                       )
                     }
                   >
-                    Clear
+                    {t("hotkeys.clear")}
                   </button>
                 </span>
               </div>

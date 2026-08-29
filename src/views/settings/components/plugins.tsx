@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { t } from "../../../lib/i18n";
 import { InfoTip } from "./info-tip";
 import type { InstallOutcome, PluginSummary } from "../types";
 
 type Status = { kind: "ok" | "err"; message: string } | null;
 
-const FILTER = [{ name: "Entracte plugin", extensions: ["json"] }];
+function pluginFilter() {
+  return [{ name: t("plugins.filter"), extensions: ["json"] }];
+}
 
 // Local-only plugin install/uninstall (#156). This slice ships content
 // providers: a signed plugin file whose ideas/routines merge into the active
@@ -29,7 +32,10 @@ export function Plugins({
       const list = await invoke<PluginSummary[]>("list_plugins");
       setPlugins(Array.isArray(list) ? list : []);
     } catch (e) {
-      setStatus({ kind: "err", message: `Could not list plugins: ${e}` });
+      setStatus({
+        kind: "err",
+        message: t("plugins.listError", { error: String(e) }),
+      });
     }
   }, []);
 
@@ -43,28 +49,43 @@ export function Plugins({
       const path = await openDialog({
         multiple: false,
         directory: false,
-        filters: FILTER,
+        filters: pluginFilter(),
       });
       if (typeof path !== "string" || !path) return;
       setBusy(true);
       const outcome = await invoke<InstallOutcome>("install_plugin", { path });
       await Promise.all([refresh(), reload()]);
       const images = outcome.images_added ?? 0;
+      const hints = t("common.countHints", {
+        n: outcome.hints_added,
+        suffix: outcome.hints_added === 1 ? "" : "s",
+      });
+      const routines = t("common.countRoutines", {
+        n: outcome.routines_added,
+        suffix: outcome.routines_added === 1 ? "" : "s",
+      });
+      const imgText =
+        images > 0
+          ? t("common.countImages", {
+              n: images,
+              suffix: images === 1 ? "" : "s",
+            })
+          : "";
       const message =
         outcome.kind === "content"
-          ? `Installed "${outcome.name}" — added ${outcome.hints_added} idea${
-              outcome.hints_added === 1 ? "" : "s"
-            } and ${outcome.routines_added} routine${
-              outcome.routines_added === 1 ? "" : "s"
-            }${
-              images > 0
-                ? ` with ${images} image${images === 1 ? "" : "s"}`
-                : ""
-            }.`
-          : `Installed "${outcome.name}".`;
+          ? t("plugins.installedContent", {
+              name: outcome.name,
+              hints,
+              routines,
+              images: imgText,
+            })
+          : t("plugins.installedGeneric", { name: outcome.name });
       setStatus({ kind: "ok", message });
     } catch (e) {
-      setStatus({ kind: "err", message: `Install failed: ${e}` });
+      setStatus({
+        kind: "err",
+        message: t("plugins.installFailed", { error: String(e) }),
+      });
     } finally {
       setBusy(false);
     }
@@ -76,9 +97,15 @@ export function Plugins({
       setBusy(true);
       await invoke("uninstall_plugin", { id: plugin.id });
       await Promise.all([refresh(), reload()]);
-      setStatus({ kind: "ok", message: `Removed "${plugin.name}".` });
+      setStatus({
+        kind: "ok",
+        message: t("plugins.removed", { name: plugin.name }),
+      });
     } catch (e) {
-      setStatus({ kind: "err", message: `Uninstall failed: ${e}` });
+      setStatus({
+        kind: "err",
+        message: t("plugins.uninstallFailed", { error: String(e) }),
+      });
     } finally {
       setBusy(false);
     }
@@ -87,12 +114,11 @@ export function Plugins({
   return (
     <>
       <p className="placeholder">
-        Install a local plugin file to add break ideas and routines from the
-        community.
-        <InfoTip text="Plugins are local files you choose yourself — no store, no account, no network. Installing shows a confirmation dialog with the plugin's name, author, and signing key. Uninstalling removes exactly what it added." />
+        {t("plugins.desc")}
+        <InfoTip text={t("plugins.tip")} />
       </p>
       <p className="placeholder plugin-warning">
-        ⚠ Only install plugin files from sources you trust.
+        {t("plugins.warning")}
       </p>
       <div className="actions inline">
         <button
@@ -101,7 +127,7 @@ export function Plugins({
           onClick={onInstall}
           disabled={busy}
         >
-          {busy ? "Working…" : "Install plugin…"}
+          {busy ? t("plugins.working") : t("plugins.installBtn")}
         </button>
       </div>
       {plugins.length > 0 ? (
@@ -112,9 +138,12 @@ export function Plugins({
                 <span className="plugin-name">{p.name}</span>
                 <span className="plugin-sub">
                   {p.author ? `${p.author} · ` : ""}v{p.version} ·{" "}
-                  {p.hints_added} idea{p.hints_added === 1 ? "" : "s"},{" "}
-                  {p.routines_added} routine
-                  {p.routines_added === 1 ? "" : "s"}
+                  {t("plugins.rowCounts", {
+                    hints: p.hints_added,
+                    hSuffix: p.hints_added === 1 ? "" : "s",
+                    routines: p.routines_added,
+                    rSuffix: p.routines_added === 1 ? "" : "s",
+                  })}
                 </span>
               </div>
               <button
@@ -122,15 +151,15 @@ export function Plugins({
                 className="secondary"
                 onClick={() => onUninstall(p)}
                 disabled={busy}
-                aria-label={`Uninstall ${p.name}`}
+                aria-label={t("plugins.uninstallAria", { name: p.name })}
               >
-                Uninstall
+                {t("plugins.uninstall")}
               </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="placeholder">No plugins installed.</p>
+        <p className="placeholder">{t("plugins.noPlugins")}</p>
       )}
       {status && (
         <p

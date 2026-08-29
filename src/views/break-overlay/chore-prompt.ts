@@ -1,3 +1,5 @@
+import { t } from "../../lib/i18n";
+
 /** Compose the long-break chore nudge shown in the wellness-hint space.
  *  The backend sends the raw task text (`chore_prompt`); the overlay frames
  *  it with the break length so it reads as an invitation rather than an
@@ -6,7 +8,7 @@
 export function choreNudge(chore: string, durationSecs: number): string {
   const mins = Math.round(durationSecs / 60);
   if (mins >= 1) {
-    return `You've got ~${mins} min — knock out: ${chore}`;
+    return t("chorePrompt.withMinutes", { mins, chore });
   }
-  return `Quick one — knock out: ${chore}`;
+  return t("chorePrompt.quick", { chore });
 }

@@ -1,14 +1,16 @@
+import { t } from "../../../lib/i18n";
 import {
   KIND_ORDER,
   groupSuppressionsByReason,
 } from "../../../lib/stats-format";
 import type { SuppressionByKind } from "../types";
 
-const KIND_LABEL: Record<string, string> = {
-  micro: "Micro",
-  long: "Long",
-  sleep: "Sleep",
-};
+function kindLabel(kind: string): string {
+  if (kind === "micro") return t("suppressionBars.kindMicro");
+  if (kind === "long") return t("suppressionBars.kindLong");
+  if (kind === "sleep") return t("suppressionBars.kindSleep");
+  return kind;
+}
 
 export function SuppressionBars({ rows }: { rows: SuppressionByKind[] }) {
   const grouped = groupSuppressionsByReason(rows);
@@ -21,13 +23,13 @@ export function SuppressionBars({ rows }: { rows: SuppressionByKind[] }) {
     <div
       className="suppression-bars"
       role="table"
-      aria-label="Suppressions by reason and break kind"
+      aria-label={t("suppressionBars.tableAria")}
     >
       <div className="suppression-legend" role="presentation">
         {kindsPresent.map((kind) => (
           <span key={kind} className="suppression-legend-item" data-kind={kind}>
             <span className="suppression-swatch" aria-hidden="true" />
-            {KIND_LABEL[kind] ?? kind}
+            {kindLabel(kind)}
           </span>
         ))}
       </div>
@@ -41,7 +43,10 @@ export function SuppressionBars({ rows }: { rows: SuppressionByKind[] }) {
             <div
               className="suppression-track"
               role="cell"
-              aria-label={`${g.label}: ${g.total} suppressions`}
+              aria-label={t("suppressionBars.trackAria", {
+                label: g.label,
+                total: g.total,
+              })}
             >
               <div
                 className="suppression-bar"
@@ -59,7 +64,11 @@ export function SuppressionBars({ rows }: { rows: SuppressionByKind[] }) {
                       ref={(el) => {
                         el?.style.setProperty("--seg-width", `${segPct}%`);
                       }}
-                      title={`${KIND_LABEL[s.kind] ?? s.kind} — ${g.label}: ${s.count}`}
+                      title={t("suppressionBars.segTitle", {
+                        kind: kindLabel(s.kind),
+                        label: g.label,
+                        count: s.count,
+                      })}
                     />
                   );
                 })}

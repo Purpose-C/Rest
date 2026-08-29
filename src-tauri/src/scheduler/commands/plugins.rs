@@ -31,8 +31,8 @@ const MAIN_WINDOW_LABEL: &str = "main";
 /// its pack, so this matches the content-pack cap.
 const MAX_MANIFEST_BYTES: u64 = 8 * 1024 * 1024;
 
-const PLUGIN_DIALOG_ALLOW: &str = "Install";
-const PLUGIN_DIALOG_CANCEL: &str = "Cancel";
+const PLUGIN_DIALOG_ALLOW: &str = "安装";
+const PLUGIN_DIALOG_CANCEL: &str = "取消";
 
 fn ensure_main_window<R: Runtime>(webview: &WebviewWindow<R>) -> Result<(), String> {
     if webview.label() != MAIN_WINDOW_LABEL {
@@ -391,7 +391,7 @@ async fn confirm_install<R: Runtime>(app: &AppHandle<R>, manifest: &Manifest) ->
         let result = app
             .dialog()
             .message(summary)
-            .title("Entracte: install plugin")
+            .title("Entracte：安装插件")
             .kind(MessageDialogKind::Warning)
             .buttons(MessageDialogButtons::OkCancelCustom(
                 PLUGIN_DIALOG_CANCEL.to_string(),
@@ -417,7 +417,7 @@ const DIALOG_MAX_CAPABILITIES_SHOWN: usize = 12;
 
 fn format_install_summary(manifest: &Manifest) -> String {
     let author = if manifest.author.trim().is_empty() {
-        "(unknown author)".to_string()
+        "（未知作者）".to_string()
     } else {
         sanitize_for_dialog(&manifest.author, 80)
     };
@@ -429,17 +429,17 @@ fn format_install_summary(manifest: &Manifest) -> String {
         .collect();
 
     let mut s = String::new();
-    s.push_str("⚠ Only click Install if you chose this plugin file yourself.\n\n");
+    s.push_str("⚠ 请仅在您自行选择了此插件文件的情况下点击“安装”。\n\n");
     s.push_str(&format!(
-        "Plugin: {}\n",
+        "插件：{}\n",
         sanitize_for_dialog(&manifest.name, 120)
     ));
-    s.push_str(&format!("Author: {author}\n"));
+    s.push_str(&format!("作者：{author}\n"));
     s.push_str(&format!(
-        "Version: {}\n",
+        "版本：{}\n",
         sanitize_for_dialog(&manifest.version, 40)
     ));
-    s.push_str(&format!("Signing key: {key}…\n\n"));
+    s.push_str(&format!("签名密钥：{key}…\n\n"));
 
     match manifest.kind {
         PluginKind::Content => {
@@ -460,7 +460,7 @@ fn format_install_summary(manifest: &Manifest) -> String {
                 .map(|p| p.routines.len())
                 .unwrap_or(0);
             s.push_str(&format!(
-                "Adds up to {hints} idea(s) and {routines} routine(s) (duplicates are skipped).\n"
+                "最多添加 {hints} 条提示和 {routines} 个引导流程（重复项将被跳过）。\n"
             ));
             if !manifest.assets.is_empty() {
                 // Approximate decoded size from the base64 length (¾) — good
@@ -471,23 +471,23 @@ fn format_install_summary(manifest: &Manifest) -> String {
                     .map(|a| a.data_base64.len() / 4 * 3)
                     .sum();
                 s.push_str(&format!(
-                    "Ships {} media file(s) — images and/or sounds ({:.1} MB).\n",
+                    "包含 {} 个媒体文件（图片和/或音频，约 {:.1} MB）。\n",
                     manifest.assets.len(),
                     bytes as f64 / (1024.0 * 1024.0)
                 ));
             }
         }
         PluginKind::Detector => {
-            s.push_str("This plugin runs sandboxed code and is granted ONLY these permissions:\n");
+            s.push_str("此插件在沙箱中运行代码，且仅被授予以下权限：\n");
             if manifest.imports.is_empty() {
-                s.push_str("• (none)\n");
+                s.push_str("•（无）\n");
             }
             for cap in manifest.imports.iter().take(DIALOG_MAX_CAPABILITIES_SHOWN) {
                 s.push_str(&format!("• {}\n", sanitize_for_dialog(cap, 120)));
             }
             if manifest.imports.len() > DIALOG_MAX_CAPABILITIES_SHOWN {
                 s.push_str(&format!(
-                    "• … and {} more\n",
+                    "• … 以及另外 {} 项\n",
                     manifest.imports.len() - DIALOG_MAX_CAPABILITIES_SHOWN
                 ));
             }
@@ -495,15 +495,15 @@ fn format_install_summary(manifest: &Manifest) -> String {
         PluginKind::Export => {
             if let Some(cfg) = &manifest.export {
                 let where_to = match cfg.sink {
-                    crate::plugins::ExportSink::File => "write your break statistics to the file",
-                    crate::plugins::ExportSink::Http => "SEND your break statistics to",
+                    crate::plugins::ExportSink::File => "将您的休息统计数据写入至文件",
+                    crate::plugins::ExportSink::Http => "将您的休息统计数据发送至",
                 };
                 s.push_str(&format!(
-                    "This plugin will {where_to}:\n• {}\n",
+                    "此插件将{where_to}：\n• {}\n",
                     sanitize_for_dialog(&cfg.destination, 200)
                 ));
                 if cfg.sink == crate::plugins::ExportSink::Http {
-                    s.push_str("⚠ This sends data OFF your machine to that address.\n");
+                    s.push_str("⚠ 这会将数据发送到您设备之外的上述地址。\n");
                 }
             }
         }
@@ -668,10 +668,10 @@ mod tests {
     fn format_install_summary_shows_export_destination_and_egress_warning() {
         let s = format_install_summary(&export_manifest("com.example.exp"));
         assert!(s.contains("http://127.0.0.1:8080/entracte"));
-        assert!(s.contains("SEND your break statistics"));
-        assert!(s.contains("OFF your machine"));
-        let warn = s.find("Only click Install").unwrap();
-        let body = s.find("This plugin will").unwrap();
+        assert!(s.contains("将您的休息统计数据发送至"));
+        assert!(s.contains("这会将数据发送到您设备之外"));
+        let warn = s.find("请仅在您自行选择了此插件文件的情况下点击“安装”").unwrap();
+        let body = s.find("此插件将").unwrap();
         assert!(warn < body);
     }
 
@@ -682,9 +682,9 @@ mod tests {
         cfg.sink = crate::plugins::ExportSink::File;
         cfg.destination = "/home/me/breaks.csv".to_string();
         let s = format_install_summary(&m);
-        assert!(s.contains("write your break statistics"));
+        assert!(s.contains("将您的休息统计数据写入至文件"));
         assert!(s.contains("/home/me/breaks.csv"));
-        assert!(!s.contains("OFF your machine"));
+        assert!(!s.contains("这会将数据发送到您设备之外"));
     }
 
     #[tokio::test]
@@ -725,10 +725,10 @@ mod tests {
     #[test]
     fn format_install_summary_lists_capabilities_for_a_detector() {
         let s = format_install_summary(&detector_manifest("com.example.focus"));
-        assert!(s.contains("ONLY these permissions"));
+        assert!(s.contains("仅被授予以下权限"));
         assert!(s.contains("detect:processes"));
-        let warn = s.find("Only click Install").unwrap();
-        let perms = s.find("ONLY these permissions").unwrap();
+        let warn = s.find("请仅在您自行选择了此插件文件的情况下点击“安装”").unwrap();
+        let perms = s.find("仅被授予以下权限").unwrap();
         assert!(warn < perms, "safety warning must come first");
     }
 
@@ -736,12 +736,12 @@ mod tests {
     fn format_install_summary_handles_no_and_many_capabilities() {
         let mut m = detector_manifest("com.example.focus");
         m.imports = vec![];
-        assert!(format_install_summary(&m).contains("(none)"));
+        assert!(format_install_summary(&m).contains("•（无）"));
 
         m.imports = (0..15).map(|i| format!("detect:file:/p/{i}")).collect();
         let s = format_install_summary(&m);
         assert!(
-            s.contains("and 3 more"),
+            s.contains("另外 3 项"),
             "15 caps minus the {DIALOG_MAX_CAPABILITIES_SHOWN} shown = 3 more"
         );
     }
@@ -750,12 +750,12 @@ mod tests {
     fn format_install_summary_reports_media_for_a_content_plugin() {
         let with = format_install_summary(&content_manifest_with_image("com.example.yoga"));
         assert!(
-            with.contains("1 media file(s)"),
+            with.contains("包含 1 个媒体文件"),
             "summary mentions the media: {with}"
         );
         // A content plugin with no media says nothing about it.
         let without = format_install_summary(&content_manifest("com.example.plain"));
-        assert!(!without.contains("media file(s)"));
+        assert!(!without.contains("媒体文件"));
     }
 
     #[tokio::test]
@@ -1035,10 +1035,10 @@ mod tests {
         assert!(s.contains("Stretch pack"));
         assert!(s.contains("Jane"));
         assert!(s.contains("1.0.0"));
-        assert!(s.contains("Signing key:"));
-        assert!(s.contains("1 idea(s) and 1 routine(s)"));
-        let warn = s.find("Only click Install").unwrap();
-        let body = s.find("Adds up to").unwrap();
+        assert!(s.contains("签名密钥："));
+        assert!(s.contains("最多添加 1 条提示和 1 个引导流程"));
+        let warn = s.find("请仅在您自行选择了此插件文件的情况下点击“安装”").unwrap();
+        let body = s.find("最多添加").unwrap();
         assert!(warn < body, "safety warning must come first");
     }
 
@@ -1046,7 +1046,7 @@ mod tests {
     fn format_install_summary_handles_missing_author() {
         let mut m = content_manifest("com.example.stretch");
         m.author = "   ".to_string();
-        assert!(format_install_summary(&m).contains("(unknown author)"));
+        assert!(format_install_summary(&m).contains("（未知作者）"));
     }
 
     #[test]

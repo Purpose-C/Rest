@@ -1,3 +1,5 @@
+import { t } from "../../../lib/i18n";
+
 export function HourHistogram({ values }: { values: number[] }) {
   const max = Math.max(1, ...values);
   return (
@@ -11,7 +13,11 @@ export function HourHistogram({ values }: { values: number[] }) {
               ref={(el) => {
                 el?.style.setProperty("--hour-bar-height", `${pct}%`);
               }}
-              title={`${h}:00 — ${v} break${v === 1 ? "" : "s"}`}
+              title={t("stats.hourTooltip", {
+                hour: h,
+                count: v,
+                suffix: v === 1 ? "" : "s",
+              })}
             />
             {h % 6 === 0 && <span className="hour-label">{h}</span>}
           </div>

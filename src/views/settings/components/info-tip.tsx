@@ -1,4 +1,5 @@
 import { useId, useState, type KeyboardEvent } from "react";
+import { t } from "../../../lib/i18n";
 
 export function InfoTip({ text, warn }: { text: string; warn?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -25,7 +26,7 @@ export function InfoTip({ text, warn }: { text: string; warn?: boolean }) {
       className={classes.join(" ")}
       tabIndex={0}
       role="button"
-      aria-label={warn ? "Warning" : "More information"}
+      aria-label={warn ? t("infoTip.warning") : t("infoTip.more")}
       aria-expanded={open}
       aria-describedby={popupId}
       onKeyDown={onKeyDown}

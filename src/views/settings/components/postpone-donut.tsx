@@ -1,3 +1,4 @@
+import { t } from "../../../lib/i18n";
 import type { PostponeFollowThrough } from "../types";
 
 const RADIUS = 42;
@@ -16,25 +17,25 @@ function segmentsFrom(data: PostponeFollowThrough): Segment[] {
   return [
     {
       key: "taken",
-      label: "Eventually taken",
+      label: t("postponeDonut.taken"),
       value: data.taken,
       cssVar: "--primary-color",
     },
     {
       key: "dismissed",
-      label: "Dismissed instead",
+      label: t("postponeDonut.dismissed"),
       value: data.dismissed,
       cssVar: "--secondary-color",
     },
     {
       key: "skipped",
-      label: "Skipped instead",
+      label: t("postponeDonut.skipped"),
       value: data.skipped,
       cssVar: "--accent-color",
     },
     {
       key: "unresolved",
-      label: "Still pending",
+      label: t("postponeDonut.unresolved"),
       value: data.unresolved,
       cssVar: "--light-primary-color",
     },
@@ -57,7 +58,12 @@ export function PostponeDonut({ data }: { data: PostponeFollowThrough }) {
         className="donut"
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         role="img"
-        aria-label={`Postpone follow-through: ${data.taken} taken, ${data.dismissed} dismissed, ${data.skipped} skipped, ${data.unresolved} pending`}
+        aria-label={t("postponeDonut.ariaLabel", {
+          taken: data.taken,
+          dismissed: data.dismissed,
+          skipped: data.skipped,
+          unresolved: data.unresolved,
+        })}
       >
         <circle
           cx={SIZE / 2}
@@ -97,7 +103,9 @@ export function PostponeDonut({ data }: { data: PostponeFollowThrough }) {
           textAnchor="middle"
           className="donut-caption"
         >
-          {data.total === 1 ? "postpone" : "postpones"}
+          {t("postponeDonut.caption", {
+            suffix: data.total === 1 ? "" : "s",
+          })}
         </text>
       </svg>
       <ul className="donut-legend">

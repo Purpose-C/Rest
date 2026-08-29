@@ -1,3 +1,5 @@
+import { t } from "./i18n";
+
 export type WindowKind = "main" | "overlay" | "pause";
 
 export function readWindowKind(search: string): WindowKind {
@@ -10,11 +12,11 @@ export function readWindowKind(search: string): WindowKind {
 export function titleForWindow(kind: WindowKind): string {
   switch (kind) {
     case "overlay":
-      return "Entracte — Break";
+      return t("windowTitle.overlay");
     case "pause":
-      return "Entracte — Pause";
+      return t("windowTitle.pause");
     default:
-      return "Entracte — Settings";
+      return t("windowTitle.settings");
   }
 }
 

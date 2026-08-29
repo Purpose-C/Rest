@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { t } from "../../../lib/i18n";
 import {
   playCustomSound,
   playSound,
@@ -89,7 +90,7 @@ export function SoundControls({
         directory: false,
         filters: [
           {
-            name: "Audio",
+            name: t("soundControls.filterAudio"),
             extensions: ["mp3", "wav", "ogg", "m4a", "aac", "flac"],
           },
         ],
@@ -146,8 +147,8 @@ export function SoundControls({
     <>
       <label className="row">
         <span>
-          Sound
-          <InfoTip text="End chime plays once when the break finishes. Ambient loops throughout the break and stops when it ends." />
+          {t("soundControls.sound")}
+          <InfoTip text={t("soundControls.soundTip")} />
         </span>
         <select
           value={sound.mode}
@@ -162,7 +163,7 @@ export function SoundControls({
       </label>
       {sound.mode !== "off" && !isCustom && (
         <label className="row">
-          <span>Track</span>
+          <span>{t("soundControls.track")}</span>
           <select
             value={sound.sound_id}
             onChange={(e) => onSoundChange(e.target.value)}
@@ -173,25 +174,25 @@ export function SoundControls({
               </option>
             ))}
             {isSupporter && (
-              <option value={PICK_CUSTOM_VALUE}>Custom file…</option>
+              <option value={PICK_CUSTOM_VALUE}>{t("soundControls.customFile")}</option>
             )}
           </select>
         </label>
       )}
       {sound.mode !== "off" && isCustom && (
         <label className="row">
-          <span>Track</span>
+          <span>{t("soundControls.track")}</span>
           <span className="actions inline">
             <span className="placeholder" title={customPath}>
-              {customPath ? basename(customPath) : "No file selected"}
+              {customPath ? basename(customPath) : t("soundControls.noFileSelected")}
             </span>
             {isSupporter && (
               <button className="secondary" onClick={pickCustomFile}>
-                {customPath ? "Replace…" : "Choose file…"}
+                {customPath ? t("soundControls.replace") : t("soundControls.chooseFile")}
               </button>
             )}
             <button className="secondary" onClick={useBundled}>
-              Use bundled
+              {t("soundControls.useBundled")}
             </button>
           </span>
         </label>

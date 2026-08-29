@@ -1,19 +1,70 @@
+import { t } from "./i18n";
 import type { Hotkey, HotkeyAction } from "../views/settings/types";
 
 // The bindable actions, in display order. Mirrors the Rust `HotkeyAction`
 // variants in `src-tauri/src/scheduler/hotkeys.rs`; each maps to the same
 // behaviour as the equivalent CLI command.
-export const HOTKEY_ACTIONS: { action: HotkeyAction; label: string }[] = [
-  { action: "pause", label: "Pause breaks" },
-  { action: "pause_15m", label: "Pause for 15 minutes" },
-  { action: "pause_30m", label: "Pause for 30 minutes" },
-  { action: "pause_60m", label: "Pause for 60 minutes" },
-  { action: "resume", label: "Resume breaks" },
-  { action: "trigger_micro", label: "Take a micro break now" },
-  { action: "trigger_long", label: "Take a long break now" },
-  { action: "skip_micro", label: "Skip next micro break" },
-  { action: "skip_long", label: "Skip next long break" },
-  { action: "cycle_profile", label: "Switch to next profile" },
+export const HOTKEY_ACTIONS: { action: HotkeyAction; readonly label: string }[] = [
+  {
+    action: "pause",
+    get label() {
+      return t("hotkeyAction.pause");
+    },
+  },
+  {
+    action: "pause_15m",
+    get label() {
+      return t("hotkeyAction.pause_15m");
+    },
+  },
+  {
+    action: "pause_30m",
+    get label() {
+      return t("hotkeyAction.pause_30m");
+    },
+  },
+  {
+    action: "pause_60m",
+    get label() {
+      return t("hotkeyAction.pause_60m");
+    },
+  },
+  {
+    action: "resume",
+    get label() {
+      return t("hotkeyAction.resume");
+    },
+  },
+  {
+    action: "trigger_micro",
+    get label() {
+      return t("hotkeyAction.trigger_micro");
+    },
+  },
+  {
+    action: "trigger_long",
+    get label() {
+      return t("hotkeyAction.trigger_long");
+    },
+  },
+  {
+    action: "skip_micro",
+    get label() {
+      return t("hotkeyAction.skip_micro");
+    },
+  },
+  {
+    action: "skip_long",
+    get label() {
+      return t("hotkeyAction.skip_long");
+    },
+  },
+  {
+    action: "cycle_profile",
+    get label() {
+      return t("hotkeyAction.cycle_profile");
+    },
+  },
 ];
 
 const ACTION_ORDER = new Map(HOTKEY_ACTIONS.map((a, i) => [a.action, i]));

@@ -1,4 +1,5 @@
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { t } from "../lib/i18n";
 import {
   announceBreak,
   breakDescription,
@@ -29,10 +30,7 @@ import {
   breathProgress,
 } from "./break-overlay/breath";
 import { useRoutineCues } from "./break-overlay/hooks/use-routine-cues";
-import {
-  ENFORCEABLE_LONG_BREAK_HINT,
-  shouldShowEnforceableHint,
-} from "./break-overlay/skip-hint";
+import { shouldShowEnforceableHint } from "./break-overlay/skip-hint";
 import { breakSoundFor, labelFor } from "./break-overlay/types";
 import {
   RING_RADIUS,
@@ -196,7 +194,7 @@ export default function BreakOverlay() {
     invoke("postpone_break", { kind: active.kind });
   };
 
-  const timerLabel = finished ? "Time's up" : remainingAriaLabel(remaining);
+  const timerLabel = finished ? t("a11y.timesUp") : remainingAriaLabel(remaining);
   const announcement = announceBreak(active.kind, active.duration_secs);
 
   return (
@@ -292,10 +290,10 @@ export default function BreakOverlay() {
           </svg>
           <p className="overlay-timer" aria-label={timerLabel} aria-live="off">
             {finished
-              ? "Done"
+              ? t("overlay.done")
               : minutes > 0
                 ? `${minutes}:${seconds.toString().padStart(2, "0")}`
-                : `${seconds}s`}
+                : t("overlay.timerSeconds", { seconds })}
           </p>
         </div>
         {breathProg ? (
@@ -341,13 +339,22 @@ export default function BreakOverlay() {
               // sits in the tab order.
               // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
               tabIndex={0}
-              aria-label={`Step ${routine.index + 1} of ${routine.total}: ${routineText}`}
+              aria-label={t("overlay.stepProgressAria", {
+                curr: routine.index + 1,
+                total: routine.total,
+                text: routineText,
+              })}
             >
               {routineText}
             </p>
             <p className="overlay-routine-progress" aria-hidden="true">
-              Step {routine.index + 1} of {routine.total}
-              {routine.stepRemaining > 0 ? ` · ${routine.stepRemaining}s` : ""}
+              {t("overlay.stepProgress", {
+                curr: routine.index + 1,
+                total: routine.total,
+              })}
+              {routine.stepRemaining > 0
+                ? t("overlay.stepSeconds", { seconds: routine.stepRemaining })
+                : ""}
             </p>
           </div>
         ) : chorePrompt ? (
@@ -360,7 +367,9 @@ export default function BreakOverlay() {
             // sits in the tab order.
             // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
             tabIndex={0}
-            aria-label={`Chore for this break: ${active.chore_prompt}`}
+            aria-label={t("overlay.choreAria", {
+              chore: active.chore_prompt ?? "",
+            })}
           >
             {chorePrompt}
           </p>
@@ -375,7 +384,7 @@ export default function BreakOverlay() {
               // it sits in the tab order.
               // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
               tabIndex={0}
-              aria-label={`Wellness tip: ${hintText}`}
+              aria-label={t("overlay.wellnessTipAria", { hint: hintText })}
             >
               {hintText}
             </p>
@@ -383,7 +392,7 @@ export default function BreakOverlay() {
         )}
         {paused && !finished && (
           <p className="overlay-paused">
-            Paused — break resumes when you stop typing
+            {t("overlay.typingPaused")}
           </p>
         )}
         <div className="overlay-actions">
@@ -391,9 +400,9 @@ export default function BreakOverlay() {
             <button
               className="overlay-button primary"
               onClick={triggerFinish}
-              aria-label="End break"
+              aria-label={t("overlay.endBreakAria")}
             >
-              I'm back
+              {t("overlay.imBack")}
             </button>
           )}
           {showPostpone && (
@@ -401,7 +410,7 @@ export default function BreakOverlay() {
               className="overlay-button"
               onClick={onPostpone}
               disabled={postpone.exhausted}
-              aria-label="Postpone break"
+              aria-label={t("overlay.postponeBreakAria")}
             >
               {postpone.label}
             </button>
@@ -410,18 +419,18 @@ export default function BreakOverlay() {
             <button
               className="overlay-button ghost"
               onClick={onSkip}
-              aria-label="Skip break"
+              aria-label={t("overlay.skipBreakAria")}
               // Escape dismisses a skippable break (use-escape-to-dismiss),
               // so surface that to assistive tech on the equivalent control.
               aria-keyshortcuts="Escape"
             >
-              Skip
+              {t("overlay.skip")}
             </button>
           )}
         </div>
         {showPostpone && postpone.exhausted && (
           <p className="overlay-dismiss">
-            Postpone exhausted — take this break
+            {t("overlay.postponeExhausted")}
           </p>
         )}
         {showEnforceableHint && (
@@ -430,7 +439,7 @@ export default function BreakOverlay() {
             role="note"
             data-testid="overlay-enforceable-hint"
           >
-            {ENFORCEABLE_LONG_BREAK_HINT}
+            {t("overlay.enforceableLongBreakHint")}
           </p>
         )}
       </div>

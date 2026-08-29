@@ -1,3 +1,5 @@
+import { t } from "./i18n";
+
 /** Break kinds the screen-reader announcement supports. */
 export type AnnouncedKind = "micro" | "long" | "sleep";
 
@@ -9,9 +11,9 @@ export type AnnouncedKind = "micro" | "long" | "sleep";
  * to feel like room to breathe, not a nag.
  */
 export function dialogLabel(kind: AnnouncedKind): string {
-  if (kind === "sleep") return "Entracte, bedtime";
-  if (kind === "long") return "Entracte, long break";
-  return "Entracte, micro break";
+  if (kind === "sleep") return t("a11y.dialogLabel.sleep");
+  if (kind === "long") return t("a11y.dialogLabel.long");
+  return t("a11y.dialogLabel.micro");
 }
 
 /** Human-readable duration, e.g. "10 minutes", "30 seconds",
@@ -22,10 +24,23 @@ export function durationPhrase(durationSecs: number): string {
   const minutes = Math.floor(total / 60);
   const seconds = total % 60;
   if (minutes > 0 && seconds > 0) {
-    return `${minutes} minute${minutes === 1 ? "" : "s"} ${seconds} second${seconds === 1 ? "" : "s"}`;
+    return t("a11y.durationMinutesSeconds", {
+      minutes,
+      mSuffix: minutes === 1 ? "" : "s",
+      seconds,
+      sSuffix: seconds === 1 ? "" : "s",
+    });
   }
-  if (minutes > 0) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
-  return `${seconds} second${seconds === 1 ? "" : "s"}`;
+  if (minutes > 0) {
+    return t("a11y.durationMinutes", {
+      minutes,
+      mSuffix: minutes === 1 ? "" : "s",
+    });
+  }
+  return t("a11y.durationSeconds", {
+    seconds,
+    sSuffix: seconds === 1 ? "" : "s",
+  });
 }
 
 /**
@@ -39,7 +54,10 @@ export function announceBreak(
   kind: AnnouncedKind,
   durationSecs: number,
 ): string {
-  return `${dialogLabel(kind)}. You have ${durationPhrase(durationSecs)}.`;
+  return t("a11y.announceBreak", {
+    label: dialogLabel(kind),
+    duration: durationPhrase(durationSecs),
+  });
 }
 
 /**
@@ -49,7 +67,9 @@ export function announceBreak(
  * repeated announcement.
  */
 export function breakDescription(durationSecs: number, hint: string): string {
-  const lead = `You have ${durationPhrase(durationSecs)}.`;
+  const lead = t("a11y.youHave", {
+    duration: durationPhrase(durationSecs),
+  });
   return hint ? `${lead} ${hint}` : lead;
 }
 
@@ -59,14 +79,27 @@ export function breakDescription(durationSecs: number, hint: string): string {
  * the ticking digits, which would be too chatty.
  */
 export function remainingAriaLabel(seconds: number): string {
-  if (seconds <= 0) return "Time's up";
+  if (seconds <= 0) return t("a11y.timesUp");
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   if (m > 0 && s > 0) {
-    return `${m} minute${m === 1 ? "" : "s"} ${s} second${s === 1 ? "" : "s"} remaining`;
+    return t("a11y.remainingMinutesSeconds", {
+      minutes: m,
+      mSuffix: m === 1 ? "" : "s",
+      seconds: s,
+      sSuffix: s === 1 ? "" : "s",
+    });
   }
-  if (m > 0) return `${m} minute${m === 1 ? "" : "s"} remaining`;
-  return `${s} second${s === 1 ? "" : "s"} remaining`;
+  if (m > 0) {
+    return t("a11y.remainingMinutes", {
+      minutes: m,
+      mSuffix: m === 1 ? "" : "s",
+    });
+  }
+  return t("a11y.remainingSeconds", {
+    seconds: s,
+    sSuffix: s === 1 ? "" : "s",
+  });
 }
 
 /**
@@ -113,9 +146,17 @@ export function milestoneMessage(
   milestone: BreakMilestone,
 ): string {
   if (milestone === null) return "";
-  const noun = kind === "sleep" ? "bedtime" : "break";
-  if (milestone === "halfway") return `Halfway through your ${noun}.`;
-  if (milestone === "one-minute") return "About a minute left.";
-  if (milestone === "ten-seconds") return "Almost done.";
-  return kind === "sleep" ? "Bedtime complete." : "Break complete.";
+  const noun = kind === "sleep" ? t("a11y.nounBedtime") : t("a11y.nounBreak");
+  if (milestone === "halfway") {
+    return t("a11y.milestoneHalfway", { noun });
+  }
+  if (milestone === "one-minute") {
+    return t("a11y.milestoneOneMinute");
+  }
+  if (milestone === "ten-seconds") {
+    return t("a11y.milestoneTenSeconds");
+  }
+  return kind === "sleep"
+    ? t("a11y.milestoneBedtimeComplete")
+    : t("a11y.milestoneBreakComplete");
 }

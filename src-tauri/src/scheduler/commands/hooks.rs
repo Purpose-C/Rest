@@ -27,8 +27,8 @@ pub async fn test_hook(command: String) -> Result<HookTestOutcome, String> {
     .map_err(|e| format!("test-run task failed: {e}"))
 }
 
-const HOOK_DIALOG_ALLOW: &str = "Allow";
-const HOOK_DIALOG_CANCEL: &str = "Cancel";
+const HOOK_DIALOG_ALLOW: &str = "允许";
+const HOOK_DIALOG_CANCEL: &str = "取消";
 const HOOK_DIALOG_PER_HOOK_CHARS: usize = 120;
 const HOOK_DIALOG_MAX_HOOKS_SHOWN: usize = 5;
 const HOOK_DIALOG_MAX_BODY_CHARS: usize = 1200;
@@ -105,7 +105,7 @@ async fn confirm_hooks_change<R: Runtime>(
         let result = app
             .dialog()
             .message(summary)
-            .title("Entracte: confirm hook change")
+            .title("Entracte：确认钩子更改")
             .kind(MessageDialogKind::Warning)
             .buttons(MessageDialogButtons::OkCancelCustom(
                 HOOK_DIALOG_CANCEL.to_string(),
@@ -122,22 +122,22 @@ async fn confirm_hooks_change<R: Runtime>(
 
 fn format_hooks_summary(enabled: bool, hooks: &[Hook]) -> String {
     let mut s = String::new();
-    s.push_str("⚠ Only click Allow if you initiated this change in Entracte's Settings.\n");
-    s.push_str("Allowing will let Entracte run the shell commands below on break events.\n\n");
+    s.push_str("⚠ 请仅在您本人于 Entracte 的设置中发起此次更改时点击“允许”。\n");
+    s.push_str("允许后，Entracte 将在休息事件上运行下列 shell 命令。\n\n");
     s.push_str(&format!(
-        "Hooks will be {} after this change.\n",
-        if enabled { "ENABLED" } else { "disabled" }
+        "此次更改后，钩子将被{}。\n",
+        if enabled { "启用" } else { "停用" }
     ));
     if hooks.is_empty() {
-        s.push_str("\nNo hooks configured.");
+        s.push_str("\n未配置钩子。");
         return s;
     }
-    s.push_str(&format!("\nCommands ({}):\n", hooks.len()));
+    s.push_str(&format!("\n命令（{}）：\n", hooks.len()));
     for h in hooks.iter().take(HOOK_DIALOG_MAX_HOOKS_SHOWN) {
         if s.len() >= HOOK_DIALOG_MAX_BODY_CHARS {
             break;
         }
-        let state = if h.enabled { "on" } else { "off" };
+        let state = if h.enabled { "开" } else { "关" };
         s.push_str(&format!(
             "• [{}] ({}) {}\n",
             h.event.as_str(),
@@ -147,7 +147,7 @@ fn format_hooks_summary(enabled: bool, hooks: &[Hook]) -> String {
     }
     if hooks.len() > HOOK_DIALOG_MAX_HOOKS_SHOWN {
         s.push_str(&format!(
-            "... and {} more (review in Settings before allowing).\n",
+            "… 以及另外 {} 条（允许前请在设置中复查）。\n",
             hooks.len() - HOOK_DIALOG_MAX_HOOKS_SHOWN
         ));
     }
@@ -198,12 +198,12 @@ mod tests {
             },
         ];
         let s = format_hooks_summary(true, &hooks);
-        assert!(s.contains("ENABLED"));
+        assert!(s.contains("将被启用"));
         assert!(s.contains("break_start"));
         assert!(s.contains("echo hi"));
         assert!(s.contains("pause_end"));
         assert!(s.contains("curl evil"));
-        assert!(s.contains("(off)"));
+        assert!(s.contains("(关)"));
     }
 
     #[test]
@@ -214,7 +214,7 @@ mod tests {
             enabled: true,
         }];
         let s = format_hooks_summary(true, &hooks);
-        let warn_pos = s.find("Only click Allow").expect("warning present");
+        let warn_pos = s.find("请仅在您本人").expect("warning present");
         let first_hook_pos = s.find("break_start").expect("hook present");
         assert!(
             warn_pos < first_hook_pos,
@@ -225,8 +225,8 @@ mod tests {
     #[test]
     fn format_hooks_summary_handles_empty_list() {
         let s = format_hooks_summary(false, &[]);
-        assert!(s.contains("disabled"));
-        assert!(s.contains("No hooks configured"));
+        assert!(s.contains("将被停用"));
+        assert!(s.contains("未配置钩子"));
     }
 
     #[test]
@@ -242,7 +242,10 @@ mod tests {
         assert!(s.contains("cmd-0"));
         assert!(s.contains(&format!("cmd-{}", HOOK_DIALOG_MAX_HOOKS_SHOWN - 1)));
         assert!(!s.contains(&format!("cmd-{HOOK_DIALOG_MAX_HOOKS_SHOWN}")));
-        assert!(s.contains(&format!("and {} more", 15 - HOOK_DIALOG_MAX_HOOKS_SHOWN)));
+        assert!(s.contains(&format!(
+            "以及另外 {} 条",
+            15 - HOOK_DIALOG_MAX_HOOKS_SHOWN
+        )));
     }
 
     #[test]
@@ -307,8 +310,8 @@ mod tests {
 
     #[test]
     fn dialog_constants_use_safe_default_button() {
-        assert_eq!(HOOK_DIALOG_CANCEL, "Cancel");
-        assert_eq!(HOOK_DIALOG_ALLOW, "Allow");
+        assert_eq!(HOOK_DIALOG_CANCEL, "取消");
+        assert_eq!(HOOK_DIALOG_ALLOW, "允许");
     }
 
     #[test]

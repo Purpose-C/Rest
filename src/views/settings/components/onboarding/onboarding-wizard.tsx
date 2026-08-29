@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { t } from "../../../../lib/i18n";
 import type { UseSettings } from "../../hooks/use-settings";
 import type { SchedulerSettings } from "../../types";
 import { CheckboxRow, TimeRow } from "../rows";
@@ -9,12 +10,42 @@ import "./onboarding.css";
 type StepId = "welcome" | "login" | "window" | "hints" | "winddown" | "done";
 
 const STEPS: { id: StepId; title: string }[] = [
-  { id: "welcome", title: "Welcome" },
-  { id: "login", title: "Start at login" },
-  { id: "window", title: "Working hours" },
-  { id: "hints", title: "Wellness hints" },
-  { id: "winddown", title: "Wind down" },
-  { id: "done", title: "All set" },
+  {
+    id: "welcome",
+    get title() {
+      return t("onboarding.stepWelcome");
+    },
+  },
+  {
+    id: "login",
+    get title() {
+      return t("onboarding.stepLogin");
+    },
+  },
+  {
+    id: "window",
+    get title() {
+      return t("onboarding.stepWindow");
+    },
+  },
+  {
+    id: "hints",
+    get title() {
+      return t("onboarding.stepHints");
+    },
+  },
+  {
+    id: "winddown",
+    get title() {
+      return t("onboarding.stepWinddown");
+    },
+  },
+  {
+    id: "done",
+    get title() {
+      return t("onboarding.stepDone");
+    },
+  },
 ];
 
 export type OnboardingWizardProps = {
@@ -71,7 +102,10 @@ export function OnboardingWizard({
       >
         <header className="onboarding-head">
           <p className="onboarding-step-count">
-            Step {index + 1} of {STEPS.length}
+            {t("onboarding.stepCount", {
+              curr: index + 1,
+              total: STEPS.length,
+            })}
           </p>
           <ol className="onboarding-dots" aria-hidden="true">
             {STEPS.map((s, i) => (
@@ -96,16 +130,16 @@ export function OnboardingWizard({
 
         <footer className="onboarding-foot">
           <button type="button" className="link" onClick={onFinish}>
-            {isLast ? "Close" : "Skip setup"}
+            {isLast ? t("onboarding.close") : t("onboarding.skipSetup")}
           </button>
           <div className="onboarding-nav">
             {!isFirst && (
               <button type="button" className="secondary" onClick={back}>
-                Back
+                {t("onboarding.back")}
               </button>
             )}
             <button type="button" onClick={next}>
-              {isLast ? "Finish" : "Next"}
+              {isLast ? t("onboarding.finish") : t("onboarding.next")}
             </button>
           </div>
         </footer>
@@ -129,26 +163,17 @@ function StepContent({
     case "welcome":
       return (
         <>
-          <h2 id="onboarding-title">Welcome to Entracte</h2>
-          <p>
-            Entracte nudges you to step away from the screen with short micro
-            breaks and longer rest breaks. Let’s tune a few things so the
-            reminders fit how you work — it takes under a minute, and you can
-            change everything later in Settings.
-          </p>
+          <h2 id="onboarding-title">{t("onboarding.welcomeTitle")}</h2>
+          <p>{t("onboarding.welcomeBody")}</p>
         </>
       );
     case "login":
       return (
         <>
-          <h2 id="onboarding-title">Start Entracte at login</h2>
-          <p>
-            Break reminders only work while Entracte is running. Starting it
-            automatically means you don’t have to remember to launch it each
-            day.
-          </p>
+          <h2 id="onboarding-title">{t("onboarding.loginTitle")}</h2>
+          <p>{t("onboarding.loginBody")}</p>
           <CheckboxRow
-            label="Start Entracte when I log in"
+            label={t("onboarding.loginCheckbox")}
             value={settings.autostart_enabled}
             onChange={(v) => setAutostart(v)}
           />
@@ -157,36 +182,32 @@ function StepContent({
     case "window":
       return (
         <>
-          <h2 id="onboarding-title">When should breaks fire?</h2>
-          <p>
-            Limit reminders to your working hours so Entracte stays quiet
-            evenings and weekends. Leave this off to be reminded around the
-            clock.
-          </p>
+          <h2 id="onboarding-title">{t("onboarding.windowTitle")}</h2>
+          <p>{t("onboarding.windowBody")}</p>
           <CheckboxRow
-            label="Only remind me during working hours"
+            label={t("onboarding.windowCheckbox")}
             value={settings.work_window_enabled}
             onChange={(v) => update("work_window_enabled", v)}
           />
           {settings.work_window_enabled && (
             <>
               <TimeRow
-                label="Start of day"
+                label={t("onboarding.startOfDay")}
                 value={settings.work_start_minutes}
                 format={settings.clock_format}
                 onChange={(v) => update("work_start_minutes", v)}
               />
               <TimeRow
-                label="End of day"
+                label={t("onboarding.endOfDay")}
                 value={settings.work_end_minutes}
                 format={settings.clock_format}
                 onChange={(v) => update("work_end_minutes", v)}
               />
               <WeekdayToggle
-                label="On these days"
+                label={t("onboarding.onTheseDays")}
                 mask={settings.work_days_mask}
                 onChange={(v) => update("work_days_mask", v)}
-                tip="Turn off days you don't work — like the weekend — and Entracte stays quiet then. You can fine-tune this later under Schedule."
+                tip={t("onboarding.onTheseDaysTip")}
               />
             </>
           )}
@@ -195,21 +216,18 @@ function StepContent({
     case "hints":
       return (
         <>
-          <h2 id="onboarding-title">Wellness hints</h2>
-          <p>
-            Each break can show a suggestion — a stretch, a breath, a moment
-            away from the desk. Long-break ideas come in two flavours.
-          </p>
+          <h2 id="onboarding-title">{t("onboarding.hintsTitle")}</h2>
+          <p>{t("onboarding.hintsBody")}</p>
           <CheckboxRow
-            label="Show a wellness hint during breaks"
+            label={t("onboarding.hintsCheckbox")}
             value={settings.show_hint}
             onChange={(v) => update("show_hint", v)}
           />
           {settings.show_hint && (
             <label className="row">
               <span>
-                Long-break suggestions
-                <InfoTip text="Solo: things to do on your own (stretch, fresh air, snack). Social: things to do with someone (call, walk together). Working alone? Pick Solo only to drop the social prompts." />
+                {t("onboarding.longSuggestions")}
+                <InfoTip text={t("onboarding.longSuggestionsTip")} />
               </span>
               <select
                 value={settings.long_hint_mix}
@@ -220,9 +238,9 @@ function StepContent({
                   )
                 }
               >
-                <option value="both">Mix of solo and social</option>
-                <option value="solo">Solo only — I work alone</option>
-                <option value="social">Social only</option>
+                <option value="both">{t("onboarding.longOptionBoth")}</option>
+                <option value="solo">{t("onboarding.longOptionSolo")}</option>
+                <option value="social">{t("onboarding.longOptionSocial")}</option>
               </select>
             </label>
           )}
@@ -231,27 +249,23 @@ function StepContent({
     case "winddown":
       return (
         <>
-          <h2 id="onboarding-title">Wind down &amp; focus</h2>
-          <p>
-            Bedtime prompts gently remind you to log off as the evening winds
-            down. Strict mode removes the skip and postpone buttons so breaks
-            always happen — handy if you tend to dismiss them.
-          </p>
+          <h2 id="onboarding-title">{t("onboarding.winddownTitle")}</h2>
+          <p>{t("onboarding.winddownBody")}</p>
           <CheckboxRow
-            label="Remind me to wind down before bed"
+            label={t("onboarding.winddownCheckbox")}
             value={settings.bedtime_enabled}
             onChange={(v) => update("bedtime_enabled", v)}
           />
           {settings.bedtime_enabled && (
             <>
               <TimeRow
-                label="Wind-down starts"
+                label={t("onboarding.winddownStarts")}
                 value={settings.bedtime_start_minutes}
                 format={settings.clock_format}
                 onChange={(v) => update("bedtime_start_minutes", v)}
               />
               <TimeRow
-                label="Wind-down ends"
+                label={t("onboarding.winddownEnds")}
                 value={settings.bedtime_end_minutes}
                 format={settings.clock_format}
                 onChange={(v) => update("bedtime_end_minutes", v)}
@@ -259,22 +273,18 @@ function StepContent({
             </>
           )}
           <CheckboxRow
-            label="Strict mode (breaks can’t be skipped or postponed)"
+            label={t("onboarding.strictCheckbox")}
             value={settings.strict_mode}
             onChange={(v) => update("strict_mode", v)}
-            tip="Disables every escape hatch on the overlay. You can turn this off any time on the Breaks tab."
+            tip={t("onboarding.strictTip")}
           />
         </>
       );
     case "done":
       return (
         <>
-          <h2 id="onboarding-title">You’re all set</h2>
-          <p>
-            That’s the essentials. Everything you picked — plus break intervals,
-            sounds, overlay appearance, profiles and more — lives in Settings,
-            ready whenever you want to fine-tune it.
-          </p>
+          <h2 id="onboarding-title">{t("onboarding.doneTitle")}</h2>
+          <p>{t("onboarding.doneBody")}</p>
         </>
       );
   }

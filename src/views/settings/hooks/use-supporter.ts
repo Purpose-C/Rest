@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
+import { t } from "../../../lib/i18n";
 import { invoke } from "../../../lib/ipc";
 import type { SupporterStatus } from "../types";
 
@@ -68,13 +69,14 @@ export function useSupporter(): UseSupporter {
         setStatus(next);
         setMessage(
           next.is_supporter
-            ? "Welcome — the customisation pack is unlocked."
-            : "Validation finished but the license isn't active. Try again.",
+            ? t("about.verifyWelcome")
+            : t("about.verifyInactive"),
         );
       }
       return next.is_supporter;
     } catch (e) {
-      if (!cancelledRef.current) setMessage(`Could not verify: ${e}`);
+      if (!cancelledRef.current)
+        setMessage(t("about.verifyFailed", { error: String(e) }));
       return false;
     } finally {
       if (!cancelledRef.current) setPending(false);
@@ -92,10 +94,11 @@ export function useSupporter(): UseSupporter {
       );
       if (!cancelledRef.current) {
         setStatus(next);
-        setMessage("License removed.");
+        setMessage(t("about.licenseRemoved"));
       }
     } catch (e) {
-      if (!cancelledRef.current) setMessage(`Could not remove license: ${e}`);
+      if (!cancelledRef.current)
+        setMessage(t("about.removeFailed", { error: String(e) }));
     } finally {
       if (!cancelledRef.current) setPending(false);
     }

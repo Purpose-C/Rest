@@ -1,3 +1,5 @@
+import { t } from "./i18n";
+
 /** One day's break tallies as the Rust backend serialises them. */
 export type DayBucket = {
   date: string;
@@ -7,12 +9,12 @@ export type DayBucket = {
 
 /** "Time paused" label for Insights — `"0m"`, `"42m"`, `"3h"`, `"3h 25m"`. */
 export function formatHoursMinutes(secs: number): string {
-  if (secs <= 0) return "0m";
+  if (secs <= 0) return t("stats.minutes", { minutes: 0 });
   const h = Math.floor(secs / 3600);
   const m = Math.round((secs - h * 3600) / 60);
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
+  if (h === 0) return t("stats.minutes", { minutes: m });
+  if (m === 0) return t("stats.hours", { hours: h });
+  return t("stats.hoursMinutes", { hours: h, minutes: m });
 }
 
 /** Dismissal-rate string for the Insights summary card. Returns
@@ -25,7 +27,17 @@ export function dismissalRate(taken: number, dismissed: number): string {
 
 /** Short Monday-anchored weekday label. `0 -> Mon`, `6 -> Sun`. */
 export function weekdayLabel(weekday: number): string {
-  return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][weekday] ?? "";
+  const keys = [
+    "stats.weekday.mon",
+    "stats.weekday.tue",
+    "stats.weekday.wed",
+    "stats.weekday.thu",
+    "stats.weekday.fri",
+    "stats.weekday.sat",
+    "stats.weekday.sun",
+  ];
+  const key = keys[weekday];
+  return key ? t(key) : "";
 }
 
 export type SuppressionRowInput = {
@@ -142,19 +154,19 @@ export function buildHeatmapWeeks(days: DayBucket[]): (DayBucket | null)[][] {
   return weeks;
 }
 
-const MONTH_ABBR = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+const MONTH_KEYS = [
+  "stats.month.jan",
+  "stats.month.feb",
+  "stats.month.mar",
+  "stats.month.apr",
+  "stats.month.may",
+  "stats.month.jun",
+  "stats.month.jul",
+  "stats.month.aug",
+  "stats.month.sep",
+  "stats.month.oct",
+  "stats.month.nov",
+  "stats.month.dec",
 ];
 
 /** Month abbreviations (Jan/Feb/...) anchored to the column where
@@ -170,7 +182,7 @@ export function heatmapMonthLabels(
     if (!firstDay) return;
     const m = new Date(firstDay.date + "T00:00:00").getMonth();
     if (m !== prevMonth) {
-      labels.push({ col: wi, label: MONTH_ABBR[m] });
+      labels.push({ col: wi, label: t(MONTH_KEYS[m]) });
       prevMonth = m;
     }
   });

@@ -122,6 +122,8 @@ export const DEFAULT_OVERLAY_SETTINGS: OverlaySettings = {
 
 export const TYPING_PAUSE_THRESHOLD_SECS = 2;
 
+import { t } from "../../lib/i18n";
+
 export function breakSoundFor(
   kind: BreakKind,
   appearance: OverlaySettings,
@@ -132,7 +134,7 @@ export function breakSoundFor(
 }
 
 export function labelFor(kind: BreakKind): string {
-  if (kind === "sleep") return "Bedtime";
-  if (kind === "long") return "Long break";
-  return "Micro break";
+  if (kind === "sleep") return t("overlay.kind.sleep");
+  if (kind === "long") return t("overlay.kind.long");
+  return t("overlay.kind.micro");
 }

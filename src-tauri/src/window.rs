@@ -179,7 +179,7 @@ pub fn show_pause_window<R: Runtime>(app: &tauri::AppHandle<R>) {
         "pause",
         tauri::WebviewUrl::App("index.html?window=pause".into()),
     )
-    .title("Pause Entracte")
+    .title("暂停 Entracte")
     .inner_size(360.0, 220.0)
     .resizable(false)
     .maximizable(false)

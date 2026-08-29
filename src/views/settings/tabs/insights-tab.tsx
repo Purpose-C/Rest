@@ -5,6 +5,7 @@ import {
   open as openDialog,
   save as saveDialog,
 } from "@tauri-apps/plugin-dialog";
+import { t } from "../../../lib/i18n";
 import {
   deltaDirection,
   deltaPct,
@@ -33,7 +34,10 @@ function DeltaChip({
   const dir = deltaDirection(curr, prev);
   const tone = dir === "flat" ? "flat" : dir === goodDirection ? "up" : "down";
   return (
-    <span className={`delta-chip ${tone}`} title={`Previous: ${prev}`}>
+    <span
+      className={`delta-chip ${tone}`}
+      title={t("insights.deltaChipPrev", { prev })}
+    >
       {deltaPct(curr, prev)}
     </span>
   );
@@ -70,15 +74,12 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
   };
 
   const onClearLog = async () => {
-    const confirmed = await askDialog(
-      "Clear all break history? This cannot be undone.",
-      {
-        title: "Clear history",
-        kind: "warning",
-        okLabel: "Clear",
-        cancelLabel: "Cancel",
-      },
-    );
+    const confirmed = await askDialog(t("insights.clearPrompt"), {
+      title: t("insights.clearTitle"),
+      kind: "warning",
+      okLabel: t("insights.clearOk"),
+      cancelLabel: t("insights.cancel"),
+    });
     if (!confirmed) return;
     try {
       await invoke("clear_event_log");
@@ -93,14 +94,20 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
     try {
       const path = await saveDialog({
         defaultPath: `entracte-backup-${localDateString()}.json`,
-        filters: [{ name: "Entracte backup", extensions: ["json"] }],
+        filters: [{ name: t("insights.backupFilter"), extensions: ["json"] }],
       });
       if (typeof path !== "string" || !path) return;
       await invoke("export_backup_to_path", { path });
-      setBackupStatus({ kind: "ok", message: `Backup written to ${path}` });
+      setBackupStatus({
+        kind: "ok",
+        message: t("insights.backupWritten", { path }),
+      });
     } catch (e) {
       console.error("backup export failed", e);
-      setBackupStatus({ kind: "err", message: `Backup export failed: ${e}` });
+      setBackupStatus({
+        kind: "err",
+        message: t("insights.backupExportFailed", { error: String(e) }),
+      });
     }
   };
 
@@ -110,84 +117,81 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
       const path = await openDialog({
         multiple: false,
         directory: false,
-        filters: [{ name: "Entracte backup", extensions: ["json"] }],
+        filters: [{ name: t("insights.backupFilter"), extensions: ["json"] }],
       });
       if (typeof path !== "string" || !path) return;
-      const confirmed = await askDialog(
-        "Importing replaces your profiles, settings, break history, pause state, and supporter record on this machine.\n\nContinue?",
-        {
-          title: "Import backup",
-          kind: "warning",
-          okLabel: "Replace",
-          cancelLabel: "Cancel",
-        },
-      );
+      const confirmed = await askDialog(t("insights.importPrompt"), {
+        title: t("insights.importTitle"),
+        kind: "warning",
+        okLabel: t("insights.importOk"),
+        cancelLabel: t("insights.cancel"),
+      });
       if (!confirmed) return;
       await invoke("import_backup_from_path", { path });
       await refreshDigest(range);
-      setBackupStatus({ kind: "ok", message: "Backup imported" });
+      setBackupStatus({ kind: "ok", message: t("insights.backupImported") });
     } catch (e) {
       console.error("backup import failed", e);
-      setBackupStatus({ kind: "err", message: `Backup import failed: ${e}` });
+      setBackupStatus({
+        kind: "err",
+        message: t("insights.backupImportFailed", { error: String(e) }),
+      });
     }
   };
 
   return (
     <>
-      <h2 id="settings-insights">This session</h2>
+      <h2 id="settings-insights">{t("insights.thisSession")}</h2>
       <section>
-        <p className="placeholder">
-          Live counters since this run started. They reset every time Entracte
-          restarts.
-        </p>
+        <p className="placeholder">{t("insights.thisSessionDesc")}</p>
         <div className="stats-grid">
           <div className="stat">
             <span className="stat-value">{session.taken}</span>
-            <span className="stat-label">Taken</span>
+            <span className="stat-label">{t("insights.taken")}</span>
           </div>
           <div className="stat">
             <span className="stat-value">{session.skipped}</span>
-            <span className="stat-label">Skipped</span>
+            <span className="stat-label">{t("insights.skipped")}</span>
           </div>
           <div className="stat">
             <span className="stat-value">{session.postponed}</span>
-            <span className="stat-label">Postponed</span>
+            <span className="stat-label">{t("insights.postponed")}</span>
           </div>
           <div className="stat">
             <span className="stat-value">{intensity}%</span>
-            <span className="stat-label">Skip rate</span>
+            <span className="stat-label">{t("insights.skipRate")}</span>
           </div>
         </div>
         <div className="actions inline">
           <button className="secondary" onClick={reset}>
-            Reset session counters
+            {t("insights.resetCounters")}
           </button>
         </div>
       </section>
 
-      <h2>Range</h2>
+      <h2>{t("insights.range")}</h2>
       <section>
         <div className="range-toggle">
           <button
             className={range === "week" ? "active" : "secondary"}
             onClick={() => setRange("week")}
           >
-            Past week
+            {t("insights.pastWeek")}
           </button>
           <button
             className={range === "month" ? "active" : "secondary"}
             onClick={() => setRange("month")}
           >
-            Past month
+            {t("insights.pastMonth")}
           </button>
         </div>
       </section>
 
       {!digest || digestLoading ? (
-        <p className="placeholder">Loading stats…</p>
+        <p className="placeholder">{t("insights.loadingStats")}</p>
       ) : (
         <>
-          <h2>Summary</h2>
+          <h2>{t("insights.summary")}</h2>
           <section>
             <div className="stat-grid">
               <div className="stat-card">
@@ -198,9 +202,14 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
                     prev={digest.previous.breaks_taken}
                   />
                 </span>
-                <span className="stat-card-label">Breaks taken</span>
+                <span className="stat-card-label">
+                  {t("insights.breaksTaken")}
+                </span>
                 <span className="stat-card-sub">
-                  {digest.micro_taken} micro, {digest.long_taken} long
+                  {t("insights.breaksTakenSub", {
+                    micro: digest.micro_taken,
+                    long: digest.long_taken,
+                  })}
                 </span>
               </div>
               <div className="stat-card">
@@ -215,44 +224,55 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
                     goodDirection="down"
                   />
                 </span>
-                <span className="stat-card-label">Dismissal rate</span>
+                <span className="stat-card-label">
+                  {t("insights.dismissalRate")}
+                </span>
                 <span className="stat-card-sub">
-                  {digest.micro_dismissed + digest.long_dismissed} dismissed,{" "}
-                  {digest.postponed_total} postponed
+                  {t("insights.dismissalRateSub", {
+                    dismissed: digest.micro_dismissed + digest.long_dismissed,
+                    postponed: digest.postponed_total,
+                  })}
                 </span>
               </div>
               <div className="stat-card">
                 <span className="stat-card-value">
                   {formatHoursMinutes(digest.pause_total_secs)}
                 </span>
-                <span className="stat-card-label">Time paused</span>
+                <span className="stat-card-label">
+                  {t("insights.timePaused")}
+                </span>
                 <span className="stat-card-sub">
-                  {digest.pause_count} pause
-                  {digest.pause_count === 1 ? "" : "s"}
+                  {t("insights.pauseCountSub", {
+                    count: digest.pause_count,
+                    suffix: digest.pause_count === 1 ? "" : "s",
+                  })}
                 </span>
               </div>
               <div className="stat-card">
                 <span className="stat-card-value">
                   {digest.suppressions[0]?.count ?? 0}
                 </span>
-                <span className="stat-card-label">Top suppression</span>
+                <span className="stat-card-label">
+                  {t("insights.topSuppression")}
+                </span>
                 <span className="stat-card-sub">
-                  {digest.suppressions[0]?.label ?? "None"}
+                  {digest.suppressions[0]?.label ?? t("insights.none")}
                 </span>
               </div>
             </div>
             <p className="stat-card-sub">
-              Delta chips compare with the previous{" "}
-              {range === "month" ? "30 days" : "7 days"}.
+              {t("insights.deltaExplanation", {
+                days: range === "month" ? 30 : 7,
+              })}
             </p>
           </section>
 
           {digest.postpone_follow_through.total > 0 && (
             <>
-              <h2>Postpone follow-through</h2>
+              <h2>{t("insights.postponeFollowThrough")}</h2>
               <section>
                 <p className="stat-card-sub">
-                  How postponed breaks eventually resolved.
+                  {t("insights.postponeFollowThroughDesc")}
                 </p>
                 <PostponeDonut data={digest.postpone_follow_through} />
               </section>
@@ -261,50 +281,44 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
 
           {digest.suppressions_by_kind.length > 0 && (
             <>
-              <h2>Breaks suppressed by</h2>
+              <h2>{t("insights.breaksSuppressedBy")}</h2>
               <section>
                 <SuppressionBars rows={digest.suppressions_by_kind} />
               </section>
             </>
           )}
 
-          <h2>By weekday</h2>
+          <h2>{t("insights.byWeekday")}</h2>
           <section>
             <WeekdayHistogram days={digest.by_weekday} />
-            <p className="stat-card-sub">
-              Solid: taken. Faded: dismissed. Hover a bar for counts.
-            </p>
+            <p className="stat-card-sub">{t("insights.byWeekdayDesc")}</p>
           </section>
 
-          <h2>Time of day</h2>
+          <h2>{t("insights.timeOfDay")}</h2>
           <section>
             <HourHistogram values={digest.by_hour} />
           </section>
 
-          <h2>Past 12 weeks</h2>
+          <h2>{t("insights.past12Weeks")}</h2>
           <section>
             <Heatmap days={digest.by_day} />
           </section>
 
-          <h2 id="settings-manage-data">Manage data</h2>
+          <h2 id="settings-manage-data">{t("insights.manageData")}</h2>
           <section>
             <div className="actions inline">
-              <button onClick={onExportCsv}>Export CSV</button>
+              <button onClick={onExportCsv}>{t("insights.exportCsv")}</button>
               <button className="secondary" onClick={onExportBackup}>
-                Export full backup
+                {t("insights.exportBackup")}
               </button>
               <button className="secondary" onClick={onImportBackup}>
-                Import full backup
+                {t("insights.importBackup")}
               </button>
               <button className="secondary" onClick={onClearLog}>
-                Clear history
+                {t("insights.clearHistory")}
               </button>
             </div>
-            <p className="stat-card-sub">
-              Full-backup files contain your manual supporter token (if you have
-              one). Treat them like a password — keep them on a device you
-              control, don&apos;t post them in public bug reports.
-            </p>
+            <p className="stat-card-sub">{t("insights.backupSecurityNotice")}</p>
             {backupStatus && (
               <p
                 className={

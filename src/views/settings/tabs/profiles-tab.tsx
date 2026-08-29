@@ -1,14 +1,13 @@
+import { t } from "../../../lib/i18n";
 import type { UseProfiles } from "../hooks/use-profiles";
 
 export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
   return (
     <>
-      <h2 id="settings-profiles">Profiles</h2>
+      <h2 id="settings-profiles">{t("profiles.title")}</h2>
       <section>
         <p className="placeholder">
-          Each profile keeps its own break cadence, hints, and overlay settings.
-          Switching is instant. The active profile drives every other tab here,
-          and appears in the tray under "Active profile".
+          {t("profiles.desc")}
         </p>
         {profiles.profileError && (
           <p className="profile-error">{profiles.profileError}</p>
@@ -32,7 +31,7 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                   <button
                     type="button"
                     className="reorder-btn"
-                    aria-label={`Move ${name} up`}
+                    aria-label={t("profiles.moveUpAria", { name })}
                     disabled={isRenaming || !canMoveUp}
                     onClick={() => profiles.move(name, -1)}
                   >
@@ -41,7 +40,7 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                   <button
                     type="button"
                     className="reorder-btn"
-                    aria-label={`Move ${name} down`}
+                    aria-label={t("profiles.moveDownAria", { name })}
                     disabled={isRenaming || !canMoveDown}
                     onClick={() => profiles.move(name, 1)}
                   >
@@ -51,7 +50,7 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                 {isRenaming ? (
                   <input
                     type="text"
-                    aria-label="Profile name"
+                    aria-label={t("profiles.nameAria")}
                     value={draft}
                     // Autofocus is appropriate here: the field appears in
                     // response to a user clicking "rename", not on page
@@ -71,7 +70,11 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                 ) : (
                   <span className="profile-name">
                     {name}
-                    {isActive && <span className="profile-badge">active</span>}
+                    {isActive && (
+                      <span className="profile-badge">
+                        {t("profiles.activeBadge")}
+                      </span>
+                    )}
                   </span>
                 )}
                 <span className="profile-actions">
@@ -79,8 +82,8 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                     <button
                       type="button"
                       className="icon-action"
-                      aria-label={`Use profile ${name}`}
-                      title="Use this profile"
+                      aria-label={t("profiles.useProfileAria", { name })}
+                      title={t("profiles.useProfileTitle")}
                       onClick={() => profiles.switchTo(name)}
                     >
                       <span aria-hidden="true">○</span>
@@ -90,8 +93,8 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                     <button
                       type="button"
                       className="icon-action"
-                      aria-label={`Rename profile ${name}`}
-                      title="Rename"
+                      aria-label={t("profiles.renameAria", { name })}
+                      title={t("profiles.renameTitle")}
                       onClick={() => profiles.setRenameDraft(name, name)}
                     >
                       <span aria-hidden="true">✎</span>
@@ -101,8 +104,8 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                     <button
                       type="button"
                       className="icon-action"
-                      aria-label={`Duplicate profile ${name}`}
-                      title="Duplicate"
+                      aria-label={t("profiles.duplicateAria", { name })}
+                      title={t("profiles.duplicateTitle")}
                       onClick={() => profiles.duplicate(name)}
                     >
                       <span aria-hidden="true">⧉</span>
@@ -115,14 +118,14 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                         className="link danger"
                         onClick={() => profiles.confirmReset(name)}
                       >
-                        Confirm reset
+                        {t("profiles.confirmReset")}
                       </button>
                     ) : (
                       <button
                         type="button"
                         className="icon-action icon-accent"
-                        aria-label={`Reset profile ${name} to defaults`}
-                        title="Reset to defaults"
+                        aria-label={t("profiles.resetAria", { name })}
+                        title={t("profiles.resetTitle")}
                         onClick={() => profiles.requestReset(name)}
                       >
                         <span aria-hidden="true">↺</span>
@@ -136,14 +139,14 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
                         className="link danger"
                         onClick={() => profiles.confirmDelete(name)}
                       >
-                        Confirm delete
+                        {t("profiles.confirmDelete")}
                       </button>
                     ) : (
                       <button
                         type="button"
                         className="icon-action icon-pop"
-                        aria-label={`Delete profile ${name}`}
-                        title="Delete"
+                        aria-label={t("profiles.deleteAria", { name })}
+                        title={t("profiles.deleteTitle")}
                         onClick={() => profiles.requestDelete(name)}
                       >
                         <span aria-hidden="true">✕</span>
@@ -157,7 +160,7 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
         <div className="profile-add">
           <input
             type="text"
-            placeholder="New profile name"
+            placeholder={t("profiles.newPlaceholder")}
             value={profiles.newProfileName}
             onChange={(e) => profiles.setNewProfileName(e.target.value)}
             onKeyDown={(e) => {
@@ -169,7 +172,7 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
             onClick={profiles.create}
             disabled={!profiles.newProfileName.trim()}
           >
-            Add
+            {t("profiles.add")}
           </button>
         </div>
       </section>

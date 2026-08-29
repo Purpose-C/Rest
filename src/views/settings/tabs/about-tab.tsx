@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { getVersion } from "@tauri-apps/api/app";
+import { t } from "../../../lib/i18n";
 import { useUpdateCheck } from "../hooks/use-update-check";
 import type { UseSupporter } from "../hooks/use-supporter";
 import type { UseSettings } from "../hooks/use-settings";
@@ -69,27 +70,29 @@ export function AboutTab({
       const report = await invoke<string>("build_diagnostics_report");
       const ok = await writeToClipboard(report);
       flashDiagnostics(
-        ok ? "Report copied to clipboard" : "Clipboard copy failed",
+        ok ? t("about.reportCopied") : t("about.copyFailed"),
       );
     } catch (e) {
       console.error("copy diagnostics report failed", e);
-      flashDiagnostics("Could not build report");
+      flashDiagnostics(t("about.couldNotBuildReport"));
     }
   };
 
   return (
     <>
-      <h2 id="settings-about">About</h2>
+      <h2 id="settings-about">{t("about.title")}</h2>
       <section>
         <div className="about-title-row">
           <p className="about-title">Entracte</p>
           <button onClick={update.check} disabled={update.checking}>
-            {update.checking ? "Checking…" : "Check for updates"}
+            {update.checking ? t("about.checking") : t("about.checkUpdates")}
           </button>
         </div>
-        <p className="about-meta">Version {version || "—"}</p>
-        <p className="about-meta">Cross-platform break reminder.</p>
-        <p className="about-meta">Apache 2.0 licensed.</p>
+        <p className="about-meta">
+          {t("about.version", { version: version || "—" })}
+        </p>
+        <p className="about-meta">{t("about.tagline")}</p>
+        <p className="about-meta">{t("about.license")}</p>
         {settings && (
           <label className="about-meta about-auto-check">
             <input
@@ -99,58 +102,62 @@ export function AboutTab({
                 updateSetting("auto_check_updates", e.target.checked)
               }
             />{" "}
-            Automatically check for updates on launch
+            {t("about.autoCheckUpdates")}
           </label>
         )}
         {update.info && update.info.has_update && update.info.release_url && (
           <>
             <p className="about-meta">
-              Update available: <strong>{update.info.latest}</strong> (you have{" "}
-              {update.info.current}).
+              {t("about.updateAvailable", {
+                latest: update.info.latest,
+                current: update.info.current,
+              })}
             </p>
             <div className="actions inline">
               {downloadInstaller && (
                 <button onClick={() => openUrl(downloadInstaller.url)}>
-                  Download for {downloadInstaller.label}
+                  {t("about.downloadFor", { label: downloadInstaller.label })}
                 </button>
               )}
               <button
                 className={downloadInstaller ? "secondary" : undefined}
                 onClick={() => openUrl(update.info!.release_url!)}
               >
-                {downloadInstaller ? "All downloads" : "Open release page"}
+                {downloadInstaller ? t("about.allDownloads") : t("about.openReleasePage")}
               </button>
             </div>
             {caps.installerUnsignedWarning && (
               <p className="about-meta">
-                The Windows installer isn't Authenticode-signed yet, so
-                SmartScreen will warn — click <em>More info → Run anyway</em> to
-                proceed.
+                {t("about.windowsUnsignedWarning")}
               </p>
             )}
           </>
         )}
         {update.info && !update.info.has_update && (
           <p className="about-meta">
-            You're on the latest version ({update.info.current}).
+            {t("about.latestVersion", { current: update.info.current })}
           </p>
         )}
         {update.error && (
-          <p className="about-meta">Check failed: {update.error}</p>
+          <p className="about-meta">
+            {t("about.checkFailed", { error: update.error })}
+          </p>
         )}
       </section>
 
       <h2 id="settings-supporter">
-        Supporter{supporter.status.is_supporter ? " ✓" : ""}
+        {t("about.supporter")}{supporter.status.is_supporter ? " ✓" : ""}
       </h2>
       <section>
         {supporter.status.is_supporter ? (
           <>
             <p className="about-meta">
-              Thank you. The customisation pack is unlocked.
+              {t("about.supporterUnlocked")}
             </p>
             <p className="about-meta">
-              License: <code>{supporter.status.masked_key}</code>
+              {t("about.licenseKey", {
+                key: supporter.status.masked_key ?? "",
+              })}
             </p>
             <div className="actions inline">
               <button
@@ -158,31 +165,29 @@ export function AboutTab({
                 onClick={() => supporter.remove()}
                 disabled={supporter.pending}
               >
-                Remove license
+                {t("about.removeLicense")}
               </button>
             </div>
           </>
         ) : (
           <>
             <p className="about-meta">
-              Entracte is free to use. The customisation pack — custom overlay
-              colours, rotating themes, custom sounds, custom CSS, and editable
-              break hints — is unlocked by becoming a supporter once, forever.
+              {t("about.supporterPitch")}
             </p>
             <div className="actions inline">
               <button onClick={() => openUrl(SUPPORTER_CHECKOUT_URL)}>
-                Become a supporter →
+                {t("about.becomeSupporter")}
               </button>
             </div>
             <p className="about-meta">
-              Already have a license? Paste it below and click Verify.
+              {t("about.alreadyHaveLicense")}
             </p>
             <div className="supporter-entry">
               <input
                 type="text"
                 value={licenseInput}
                 onChange={(e) => setLicenseInput(e.target.value)}
-                placeholder="License key"
+                placeholder={t("about.licensePlaceholder")}
                 spellCheck={false}
                 autoCapitalize="off"
                 autoCorrect="off"
@@ -195,7 +200,7 @@ export function AboutTab({
                 onClick={onVerify}
                 disabled={supporter.pending || licenseInput.trim() === ""}
               >
-                {supporter.pending ? "Verifying…" : "Verify"}
+                {supporter.pending ? t("about.verifying") : t("about.verify")}
               </button>
             </div>
           </>
@@ -206,41 +211,38 @@ export function AboutTab({
       </section>
 
       <div className="section-heading">
-        <h2>Author</h2>
+        <h2>{t("about.author")}</h2>
         <button
           onClick={() => openUrl("https://buymeacoffee.com/drmowinckels")}
         >
-          ☕ Buy me a coffee
+          {t("about.buyMeACoffee")}
         </button>
       </div>
       <section>
         <p className="about-meta">
-          Built by <strong>Dr. Athanasia M. Mowinckel</strong>
+          {t("about.authorName")}
         </p>
         <p className="about-meta">
-          Senior staff engineer & researcher, working on tools for reproducible
-          science and developer wellbeing.
+          {t("about.authorBio")}
         </p>
       </section>
 
-      <h2>Companion app</h2>
+      <h2>{t("about.companionApp")}</h2>
       <section>
         <p className="about-meta">
-          Tracking your work hours too? <strong>Cairn</strong> is Entracte's
-          sibling — local-first time tracking that quietly notices what you work
-          on.
+          {t("about.cairnPitch")}
         </p>
         <div className="actions inline">
           <button onClick={() => openUrl("https://cairn.drmowinckels.io/")}>
-            Try Cairn →
+            {t("about.tryCairn")}
           </button>
         </div>
       </section>
 
       <div className="section-heading">
-        <h2 id="settings-diagnostics">Diagnostics</h2>
+        <h2 id="settings-diagnostics">{t("about.diagnostics")}</h2>
         <button onClick={onCopyDiagnosticsReport}>
-          Copy diagnostics report
+          {t("about.copyDiagnosticsReport")}
         </button>
       </div>
       <section>
@@ -248,16 +250,9 @@ export function AboutTab({
           <p className="diagnostics-status">{diagnosticsStatus}</p>
         )}
         <p className="diagnostics-hint">
-          Click <strong>Copy diagnostics report</strong> when filing an issue at{" "}
-          <button
-            className="link"
-            onClick={() =>
-              openUrl("https://github.com/drmowinckels/entracte/issues")
-            }
-          >
-            github.com/drmowinckels/entracte/issues
-          </button>{" "}
-          — it includes app version, settings, and the last 50 KB of logs.
+          {t("about.diagnosticsHint", {
+            link: "github.com/drmowinckels/entracte/issues",
+          })}
         </p>
       </section>
     </>

@@ -1,3 +1,4 @@
+import { t } from "../../../lib/i18n";
 import { weekdayLabel } from "../../../lib/stats-format";
 import type { WeekdayBucket } from "../types";
 
@@ -7,7 +8,7 @@ export function WeekdayHistogram({ days }: { days: WeekdayBucket[] }) {
     <div
       className="weekday-histogram"
       role="img"
-      aria-label="Breaks taken vs dismissed by weekday"
+      aria-label={t("stats.weekdayHistogramAria")}
     >
       {days.map((d) => {
         const takenPct = (d.taken / max) * 100;
@@ -21,7 +22,7 @@ export function WeekdayHistogram({ days }: { days: WeekdayBucket[] }) {
                 ref={(el) => {
                   el?.style.setProperty("--weekday-bar-height", `${takenPct}%`);
                 }}
-                title={`${label}: ${d.taken} taken`}
+                title={t("stats.takenTooltip", { label, count: d.taken })}
               />
               <div
                 className="weekday-bar weekday-bar-dismissed"
@@ -31,7 +32,10 @@ export function WeekdayHistogram({ days }: { days: WeekdayBucket[] }) {
                     `${dismissedPct}%`,
                   );
                 }}
-                title={`${label}: ${d.dismissed} dismissed`}
+                title={t("stats.dismissedTooltip", {
+                  label,
+                  count: d.dismissed,
+                })}
               />
             </div>
             <span className="weekday-label">{label}</span>

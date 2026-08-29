@@ -237,12 +237,12 @@ impl SuppressReason {
     /// Kept under ~12 chars so the menu-bar doesn't blow out.
     pub fn short_label(self) -> &'static str {
         match self {
-            Self::WorkWindow => "off-hours",
-            Self::Dnd => "DND",
-            Self::Camera => "camera",
-            Self::Video => "video",
-            Self::AppPause => "app paused",
-            Self::Plugin => "plugin",
+            Self::WorkWindow => "非时段",
+            Self::Dnd => "勿扰",
+            Self::Camera => "摄像头",
+            Self::Video => "视频",
+            Self::AppPause => "应用暂停",
+            Self::Plugin => "插件",
         }
     }
 
@@ -250,12 +250,12 @@ impl SuppressReason {
     /// setting* turns it off, so the user knows where to look.
     pub fn human(self) -> &'static str {
         match self {
-            Self::WorkWindow => "Outside work hours (Schedule → Work window)",
-            Self::Dnd => "Do Not Disturb is on (Quiet → Pause during DND)",
-            Self::Camera => "Camera in use (Quiet → Pause during camera)",
-            Self::Video => "Video keeping the display awake (Quiet → Pause during video)",
-            Self::AppPause => "A paused app is running (Quiet → App pause list)",
-            Self::Plugin => "A detector plugin is suppressing breaks (System → Plugins)",
+            Self::WorkWindow => "处于活动时段之外（计划 → 活动时段）",
+            Self::Dnd => "勿扰模式已开启（暂停 → 勿扰模式开启时）",
+            Self::Camera => "摄像头正在使用（暂停 → 摄像头正在使用时）",
+            Self::Video => "视频播放阻止休眠（暂停 → 正在播放全屏视频时）",
+            Self::AppPause => "列表中的应用正在运行（暂停 → 针对特定应用暂停）",
+            Self::Plugin => "检测器插件正在拦截休息（系统 → 插件）",
         }
     }
 }

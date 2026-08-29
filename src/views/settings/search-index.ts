@@ -1,4 +1,12 @@
+import { t } from "../../lib/i18n";
+import { en } from "../../lib/i18n/en";
 import type { Tab } from "./types";
+
+/** Fold the English label into keywords so searches like "bedtime" still
+ * hit after `setLocale("zh-CN")` replaces `entry.label`. */
+function kw(enKey: string, extra: string): string {
+  return `${en[enKey] ?? ""} ${extra}`;
+}
 
 /** One searchable destination in the Settings window. `anchorId` must match
  * the `id` on a section heading inside the tab named by `tabId`, so the
@@ -18,222 +26,357 @@ export const SETTINGS_INDEX: SettingsSearchEntry[] = [
   // Schedule
   {
     id: "active-hours",
-    label: "Active hours",
+    get label() {
+      return t("search.activeHours");
+    },
     tabId: "schedule",
     anchorId: "settings-active-hours",
-    keywords: "work window weekdays days start end time range when",
+    keywords: kw(
+      "search.activeHours",
+      "work window weekdays days start end time range when 活动时段 工作时段 工作日 开始 结束 时间",
+    ),
   },
   {
     id: "micro-breaks",
-    label: "Micro breaks",
+    get label() {
+      return t("search.microBreaks");
+    },
     tabId: "schedule",
     anchorId: "settings-micro-breaks",
-    keywords: "interval fixed times duration enable cadence frequency idle",
+    keywords: kw(
+      "search.microBreaks",
+      "interval fixed times duration enable cadence frequency idle 短休息 间隔 时长 启用 空闲",
+    ),
   },
   {
     id: "long-breaks",
-    label: "Long breaks",
+    get label() {
+      return t("search.longBreaks");
+    },
     tabId: "schedule",
     anchorId: "settings-long-breaks",
-    keywords: "interval fixed times duration enable cadence frequency idle",
+    keywords: kw(
+      "search.longBreaks",
+      "interval fixed times duration enable cadence frequency idle 长休息 间隔 时长 启用 空闲",
+    ),
   },
   {
     id: "bedtime",
-    label: "Bedtime",
+    get label() {
+      return t("search.bedtime");
+    },
     tabId: "schedule",
     anchorId: "settings-bedtime",
-    keywords: "sleep night wind down reminder window",
+    keywords: kw(
+      "search.bedtime",
+      "sleep night wind down reminder window 就寝提醒 夜间 收尾 窗口",
+    ),
   },
   {
     id: "screen-time",
-    label: "Daily screen time",
+    get label() {
+      return t("search.screenTime");
+    },
     tabId: "schedule",
     anchorId: "settings-screen-time",
-    keywords: "budget limit usage time at keyboard wrap up",
+    keywords: kw(
+      "search.screenTime",
+      "budget limit usage time at keyboard wrap up 屏幕时间 限额 使用时长 放松收尾",
+    ),
   },
   // Breaks
   {
     id: "delivery",
-    label: "Delivery mode",
+    get label() {
+      return t("search.delivery");
+    },
     tabId: "breaks",
     anchorId: "settings-delivery",
-    keywords: "overlay windowed notification fullscreen test how appears",
+    keywords: kw(
+      "search.delivery",
+      "overlay windowed notification fullscreen test how appears 全屏遮罩 窗口模式 仅系统通知 测试 呈现",
+    ),
   },
   {
     id: "overlay",
-    label: "Overlay appearance",
+    get label() {
+      return t("search.overlay");
+    },
     tabId: "breaks",
     anchorId: "settings-overlay",
-    keywords:
-      "transparency opacity theme colour color text size high contrast monitor vignette",
+    keywords: kw(
+      "search.overlay",
+      "transparency opacity theme colour color text size high contrast monitor vignette 透明度 主题 字号 高对比度 显示器 暗角",
+    ),
   },
   {
     id: "sound",
-    label: "Sound",
+    get label() {
+      return t("search.sound");
+    },
     tabId: "breaks",
     anchorId: "settings-sound",
-    keywords: "volume chime ambient track audio custom file",
+    keywords: kw(
+      "search.sound",
+      "volume chime ambient track audio custom file 音量 提示音 氛围音 音效",
+    ),
   },
   {
     id: "skip-postpone",
-    label: "Skip & postpone",
+    get label() {
+      return t("search.skipPostpone");
+    },
     tabId: "breaks",
     anchorId: "settings-skip-postpone",
-    keywords:
-      "strict mode escalation enforce manual finish cannot be dismissed snooze",
+    keywords: kw(
+      "search.skipPostpone",
+      "strict mode escalation enforce manual finish cannot be dismissed snooze 严格模式 跳过 推迟 无法关闭",
+    ),
   },
   {
     id: "break-ideas",
-    label: "Break ideas",
+    get label() {
+      return t("search.breakIdeas");
+    },
     tabId: "breaks",
     anchorId: "settings-break-ideas",
-    keywords: "hints routines mix physical psychological solo social guided",
+    keywords: kw(
+      "search.breakIdeas",
+      "hints routines mix physical psychological solo social guided 健康提示 引导流程 身体 心理 独处 社交",
+    ),
   },
   {
     id: "chores",
-    label: "Today's chores",
+    get label() {
+      return t("search.chores");
+    },
     tabId: "breaks",
     anchorId: "settings-chores",
-    keywords: "tasks post-it morning prompt to do list",
+    keywords: kw(
+      "search.chores",
+      "tasks post-it morning prompt to do list 杂事 待办 晨间 列表",
+    ),
   },
   {
     id: "content-packs",
-    label: "Content packs",
+    get label() {
+      return t("search.contentPacks");
+    },
     tabId: "breaks",
     anchorId: "settings-content-packs",
-    keywords: "import export share routines hints json",
+    keywords: kw(
+      "search.contentPacks",
+      "import export share routines hints json 内容包 导入 导出 分享 健康提示 引导流程",
+    ),
   },
   {
     id: "custom-css",
-    label: "Custom CSS",
+    get label() {
+      return t("search.customCss");
+    },
     tabId: "breaks",
     anchorId: "settings-custom-css",
-    keywords: "stylesheet style supporter overlay appearance",
+    keywords: kw(
+      "search.customCss",
+      "stylesheet style supporter overlay appearance 样式 自定义 外观 全屏遮罩",
+    ),
   },
   // Pausing
   {
     id: "auto-pause",
-    label: "Auto-pause",
+    get label() {
+      return t("search.autoPause");
+    },
     tabId: "quiet",
     anchorId: "settings-auto-pause",
-    keywords:
-      "do not disturb dnd focus camera webcam fullscreen video suppress",
+    keywords: kw(
+      "search.autoPause",
+      "do not disturb dnd focus camera webcam fullscreen video suppress 勿扰 摄像头 全屏 视频 拦截",
+    ),
   },
   {
     id: "during-breaks",
-    label: "Pause media during breaks",
+    get label() {
+      return t("search.duringBreaks");
+    },
     tabId: "quiet",
     anchorId: "settings-during-breaks",
-    keywords: "music spotify video play pause media",
+    keywords: kw(
+      "search.duringBreaks",
+      "music spotify video play pause media 音乐 视频 播放 暂停",
+    ),
   },
   {
     id: "app-pause",
-    label: "Pause for specific apps",
+    get label() {
+      return t("search.appPause");
+    },
     tabId: "quiet",
     anchorId: "settings-app-pause",
-    keywords: "zoom obs keynote running application suppress",
+    keywords: kw(
+      "search.appPause",
+      "zoom obs keynote running application suppress 应用 运行 拦截 暂停",
+    ),
   },
   {
     id: "manual-pause",
-    label: "Manual pause",
+    get label() {
+      return t("search.manualPause");
+    },
     tabId: "quiet",
     anchorId: "settings-manual-pause",
-    keywords: "pause until resume holiday snooze",
+    keywords: kw(
+      "search.manualPause",
+      "pause until resume holiday snooze 暂停 恢复 直到 假期",
+    ),
   },
   // System
   {
     id: "startup",
-    label: "Start at login",
+    get label() {
+      return t("search.startup");
+    },
     tabId: "system",
     anchorId: "settings-startup",
-    keywords: "autostart boot launch",
+    keywords: kw("search.startup", "autostart boot launch 开机 启动 登录"),
   },
   {
     id: "display",
-    label: "Time format",
+    get label() {
+      return t("search.display");
+    },
     tabId: "system",
     anchorId: "settings-display",
-    keywords: "clock 12 24 hour am pm",
+    keywords: kw("search.display", "clock 12 24 hour am pm 时钟 小时 时间格式"),
   },
   {
     id: "notifications",
-    label: "Notifications",
+    get label() {
+      return t("search.notifications");
+    },
     tabId: "system",
     anchorId: "settings-notifications",
-    keywords: "pre-break heads up lead time warning",
+    keywords: kw(
+      "search.notifications",
+      "pre-break heads up lead time warning 通知 提前提醒 即将开始",
+    ),
   },
   {
     id: "hotkeys",
-    label: "Global hotkeys",
+    get label() {
+      return t("search.hotkeys");
+    },
     tabId: "system",
     anchorId: "settings-hotkeys",
-    keywords: "keyboard shortcuts accelerator pause resume trigger",
+    keywords: kw(
+      "search.hotkeys",
+      "keyboard shortcuts accelerator pause resume trigger 快捷键 键盘 暂停 恢复",
+    ),
   },
   {
     id: "tray",
-    label: "Tray countdown",
+    get label() {
+      return t("search.tray");
+    },
     tabId: "system",
     anchorId: "settings-tray",
-    keywords: "menu bar icon timer countdown next break",
+    keywords: kw(
+      "search.tray",
+      "menu bar icon timer countdown next break 菜单栏 托盘 倒计时 图标",
+    ),
   },
   {
     id: "plugins",
-    label: "Plugins",
+    get label() {
+      return t("search.plugins");
+    },
     tabId: "system",
     anchorId: "settings-plugins",
-    keywords: "extensions install content detector export",
+    keywords: kw(
+      "search.plugins",
+      "extensions install content detector export 插件 安装 内容包 检测器 导出",
+    ),
   },
   {
     id: "hooks",
-    label: "Event hooks",
+    get label() {
+      return t("search.hooks");
+    },
     tabId: "system",
     anchorId: "settings-hooks",
-    keywords: "shell command script break start end advanced automation",
+    keywords: kw(
+      "search.hooks",
+      "shell command script break start end advanced automation 钩子 命令 脚本 休息",
+    ),
   },
   // Insights
   {
     id: "insights",
-    label: "Insights & stats",
+    get label() {
+      return t("search.insights");
+    },
     tabId: "insights",
     anchorId: "settings-insights",
-    keywords: "stats history breaks taken skipped dismissed heatmap session",
+    keywords: kw(
+      "search.insights",
+      "stats history breaks taken skipped dismissed heatmap session 统计 历史 跳过 拦截 热力图",
+    ),
   },
   {
     id: "manage-data",
-    label: "Manage data",
+    get label() {
+      return t("search.manageData");
+    },
     tabId: "insights",
     anchorId: "settings-manage-data",
-    keywords: "export csv backup import clear history reset",
+    keywords: kw(
+      "search.manageData",
+      "export csv backup import clear history reset 导出 备份 导入 清空 历史",
+    ),
   },
   // Profiles
   {
     id: "profiles",
-    label: "Profiles",
+    get label() {
+      return t("search.profiles");
+    },
     tabId: "profiles",
     anchorId: "settings-profiles",
-    keywords: "switch duplicate rename reset preset",
+    keywords: kw(
+      "search.profiles",
+      "switch duplicate rename reset preset 情景 切换 复制 重命名 重置",
+    ),
   },
   // About
   {
     id: "about",
-    label: "About & updates",
+    get label() {
+      return t("search.about");
+    },
     tabId: "about",
     anchorId: "settings-about",
-    keywords: "version update check release",
+    keywords: kw("search.about", "version update check release 版本 更新 检查 发布"),
   },
   {
     id: "supporter",
-    label: "Supporter",
+    get label() {
+      return t("search.supporter");
+    },
     tabId: "about",
     anchorId: "settings-supporter",
-    keywords: "license key unlock customisation pack donate",
+    keywords: kw(
+      "search.supporter",
+      "license key unlock customisation pack donate 支持者 许可证 解锁 捐赠",
+    ),
   },
   {
     id: "diagnostics",
-    label: "Diagnostics",
+    get label() {
+      return t("search.diagnostics");
+    },
     tabId: "about",
     anchorId: "settings-diagnostics",
-    keywords: "report logs bug issue copy",
+    keywords: kw("search.diagnostics", "report logs bug issue copy 诊断 日志 问题 复制"),
   },
 ];
 

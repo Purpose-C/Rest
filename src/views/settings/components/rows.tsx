@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { t } from "../../../lib/i18n";
 import { formatMinutesOfDay, parseMinutesOfDay } from "../../../lib/time";
 import {
   PLATFORM_LABELS,
@@ -140,7 +141,7 @@ export function CheckboxRow({
   const supported = !onlyOn || onlyOn.includes(platform);
   const displayLabel = supported
     ? label
-    : `${label} (${onlyOn!.map((p) => PLATFORM_LABELS[p]).join("/")} only)`;
+    : `${label}${t("rows.platformOnly", { platforms: onlyOn!.map((p) => PLATFORM_LABELS[p]).join("/") })}`;
   const isDisabled = Boolean(disabled) || !supported;
   return (
     <label className={`row checkbox-row${isDisabled ? " disabled" : ""}`}>

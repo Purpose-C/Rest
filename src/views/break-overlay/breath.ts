@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import type { BreathPattern, BreathSounds } from "./types";
 
 export type BreathPhase = "inhale" | "hold" | "exhale" | "hold_out" | "rest";
@@ -10,16 +11,19 @@ export type BreathProgress = {
   fullness: number;
 };
 
-const PHASE_LABEL: Record<BreathPhase, string> = {
-  inhale: "Breathe in",
-  hold: "Hold",
-  exhale: "Breathe out",
-  hold_out: "Hold",
-  rest: "Rest",
-};
-
 export function breathPhaseLabel(phase: BreathPhase): string {
-  return PHASE_LABEL[phase];
+  switch (phase) {
+    case "inhale":
+      return t("breath.phase.inhale");
+    case "hold":
+      return t("breath.phase.hold");
+    case "exhale":
+      return t("breath.phase.exhale");
+    case "hold_out":
+      return t("breath.phase.hold_out");
+    case "rest":
+      return t("breath.phase.rest");
+  }
 }
 
 // The sound cue for a given phase, if the pattern declares one. `rest` is
@@ -123,13 +127,15 @@ export function breathProgress(
 // the phase is still counting down (the held `rest` shows just the label).
 export function breathLabel(prog: BreathProgress): string {
   const base = breathPhaseLabel(prog.phase);
-  return prog.phaseRemaining > 0 ? `${base} · ${prog.phaseRemaining}s` : base;
+  return prog.phaseRemaining > 0
+    ? t("breath.phaseLabel", { phase: base, seconds: prog.phaseRemaining })
+    : base;
 }
 
 // Accessible-name variant, spelling out "seconds" for screen readers.
 export function breathAriaLabel(prog: BreathProgress): string {
   const base = breathPhaseLabel(prog.phase);
   return prog.phaseRemaining > 0
-    ? `${base}, ${prog.phaseRemaining} seconds`
+    ? t("breath.phaseAria", { phase: base, seconds: prog.phaseRemaining })
     : base;
 }

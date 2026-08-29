@@ -1,3 +1,4 @@
+import { t } from "../../lib/i18n";
 import type { PostponeState } from "./types";
 
 export type PostponeDerived = {
@@ -18,7 +19,10 @@ export function derivePostpone(state: PostponeState | null): PostponeDerived {
   const exhausted = finite !== null && finite.remaining === 0;
   const label =
     finite !== null
-      ? `Postpone (${finite.count + 1} of ${finite.max})`
-      : "Postpone";
+      ? t("postpone.withCount", {
+          count: finite.count + 1,
+          max: finite.max,
+        })
+      : t("postpone.simple");
   return { finite, exhausted, label };
 }

@@ -931,7 +931,10 @@ mod tests {
         };
         let out = format_runtime_snapshot(&snap);
         assert!(out.contains("Pause: paused (600s remaining)"));
-        assert!(out.contains("Auto-suppressed by: Do Not Disturb"));
+        assert!(out.contains(&format!(
+            "Auto-suppressed by: {}",
+            crate::scheduler::SuppressReason::Dnd.human()
+        )));
         assert!(out.contains("DND `true`"));
         assert!(out.contains("Idle detection: unavailable (MIT-SCREEN-SAVER missing)"));
         assert!(out.contains("Active break: micro"));

@@ -1069,11 +1069,11 @@ fn warn_user_idle_failure(err: &str, backoff_secs: u64) {
 
 fn prebreak_message(kind: BreakKind, seconds: u64) -> (&'static str, String) {
     let title = match kind {
-        BreakKind::Micro => "Micro break coming up",
-        BreakKind::Long => "Long break coming up",
-        BreakKind::Sleep => "Bedtime reminder coming up",
+        BreakKind::Micro => "即将开始短休息",
+        BreakKind::Long => "即将开始长休息",
+        BreakKind::Sleep => "即将开始就寝提醒",
     };
-    (title, format!("Starting in {seconds}s"))
+    (title, format!("{seconds} 秒后开始"))
 }
 
 fn notify_break_coming<R: Runtime>(app: &AppHandle<R>, kind: BreakKind, seconds: u64) {
@@ -1085,20 +1085,16 @@ fn screen_time_body(budget_minutes: u64) -> String {
     let hours = budget_minutes / 60;
     let mins = budget_minutes % 60;
     if hours > 0 && mins == 0 {
-        format!(
-            "You've been at the screen {} hour{} — time to wrap up.",
-            hours,
-            if hours == 1 { "" } else { "s" }
-        )
+        format!("您已在屏幕前工作了 {hours} 小时 —— 是时候放松收尾了。")
     } else if hours == 0 {
-        format!("You've been at the screen {mins} minutes — time to wrap up.")
+        format!("您已在屏幕前工作了 {mins} 分钟 —— 是时候放松收尾了。")
     } else {
-        format!("You've been at the screen {hours}h {mins}m — time to wrap up.")
+        format!("您已在屏幕前工作了 {hours} 小时 {mins} 分钟 —— 是时候放松收尾了。")
     }
 }
 
 fn notify_screen_time_budget<R: Runtime>(app: &AppHandle<R>, budget_minutes: u64) {
-    super::overlay::post_notification(app, "Time to wind down", screen_time_body(budget_minutes));
+    super::overlay::post_notification(app, "该放松收尾了", screen_time_body(budget_minutes));
 }
 
 /// Pure decision: which break kinds were due (enabled and past their
@@ -1325,36 +1321,36 @@ mod tests {
     fn prebreak_message_titles_per_kind() {
         assert_eq!(
             prebreak_message(BreakKind::Micro, 30).0,
-            "Micro break coming up"
+            "即将开始短休息"
         );
         assert_eq!(
             prebreak_message(BreakKind::Long, 30).0,
-            "Long break coming up"
+            "即将开始长休息"
         );
         assert_eq!(
             prebreak_message(BreakKind::Sleep, 30).0,
-            "Bedtime reminder coming up"
+            "即将开始就寝提醒"
         );
-        assert_eq!(prebreak_message(BreakKind::Micro, 45).1, "Starting in 45s");
+        assert_eq!(prebreak_message(BreakKind::Micro, 45).1, "45 秒后开始");
     }
 
     #[test]
     fn screen_time_body_formats_each_bucket() {
         assert_eq!(
             screen_time_body(45),
-            "You've been at the screen 45 minutes — time to wrap up."
+            "您已在屏幕前工作了 45 分钟 —— 是时候放松收尾了。"
         );
         assert_eq!(
             screen_time_body(60),
-            "You've been at the screen 1 hour — time to wrap up."
+            "您已在屏幕前工作了 1 小时 —— 是时候放松收尾了。"
         );
         assert_eq!(
             screen_time_body(120),
-            "You've been at the screen 2 hours — time to wrap up."
+            "您已在屏幕前工作了 2 小时 —— 是时候放松收尾了。"
         );
         assert_eq!(
             screen_time_body(90),
-            "You've been at the screen 1h 30m — time to wrap up."
+            "您已在屏幕前工作了 1 小时 30 分钟 —— 是时候放松收尾了。"
         );
     }
 

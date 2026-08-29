@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
+import { t } from "../../../lib/i18n";
 import { invoke } from "../../../lib/ipc";
 import { useTauriListen } from "../../../lib/use-tauri-listen";
 
@@ -117,7 +118,7 @@ export function useProfiles(): UseProfiles {
 
   const duplicate = useCallback(
     async (source: string) => {
-      const base = `${source} copy`;
+      const base = t("profiles.copyOf", { source });
       let candidate = base;
       let i = 2;
       while (profiles.includes(candidate)) {

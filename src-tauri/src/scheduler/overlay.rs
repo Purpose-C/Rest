@@ -95,25 +95,19 @@ fn scale_corrected_rect(rect: MonitorRect, scale: f64, wayland: bool) -> Monitor
     }
 }
 
-/// Human-friendly break duration for notifications (e.g. `"20 seconds"`,
-/// `"5 minutes"`, `"1m 30s"`). Drops the seconds part when the
+/// Human-friendly break duration for notifications (e.g. `"20 秒"`,
+/// `"5 分钟"`, `"1 分 30 秒"`). Drops the seconds part when the
 /// duration is a whole-minute multiple.
 pub fn format_break_duration(secs: u64) -> String {
     if secs >= 60 && secs.is_multiple_of(60) {
         let mins = secs / 60;
-        if mins == 1 {
-            "1 minute".to_string()
-        } else {
-            format!("{mins} minutes")
-        }
+        format!("{mins} 分钟")
     } else if secs >= 60 {
         let mins = secs / 60;
         let rem = secs % 60;
-        format!("{mins}m {rem}s")
-    } else if secs == 1 {
-        "1 second".to_string()
+        format!("{mins} 分 {rem} 秒")
     } else {
-        format!("{secs} seconds")
+        format!("{secs} 秒")
     }
 }
 
@@ -123,11 +117,11 @@ pub(super) fn notify_break_now<R: Runtime>(
     duration_secs: u64,
 ) {
     let title = match kind {
-        BreakKind::Micro => "Micro break",
-        BreakKind::Long => "Long break",
-        BreakKind::Sleep => "Bedtime reminder",
+        BreakKind::Micro => "短休息",
+        BreakKind::Long => "长休息",
+        BreakKind::Sleep => "就寝提醒",
     };
-    let body = format!("Take a {} break.", format_break_duration(duration_secs));
+    let body = format!("休息 {}。", format_break_duration(duration_secs));
     post_notification(app, title, body);
 }
 
@@ -800,11 +794,11 @@ mod tests {
 
     #[test]
     fn format_break_duration_uses_friendly_units() {
-        assert_eq!(format_break_duration(20), "20 seconds");
-        assert_eq!(format_break_duration(1), "1 second");
-        assert_eq!(format_break_duration(60), "1 minute");
-        assert_eq!(format_break_duration(120), "2 minutes");
-        assert_eq!(format_break_duration(300), "5 minutes");
-        assert_eq!(format_break_duration(90), "1m 30s");
+        assert_eq!(format_break_duration(20), "20 秒");
+        assert_eq!(format_break_duration(1), "1 秒");
+        assert_eq!(format_break_duration(60), "1 分钟");
+        assert_eq!(format_break_duration(120), "2 分钟");
+        assert_eq!(format_break_duration(300), "5 分钟");
+        assert_eq!(format_break_duration(90), "1 分 30 秒");
     }
 }

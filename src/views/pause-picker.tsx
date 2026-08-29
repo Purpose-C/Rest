@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { t } from "../lib/i18n";
 import {
   formatMinutesOfDay,
   parseMinutesOfDay,
@@ -26,7 +27,7 @@ function clampDay(year: number, month: number, day: number): number {
  * of the OS region. Pauses all breaks until the chosen moment, then closes. */
 export function PausePicker() {
   const now = useMemo(() => new Date(), []);
-  const [locale, setLocale] = useState("en-US");
+  const [locale, setLocale] = useState("zh-CN");
   const [clockFormat, setClockFormat] = useState<ClockFormat>("24h");
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -40,7 +41,7 @@ export function PausePicker() {
     void (async () => {
       try {
         const loc = await invoke<string>("get_locale");
-        if (!cancelled && loc) setLocale(loc);
+        if (!cancelled && loc) setLocale(loc.replace(/_/g, "-"));
       } catch (e) {
         console.error("get_locale failed", e);
       }
@@ -94,7 +95,7 @@ export function PausePicker() {
       return (
         <select
           key="day"
-          aria-label="Day"
+          aria-label={t("pausePicker.dayAria")}
           value={day}
           onChange={(e) => setDay(Number(e.target.value))}
         >
@@ -110,7 +111,7 @@ export function PausePicker() {
       return (
         <select
           key="month"
-          aria-label="Month"
+          aria-label={t("pausePicker.monthAria")}
           value={month}
           onChange={(e) => setMonth(Number(e.target.value))}
         >
@@ -125,7 +126,7 @@ export function PausePicker() {
     return (
       <select
         key="year"
-        aria-label="Year"
+        aria-label={t("pausePicker.yearAria")}
         value={year}
         onChange={(e) => setYear(Number(e.target.value))}
       >
@@ -140,18 +141,17 @@ export function PausePicker() {
 
   return (
     <main className="pause-picker">
-      <h1 className="pause-picker-title">Pause until</h1>
+      <h1 className="pause-picker-title">{t("pausePicker.title")}</h1>
       <p className="pause-picker-hint">
-        Suppress all breaks until the chosen date and time, shown in your
-        region&apos;s format.
+        {t("pausePicker.hint")}
       </p>
       <div className="pause-picker-date">{order.map(fieldFor)}</div>
       <label className="pause-picker-time">
-        <span>Time</span>
+        <span>{t("pausePicker.time")}</span>
         <input
           type="text"
           className="pause-picker-input"
-          aria-label="Time"
+          aria-label={t("pausePicker.time")}
           inputMode="numeric"
           spellCheck={false}
           placeholder={clockFormat === "12h" ? "h:mm AM/PM" : "HH:MM"}
@@ -173,14 +173,14 @@ export function PausePicker() {
       </label>
       <div className="pause-picker-actions">
         <button type="button" className="secondary" onClick={close}>
-          Cancel
+          {t("pausePicker.cancel")}
         </button>
         <button
           type="button"
           disabled={secs === null}
           onClick={() => void submit()}
         >
-          Pause
+          {t("pausePicker.pause")}
         </button>
       </div>
     </main>

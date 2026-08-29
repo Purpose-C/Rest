@@ -1,3 +1,4 @@
+import { t } from "../../../lib/i18n";
 import type { Routine } from "../hooks/use-routines";
 import type { UseSettings } from "../hooks/use-settings";
 import type {
@@ -9,17 +10,52 @@ import { InfoTip } from "./info-tip";
 
 // Exported for the routine enum-parity test (kept in lockstep with the zod
 // routine enums and the Rust `RoutineCategory` / `RoutineDifficulty`).
-export const CATEGORIES: { id: RoutineCategory; label: string }[] = [
-  { id: "eyes", label: "Eyes" },
-  { id: "mobility", label: "Mobility" },
-  { id: "breathing", label: "Breathing" },
-  { id: "desk_yoga", label: "Desk yoga" },
+export const CATEGORIES: { id: RoutineCategory; readonly label: string }[] = [
+  {
+    id: "eyes",
+    get label() {
+      return t("routine.category.eyes");
+    },
+  },
+  {
+    id: "mobility",
+    get label() {
+      return t("routine.category.mobility");
+    },
+  },
+  {
+    id: "breathing",
+    get label() {
+      return t("routine.category.breathing");
+    },
+  },
+  {
+    id: "desk_yoga",
+    get label() {
+      return t("routine.category.desk_yoga");
+    },
+  },
 ];
 
-export const DIFFICULTIES: { id: RoutineDifficulty; label: string }[] = [
-  { id: "gentle", label: "Gentle" },
-  { id: "moderate", label: "Moderate" },
-  { id: "active", label: "Active" },
+export const DIFFICULTIES: { id: RoutineDifficulty; readonly label: string }[] = [
+  {
+    id: "gentle",
+    get label() {
+      return t("routine.difficulty.gentle");
+    },
+  },
+  {
+    id: "moderate",
+    get label() {
+      return t("routine.difficulty.moderate");
+    },
+  },
+  {
+    id: "active",
+    get label() {
+      return t("routine.difficulty.active");
+    },
+  },
 ];
 
 type RoutineKey = "micro_routine" | "long_routine";
@@ -62,15 +98,15 @@ export function RoutinePicker({
     <>
       <label className="row">
         <span>
-          Guided routine
-          <InfoTip text="Step-by-step prompts that advance through the break instead of a single rotating idea. Random picks a fresh routine each break from the filters below; None keeps the rotating ideas above." />
+          {t("routine.guidedRoutine")}
+          <InfoTip text={t("routine.guidedRoutineTip")} />
         </span>
         <select
           value={mode}
           onChange={(e) => update(routineKey, e.target.value)}
         >
-          <option value="">None (rotate ideas)</option>
-          <option value="random">Random (from filters)</option>
+          <option value="">{t("routine.modeNone")}</option>
+          <option value="random">{t("routine.modeRandom")}</option>
           {routines
             .filter((r) => r.kind === kind)
             .map((r) => (
@@ -84,8 +120,8 @@ export function RoutinePicker({
         <>
           <div className="row">
             <span>
-              Categories
-              <InfoTip text="Draw routines only from the ticked categories. Leave all unticked to draw from every category." />
+              {t("routine.categories")}
+              <InfoTip text={t("routine.categoriesTip")} />
             </span>
             <span className="routine-categories">
               {CATEGORIES.map((cat) => (
@@ -102,8 +138,8 @@ export function RoutinePicker({
           </div>
           <label className="row">
             <span>
-              Maximum difficulty
-              <InfoTip text="Include routines up to and including this level — Gentle for the lightest only, Active for everything." />
+              {t("routine.maxDifficulty")}
+              <InfoTip text={t("routine.maxDifficultyTip")} />
             </span>
             <select
               value={settings[difficultyKey]}
