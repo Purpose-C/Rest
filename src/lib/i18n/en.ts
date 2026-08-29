@@ -461,6 +461,9 @@ export const en: Record<string, string> = {
   "system.trayCountdown": "Show countdown to next break in the tray",
   "system.trayCountdownTip":
     "Shows the minutes until the next break next to the tray icon. macOS and Linux only — Windows doesn't support tray text.",
+  "system.trayIcon": "Show the tray icon",
+  "system.trayIconTip":
+    "Off leaves just the countdown number in the menu bar. The icon comes back whenever there is no number to show — paused, bedtime, during a break, or with the countdown turned off — so the menu stays reachable.",
   "system.countdownTo": "Count down to",
   "system.plugins": "Plugins",
   "system.showAdvancedHooks": "Show advanced (hooks)",

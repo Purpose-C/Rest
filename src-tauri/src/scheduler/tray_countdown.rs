@@ -115,6 +115,14 @@ impl Scheduler {
         );
         (snapshot, s.tray_countdown_enabled)
     }
+
+    /// The user's `tray_icon_enabled` setting. Read on its own so the
+    /// ticker can decide about the glyph without widening the snapshot
+    /// tuple that every other caller destructures.
+    #[cfg_attr(target_os = "windows", allow(dead_code))]
+    pub async fn tray_icon_enabled(&self) -> bool {
+        self.settings.lock().await.tray_icon_enabled
+    }
 }
 
 // Pure decision tree for the tray snapshot. Visual-mode signals (paused,

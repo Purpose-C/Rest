@@ -91,6 +91,7 @@
   "daily_screen_time_budget_minutes": 480,
   "daily_screen_time_remind_again_minutes": 30,
   "tray_countdown_enabled": true,
+  "tray_icon_enabled": true,
   "tray_countdown_target": "next",
   "micro_break_mode": "overlay",
   "long_break_mode": "overlay",

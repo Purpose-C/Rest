@@ -694,6 +694,13 @@ pub struct Settings {
     pub daily_screen_time_remind_again_minutes: u64,
     pub tray_countdown_enabled: bool,
     pub tray_countdown_target: String,
+    /// Whether the tray shows its glyph. Off leaves just the countdown
+    /// number in the menu bar. The glyph comes back whenever there is no
+    /// number to show (paused, bedtime, on-break, idle, countdown off) —
+    /// otherwise the status item would collapse to zero width and the
+    /// menu would become unreachable.
+    #[serde(default = "default_true")]
+    pub tray_icon_enabled: bool,
     pub micro_break_mode: BreakMode,
     pub long_break_mode: BreakMode,
     /// Supporter-only freeform stylesheet, applied to both the settings
@@ -811,6 +818,7 @@ impl Default for Settings {
             daily_screen_time_remind_again_minutes: 60,
             tray_countdown_enabled: true,
             tray_countdown_target: default_tray_countdown_target(),
+            tray_icon_enabled: true,
             micro_break_mode: BreakMode::default(),
             long_break_mode: BreakMode::default(),
             custom_css: String::new(),

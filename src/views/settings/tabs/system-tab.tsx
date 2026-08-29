@@ -137,6 +137,13 @@ export function SystemTab({
           onlyOn={["macos", "linux"]}
           tip={t("system.trayCountdownTip")}
         />
+        <CheckboxRow
+          label={t("system.trayIcon")}
+          value={settings.tray_icon_enabled}
+          onChange={(v) => update("tray_icon_enabled", v)}
+          onlyOn={["macos", "linux"]}
+          tip={t("system.trayIconTip")}
+        />
         <label
           className={`row${settings.tray_countdown_enabled ? "" : " disabled"}`}
         >

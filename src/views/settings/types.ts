@@ -212,6 +212,7 @@ export type SchedulerSettings = {
   daily_screen_time_remind_again_minutes: number;
   tray_countdown_enabled: boolean;
   tray_countdown_target: TrayCountdownTarget;
+  tray_icon_enabled: boolean;
   micro_break_mode: BreakDeliveryMode;
   long_break_mode: BreakDeliveryMode;
   custom_css: string;

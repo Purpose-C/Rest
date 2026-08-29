@@ -566,19 +566,46 @@ fn tray_icon_kind_for(snapshot: &TrayCountdownSnapshot) -> TrayIconKind {
 
 fn spawn_countdown_ticker(app: AppHandle, tray: Arc<TrayIcon<tauri::Wry>>) {
     tauri::async_runtime::spawn(async move {
-        let mut last_icon: Option<TrayIconKind> = None;
+        // `Some(None)` means "currently hidden"; the outer `None` only
+        // means "nothing pushed yet", so the first tick always writes.
+        let mut last_icon: Option<Option<TrayIconKind>> = None;
         let mut last_tooltip: Option<String> = None;
         #[cfg(not(target_os = "windows"))]
         let mut last_title: Option<String> = None;
+        #[cfg(not(target_os = "windows"))]
+        let mut last_standalone: Option<bool> = None;
         loop {
             tokio::time::sleep(Duration::from_secs(1)).await;
             let scheduler = app.state::<Scheduler>().inner().clone();
             let (snapshot, text_enabled) = scheduler.tray_countdown_snapshot().await;
-            let icon_kind = tray_icon_kind_for(&snapshot);
+
+            #[cfg(not(target_os = "windows"))]
+            let title = tray_title_for(&snapshot, text_enabled);
+
+            // The glyph hides only while a number is actually on screen.
+            // Paused / bedtime / on-break / idle all blank the title, and a
+            // status item with neither glyph nor title collapses to zero
+            // width — the menu would become unreachable. Windows renders no
+            // title at all, so the glyph is unconditional there.
+            #[cfg(not(target_os = "windows"))]
+            let show_icon = scheduler.tray_icon_enabled().await
+                || title.as_deref().unwrap_or("").is_empty();
+            #[cfg(target_os = "windows")]
+            let show_icon = true;
+
+            let icon_kind = show_icon.then(|| tray_icon_kind_for(&snapshot));
             if Some(icon_kind) != last_icon {
-                if let Ok(icon) = tray_image(icon_kind, std::env::consts::OS) {
-                    let _ = tray.set_icon(Some(icon));
-                    let _ = tray.set_icon_as_template(icon_is_template(std::env::consts::OS));
+                match icon_kind {
+                    Some(kind) => {
+                        if let Ok(icon) = tray_image(kind, std::env::consts::OS) {
+                            let _ = tray.set_icon(Some(icon));
+                            let _ =
+                                tray.set_icon_as_template(icon_is_template(std::env::consts::OS));
+                        }
+                    }
+                    None => {
+                        let _ = tray.set_icon(None);
+                    }
                 }
                 last_icon = Some(icon_kind);
             }
@@ -593,14 +620,19 @@ fn spawn_countdown_ticker(app: AppHandle, tray: Arc<TrayIcon<tauri::Wry>>) {
             }
             #[cfg(not(target_os = "windows"))]
             {
-                let title = tray_title_for(&snapshot, text_enabled);
-                if title != last_title {
+                // Standalone (no glyph beside it) changes how the number
+                // should be styled, so re-apply when either input moves.
+                let standalone = !show_icon;
+                if title != last_title || Some(standalone) != last_standalone {
                     let _ = tray.set_title(title.clone());
                     #[cfg(target_os = "macos")]
                     {
-                        let _ = app.run_on_main_thread(apply_monospaced_status_titles);
+                        let _ = app.run_on_main_thread(move || {
+                            apply_monospaced_status_titles(standalone)
+                        });
                     }
                     last_title = title;
+                    last_standalone = Some(standalone);
                 }
             }
             // `text_enabled` is consumed by the title-gating block above;
@@ -611,20 +643,30 @@ fn spawn_countdown_ticker(app: AppHandle, tray: Arc<TrayIcon<tauri::Wry>>) {
     });
 }
 
-/// Tray title size as a fraction of the system menu-bar font. The default
-/// (1.0) renders the countdown at full menu-bar size, which reads large
-/// next to the padded glyph. Lower to shrink the number.
+/// Tray title size as a fraction of the system menu-bar font, when the
+/// number sits *beside the glyph*. Full menu-bar size reads large next to
+/// the padded glyph, so it is scaled down to match. Lower to shrink.
 #[cfg(target_os = "macos")]
 const TRAY_TITLE_FONT_SCALE: f64 = 0.82;
 
-/// Vertical nudge for the tray title, in points. AppKit centres the title
-/// on the button's baseline, which sits high against the glyph's optical
-/// centre. Negative moves the number down; raise toward 0 to move it up.
+/// Vertical nudge for the tray title beside the glyph, in points. AppKit
+/// aligns the title on the button's baseline, which sits high against the
+/// glyph's optical centre. Negative moves the number down.
 #[cfg(target_os = "macos")]
 const TRAY_TITLE_BASELINE_OFFSET: f64 = -1.0;
 
+/// Size and nudge when the number stands alone (glyph hidden). Both revert
+/// to the system defaults: with no glyph to match, the number should read
+/// as ordinary menu-bar text, the same size and baseline as every other
+/// item in the bar. Shrinking or nudging it here would make it the one
+/// misaligned thing in the row.
 #[cfg(target_os = "macos")]
-fn apply_monospaced_status_titles() {
+const TRAY_TITLE_FONT_SCALE_STANDALONE: f64 = 1.0;
+#[cfg(target_os = "macos")]
+const TRAY_TITLE_BASELINE_OFFSET_STANDALONE: f64 = 0.0;
+
+#[cfg(target_os = "macos")]
+fn apply_monospaced_status_titles(standalone: bool) {
     use objc2::msg_send;
     use objc2::rc::Retained;
     use objc2::runtime::AnyObject;
@@ -676,12 +718,20 @@ fn apply_monospaced_status_titles() {
         let base_size = base_font.pointSize();
         let base_desc = base_font.fontDescriptor();
         let mono_desc = base_desc.fontDescriptorByAddingAttributes(&desc_attrs);
-        let title_size = base_size * TRAY_TITLE_FONT_SCALE;
+        let (scale, offset) = if standalone {
+            (
+                TRAY_TITLE_FONT_SCALE_STANDALONE,
+                TRAY_TITLE_BASELINE_OFFSET_STANDALONE,
+            )
+        } else {
+            (TRAY_TITLE_FONT_SCALE, TRAY_TITLE_BASELINE_OFFSET)
+        };
+        let title_size = base_size * scale;
         let Some(mono_font) = NSFont::fontWithDescriptor_size(&mono_desc, title_size) else {
             return;
         };
 
-        let baseline = NSNumber::new_f64(TRAY_TITLE_BASELINE_OFFSET);
+        let baseline = NSNumber::new_f64(offset);
         let attrs = NSDictionary::from_slices::<NSString>(
             &[NSFontAttributeName, NSBaselineOffsetAttributeName],
             &[&*mono_font as &AnyObject, &*baseline as &AnyObject],
