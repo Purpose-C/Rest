@@ -508,16 +508,46 @@ fn outline_glyph_for_panels(rgba: &[u8], width: u32, height: u32) -> Vec<u8> {
     )
 }
 
+/// Fraction of the padded canvas the glyph occupies. The shipped assets
+/// bleed to all four edges, so the OS scales them to the full menu-bar
+/// height and the glyph reads noticeably chunkier than system icons,
+/// which conventionally leave a couple of points of breathing room.
+/// Centring the glyph in a larger transparent canvas shrinks it by the
+/// same ratio once the OS scales the whole thing down.
+#[cfg_attr(target_os = "windows", allow(dead_code))]
+const TRAY_GLYPH_SCALE: f32 = 0.78;
+
+/// Centre `rgba` in a transparent canvas sized so the glyph occupies
+/// `TRAY_GLYPH_SCALE` of it. Pure translation — no resampling, so the
+/// glyph stays pixel-exact and only gains margin.
+#[cfg_attr(target_os = "windows", allow(dead_code))]
+fn pad_glyph(rgba: &[u8], width: u32, height: u32) -> (Vec<u8>, u32, u32) {
+    let out_w = ((width as f32) / TRAY_GLYPH_SCALE).round() as u32;
+    let out_h = ((height as f32) / TRAY_GLYPH_SCALE).round() as u32;
+    let off_x = (out_w - width) / 2;
+    let off_y = (out_h - height) / 2;
+    let mut out = vec![0u8; (out_w * out_h * 4) as usize];
+    for row in 0..height {
+        let src = (row * width * 4) as usize;
+        let dst = (((row + off_y) * out_w + off_x) * 4) as usize;
+        let len = (width * 4) as usize;
+        out[dst..dst + len].copy_from_slice(&rgba[src..src + len]);
+    }
+    (out, out_w, out_h)
+}
+
 /// Decode a tray-icon asset and adapt it to the platform: macOS keeps the
 /// raw black template (AppKit tints it), every other OS gets the
 /// light-fill/dark-outline recolour so the glyph survives a dark panel (#86).
+/// Both paths get the glyph padded first so the tray icon isn't oversized.
 fn tray_image(kind: TrayIconKind, os: &str) -> tauri::Result<Image<'static>> {
     let base = Image::from_bytes(kind.bytes())?;
+    let (padded, w, h) = pad_glyph(base.rgba(), base.width(), base.height());
     if icon_is_template(os) {
-        return Ok(base);
+        return Ok(Image::new_owned(padded, w, h));
     }
-    let rgba = outline_glyph_for_panels(base.rgba(), base.width(), base.height());
-    Ok(Image::new_owned(rgba, base.width(), base.height()))
+    let rgba = outline_glyph_for_panels(&padded, w, h);
+    Ok(Image::new_owned(rgba, w, h))
 }
 
 #[cfg_attr(target_os = "windows", allow(dead_code))]
@@ -778,11 +808,11 @@ mod tests {
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Running(754), on),
-            Some(" 13m".to_string())
+            Some(" 13".to_string())
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Running(65), on),
-            Some(" 2m".to_string())
+            Some(" 2".to_string())
         );
     }
 
@@ -937,20 +967,39 @@ mod tests {
     #[test]
     fn tray_image_recolours_off_macos_but_not_on_macos() {
         let raw = Image::from_bytes(TRAY_ICON_BYTES).unwrap();
+        let (padded, pw, ph) = pad_glyph(raw.rgba(), raw.width(), raw.height());
         let mac = tray_image(TrayIconKind::Normal, "macos").unwrap();
         assert_eq!(
             mac.rgba(),
-            raw.rgba(),
-            "macOS keeps the raw template for AppKit to tint"
+            padded.as_slice(),
+            "macOS keeps the raw template (padded) for AppKit to tint"
         );
         let linux = tray_image(TrayIconKind::Normal, "linux").unwrap();
         assert_ne!(
             linux.rgba(),
-            raw.rgba(),
+            padded.as_slice(),
             "Linux must recolour so the glyph survives a dark panel"
         );
-        assert_eq!(linux.width(), raw.width());
-        assert_eq!(linux.height(), raw.height());
+        assert_eq!(linux.width(), pw);
+        assert_eq!(linux.height(), ph);
+    }
+
+    #[test]
+    fn pad_glyph_centres_the_source_and_grows_the_canvas() {
+        let raw = Image::from_bytes(TRAY_ICON_BYTES).unwrap();
+        let (w, h) = (raw.width(), raw.height());
+        let (out, ow, oh) = pad_glyph(raw.rgba(), w, h);
+        assert!(ow > w && oh > h, "canvas must grow to make room");
+        assert_eq!(out.len(), (ow * oh * 4) as usize);
+        // The added margin is fully transparent: the first row is untouched.
+        assert!(out[..(ow * 4) as usize].iter().all(|&b| b == 0));
+        // The glyph lands intact at the centre offset.
+        let (off_x, off_y) = ((ow - w) / 2, (oh - h) / 2);
+        let dst = ((off_y * ow + off_x) * 4) as usize;
+        assert_eq!(
+            &out[dst..dst + (w * 4) as usize],
+            &raw.rgba()[..(w * 4) as usize]
+        );
     }
 
     #[test]
