@@ -122,7 +122,8 @@ fn build_profile_submenu(
 }
 
 pub fn setup(app: &AppHandle) -> tauri::Result<()> {
-    let prefs = MenuItem::with_id(app, "preferences", "偏好设置…", true, None::<&str>)?;
+    let countdown = MenuItem::with_id(app, "countdown", "休息未启用", false, None::<&str>)?;
+    let prefs = MenuItem::with_id(app, "preferences", "打开设置", true, None::<&str>)?;
     let resume = MenuItem::with_id(app, "resume", "恢复", false, None::<&str>)?;
     let resume_break = MenuItem::with_id(
         app,
@@ -136,6 +137,33 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let long_break_now =
         MenuItem::with_id(app, "long_break_now", "立即进行长休息", true, None::<&str>)?;
 
+    let pause_15m = MenuItem::with_id(app, "pause_15m", "15 分钟", true, None::<&str>)?;
+    let pause_30m = MenuItem::with_id(app, "pause_30m", "30 分钟", true, None::<&str>)?;
+    let pause_1h = MenuItem::with_id(app, "pause_1h", "1 小时", true, None::<&str>)?;
+    let pause_2h = MenuItem::with_id(app, "pause_2h", "2 小时", true, None::<&str>)?;
+    let pause_4h = MenuItem::with_id(app, "pause_4h", "4 小时", true, None::<&str>)?;
+    let pause_tomorrow =
+        MenuItem::with_id(app, "pause_tomorrow", "直到明早 6 点", true, None::<&str>)?;
+    let pause_indef = MenuItem::with_id(app, "pause_indef", "无限期", true, None::<&str>)?;
+    let pause_sep = PredefinedMenuItem::separator(app)?;
+    let pause_until = MenuItem::with_id(app, "pause_until", "暂停直到…", true, None::<&str>)?;
+    let pause_submenu = Submenu::with_items(
+        app,
+        "暂停…",
+        true,
+        &[
+            &pause_15m,
+            &pause_30m,
+            &pause_1h,
+            &pause_2h,
+            &pause_4h,
+            &pause_tomorrow,
+            &pause_indef,
+            &pause_sep,
+            &pause_until,
+        ],
+    )?;
+
     let (initial_profiles, initial_active) = read_profiles_blocking(app);
     let profile_submenu = build_profile_submenu(app, &initial_profiles, &initial_active)?;
 
@@ -148,9 +176,10 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let menu = Menu::with_items(
         app,
         &[
-            &prefs,
+            &countdown,
             &sep1,
             &resume,
+            &pause_submenu,
             &sep2,
             &profile_submenu,
             &sep3,
@@ -158,11 +187,14 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
             &micro_break_now,
             &long_break_now,
             &sep4,
+            &prefs,
             &quit,
         ],
     )?;
 
+    let pause_submenu_for_event = pause_submenu.clone();
     let resume_for_event = resume.clone();
+    let pause_submenu_for_click = pause_submenu.clone();
     let resume_for_click = resume.clone();
     let resume_break_for_event = resume_break.clone();
 
@@ -173,20 +205,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         .icon_as_template(icon_is_template(std::env::consts::OS))
         .menu(&menu)
         .tooltip(tooltip_for(&initial_active))
-        .show_menu_on_left_click(false)
-        .on_tray_icon_event(|tray, event| {
-            if let tauri::tray::TrayIconEvent::Click {
-                button,
-                button_state,
-                rect,
-                ..
-            } = event
-            {
-                if is_quick_panel_tray_click(button, button_state) {
-                    crate::window::show_quick_window(tray.app_handle(), rect);
-                }
-            }
-        })
+        .show_menu_on_left_click(true)
         .on_menu_event(move |app, event| {
             let id = event.id.as_ref();
             if let Some(profile_name) = id.strip_prefix("profile:") {
@@ -210,12 +229,17 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                 "preferences" => {
                     crate::window::show_main_window(app);
                 }
+                "pause_until" => {
+                    crate::window::show_pause_window(app);
+                }
                 "resume" => {
                     let scheduler = app.state::<Scheduler>().inner().clone();
                     let app_handle = app.clone();
+                    let pause_submenu = pause_submenu_for_click.clone();
                     let resume = resume_for_click.clone();
                     tauri::async_runtime::spawn(async move {
                         crate::scheduler::resume_impl(&scheduler).await;
+                        let _ = pause_submenu.set_enabled(true);
                         let _ = resume.set_enabled(false);
                         let _ = app_handle.emit("pause:changed", false);
                     });
@@ -249,6 +273,29 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                 }
                 _ => {}
             }
+
+            let duration: Option<Option<u64>> = match id {
+                "pause_15m" => Some(Some(15 * 60)),
+                "pause_30m" => Some(Some(30 * 60)),
+                "pause_1h" => Some(Some(60 * 60)),
+                "pause_2h" => Some(Some(2 * 60 * 60)),
+                "pause_4h" => Some(Some(4 * 60 * 60)),
+                "pause_tomorrow" => Some(Some(seconds_until_tomorrow_morning())),
+                "pause_indef" => Some(None),
+                _ => None,
+            };
+            if let Some(duration_secs) = duration {
+                let scheduler = app.state::<Scheduler>().inner().clone();
+                let app_handle = app.clone();
+                let pause_submenu = pause_submenu_for_click.clone();
+                let resume = resume_for_click.clone();
+                tauri::async_runtime::spawn(async move {
+                    crate::scheduler::pause_impl(&scheduler, duration_secs).await;
+                    let _ = pause_submenu.set_enabled(false);
+                    let _ = resume.set_enabled(true);
+                    let _ = app_handle.emit("pause:changed", true);
+                });
+            }
         })
         .build(app)?;
 
@@ -259,6 +306,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
 
     app.listen("pause:changed", move |event| {
         let paused: bool = serde_json::from_str(event.payload()).unwrap_or(false);
+        let _ = pause_submenu_for_event.set_enabled(!paused);
         let _ = resume_for_event.set_enabled(paused);
     });
 
@@ -273,8 +321,10 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let menu_for_profile = menu_holder.clone();
     let profile_submenu_for_profile = profile_submenu_holder.clone();
     let tray_for_profile = tray_holder.clone();
+    let countdown_for_rebuild = countdown.clone();
     let prefs_for_rebuild = prefs.clone();
     let resume_for_rebuild = resume.clone();
+    let pause_submenu_for_rebuild = pause_submenu.clone();
     let resume_break_for_rebuild = resume_break.clone();
     let micro_break_now_for_rebuild = micro_break_now.clone();
     let long_break_now_for_rebuild = long_break_now.clone();
@@ -288,8 +338,10 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         let menu_holder = menu_for_profile.clone();
         let profile_submenu_holder = profile_submenu_for_profile.clone();
         let tray = tray_for_profile.clone();
+        let countdown = countdown_for_rebuild.clone();
         let prefs = prefs_for_rebuild.clone();
         let resume = resume_for_rebuild.clone();
+        let pause_submenu = pause_submenu_for_rebuild.clone();
         let resume_break = resume_break_for_rebuild.clone();
         let micro_break_now = micro_break_now_for_rebuild.clone();
         let long_break_now = long_break_now_for_rebuild.clone();
@@ -314,9 +366,10 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
             let Ok(new_menu) = Menu::with_items(
                 &app,
                 &[
-                    &prefs,
+                    &countdown,
                     &sep1,
                     &resume,
+                    &pause_submenu,
                     &sep2,
                     &new_submenu,
                     &sep3,
@@ -324,6 +377,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                     &micro_break_now,
                     &long_break_now,
                     &sep4,
+                    &prefs,
                     &quit,
                 ],
             ) else {
@@ -340,9 +394,22 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         });
     });
 
-    spawn_countdown_ticker(app.clone(), tray_holder.clone());
+    spawn_countdown_ticker(app.clone(), tray_holder.clone(), countdown);
 
     Ok(())
+}
+
+fn countdown_menu_label(snapshot: &TrayCountdownSnapshot) -> String {
+    match snapshot {
+        TrayCountdownSnapshot::Running(secs) => format!("下次休息 {}:{:02}", secs / 60, secs % 60),
+        TrayCountdownSnapshot::Paused => "已暂停".to_string(),
+        TrayCountdownSnapshot::Bedtime => "就寝提醒进行中".to_string(),
+        TrayCountdownSnapshot::OnBreak => "正在休息".to_string(),
+        TrayCountdownSnapshot::Suppressed(reason) => {
+            format!("已拦截：{}", reason.short_label())
+        }
+        TrayCountdownSnapshot::Idle | TrayCountdownSnapshot::Disabled => "休息未启用".to_string(),
+    }
 }
 
 #[cfg_attr(target_os = "windows", allow(dead_code))]
@@ -516,7 +583,11 @@ fn tray_icon_kind_for(snapshot: &TrayCountdownSnapshot) -> TrayIconKind {
     }
 }
 
-fn spawn_countdown_ticker(app: AppHandle, tray: Arc<TrayIcon<tauri::Wry>>) {
+fn spawn_countdown_ticker(
+    app: AppHandle,
+    tray: Arc<TrayIcon<tauri::Wry>>,
+    countdown: MenuItem<tauri::Wry>,
+) {
     tauri::async_runtime::spawn(async move {
         // `Some(None)` means "currently hidden"; the outer `None` only
         // means "nothing pushed yet", so the first tick always writes.
@@ -530,6 +601,7 @@ fn spawn_countdown_ticker(app: AppHandle, tray: Arc<TrayIcon<tauri::Wry>>) {
             tokio::time::sleep(Duration::from_secs(1)).await;
             let scheduler = app.state::<Scheduler>().inner().clone();
             let (snapshot, text_enabled) = scheduler.tray_countdown_snapshot().await;
+            let _ = countdown.set_text(countdown_menu_label(&snapshot));
 
             #[cfg(not(target_os = "windows"))]
             let title = tray_title_for(&snapshot, text_enabled);
@@ -711,19 +783,6 @@ fn apply_monospaced_status_titles(standalone: bool) {
     }
 }
 
-fn is_quick_panel_tray_click(
-    button: tauri::tray::MouseButton,
-    state: tauri::tray::MouseButtonState,
-) -> bool {
-    matches!(
-        (button, state),
-        (
-            tauri::tray::MouseButton::Left,
-            tauri::tray::MouseButtonState::Up
-        )
-    )
-}
-
 fn read_profiles_blocking(app: &AppHandle) -> (Vec<String>, String) {
     let scheduler = app.state::<Scheduler>().inner().clone();
     tauri::async_runtime::block_on(async move {
@@ -752,27 +811,42 @@ mod tests {
     }
 
     #[test]
+    fn countdown_menu_label_covers_each_scheduler_state() {
+        assert_eq!(
+            countdown_menu_label(&TrayCountdownSnapshot::Running(277)),
+            "下次休息 4:37"
+        );
+        assert_eq!(
+            countdown_menu_label(&TrayCountdownSnapshot::Paused),
+            "已暂停"
+        );
+        assert_eq!(
+            countdown_menu_label(&TrayCountdownSnapshot::Bedtime),
+            "就寝提醒进行中"
+        );
+        assert_eq!(
+            countdown_menu_label(&TrayCountdownSnapshot::OnBreak),
+            "正在休息"
+        );
+        assert_eq!(
+            countdown_menu_label(&TrayCountdownSnapshot::Suppressed(SuppressReason::Dnd)),
+            "已拦截：勿扰"
+        );
+        assert_eq!(
+            countdown_menu_label(&TrayCountdownSnapshot::Idle),
+            "休息未启用"
+        );
+        assert_eq!(
+            countdown_menu_label(&TrayCountdownSnapshot::Disabled),
+            "休息未启用"
+        );
+    }
+
+    #[test]
     fn icon_is_template_only_on_macos() {
         assert!(icon_is_template("macos"));
         assert!(!icon_is_template("linux"));
         assert!(!icon_is_template("windows"));
-    }
-
-    #[test]
-    fn left_click_up_opens_quick_panel_other_buttons_do_not() {
-        use tauri::tray::{MouseButton, MouseButtonState};
-        assert!(is_quick_panel_tray_click(
-            MouseButton::Left,
-            MouseButtonState::Up
-        ));
-        assert!(!is_quick_panel_tray_click(
-            MouseButton::Left,
-            MouseButtonState::Down
-        ));
-        assert!(!is_quick_panel_tray_click(
-            MouseButton::Right,
-            MouseButtonState::Up
-        ));
     }
 
     #[test]

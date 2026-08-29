@@ -1,14 +1,12 @@
 import { t } from "../../../lib/i18n";
+import { CollapsibleSection } from "../components/collapsible-section";
 import type { UseProfiles } from "../hooks/use-profiles";
 
 export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
   return (
     <>
-      <h2 id="settings-profiles">{t("profiles.title")}</h2>
-      <section>
-        <p className="placeholder">
-          {t("profiles.desc")}
-        </p>
+      <CollapsibleSection id="settings-profiles" title={t("profiles.title")}>
+        <p className="placeholder">{t("profiles.desc")}</p>
         {profiles.profileError && (
           <p className="profile-error">{profiles.profileError}</p>
         )}
@@ -175,7 +173,7 @@ export function ProfilesTab({ profiles }: { profiles: UseProfiles }) {
             {t("profiles.add")}
           </button>
         </div>
-      </section>
+      </CollapsibleSection>
     </>
   );
 }

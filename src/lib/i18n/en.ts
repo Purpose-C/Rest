@@ -745,22 +745,6 @@ export const en: Record<string, string> = {
   "app.areaQuick": "Quick panel",
   "app.areaSettings": "Settings",
 
-  // quick-panel
-  "quickPanel.nextBreak": "Next break",
-  "quickPanel.paused": "Paused",
-  "quickPanel.pausedLabel": "Paused",
-  "quickPanel.onBreak": "On break",
-  "quickPanel.bedtime": "Bedtime",
-  "quickPanel.suppressed": "Suppressed",
-  "quickPanel.disabled": "Breaks disabled",
-  "quickPanel.idle": "Idle",
-  "quickPanel.resume": "Resume",
-  "quickPanel.pause15m": "15m",
-  "quickPanel.pause30m": "30m",
-  "quickPanel.pause1h": "1h",
-  "quickPanel.pauseIndef": "Indefinitely",
-  "quickPanel.more": "More…",
-
   // error-boundary
   "error.areaHitError": "{area} hit an error",
   "error.somethingWentWrong": "Something went wrong",

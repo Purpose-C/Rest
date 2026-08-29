@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { t } from "../../../lib/i18n";
+import { CollapsibleSection } from "../components/collapsible-section";
 import {
   clampCsvToDark,
   hexToRgbCsv,
@@ -130,8 +131,7 @@ export function BreaksTab({
 
   return (
     <>
-      <h2 id="settings-delivery">{t("breaks.delivery")}</h2>
-      <section>
+      <CollapsibleSection id="settings-delivery" title={t("breaks.delivery")}>
         <p className="placeholder">
           {t("breaks.deliveryDesc")}
           <InfoTip text={t("breaks.deliveryTip")} />
@@ -191,10 +191,9 @@ export function BreaksTab({
             {t("breaks.takeLongNow")}
           </button>
         </div>
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-overlay">{t("breaks.overlay")}</h2>
-      <section>
+      <CollapsibleSection id="settings-overlay" title={t("breaks.overlay")}>
         <label className="row">
           <span>
             {t("breaks.transparency")}
@@ -403,10 +402,9 @@ export function BreaksTab({
             tip={t("breaks.showVignetteTip")}
           />
         </Advanced>
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-sound">{t("breaks.sound")}</h2>
-      <section>
+      <CollapsibleSection id="settings-sound" title={t("breaks.sound")}>
         <label className="row">
           <span>{t("breaks.volume")}</span>
           <span className="range-wrap">
@@ -438,10 +436,12 @@ export function BreaksTab({
           onChange={(next) => update("long_sound", next)}
           isSupporter={isSupporter}
         />
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-skip-postpone">{t("breaks.skipPostpone")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-skip-postpone"
+        title={t("breaks.skipPostpone")}
+      >
         <CheckboxRow
           label={t("breaks.strictMode")}
           value={settings.strict_mode}
@@ -568,10 +568,12 @@ export function BreaksTab({
             tip={t("breaks.longEnforceableTip")}
           />
         </Advanced>
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-break-ideas">{t("breaks.breakIdeas")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-break-ideas"
+        title={t("breaks.breakIdeas")}
+      >
         <p className="placeholder">
           {t("breaks.breakIdeasDesc")}
           {isSupporter ? t("breaks.breakIdeasSupporterDesc") : ""}
@@ -593,7 +595,9 @@ export function BreaksTab({
           >
             <option value="both">{t("breaks.mixBoth")}</option>
             <option value="physical">{t("breaks.mixPhysicalOnly")}</option>
-            <option value="psychological">{t("breaks.mixPsychologicalOnly")}</option>
+            <option value="psychological">
+              {t("breaks.mixPsychologicalOnly")}
+            </option>
           </select>
         </label>
         {routinePicker("micro")}
@@ -718,22 +722,26 @@ export function BreaksTab({
             </label>
           </>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-content-packs">{t("breaks.contentPacks")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-content-packs"
+        title={t("breaks.contentPacks")}
+      >
         <ContentPacks
           reload={async () => {
             await reload();
             reloadRoutines();
           }}
         />
-      </section>
+      </CollapsibleSection>
 
       {isSupporter && (
         <>
-          <h2 id="settings-custom-css">{t("breaks.customCss")}</h2>
-          <section>
+          <CollapsibleSection
+            id="settings-custom-css"
+            title={t("breaks.customCss")}
+          >
             <p className="placeholder">{t("breaks.customCssDesc")}</p>
             <label className="row stacked">
               <span>{t("breaks.stylesheet")}</span>
@@ -747,7 +755,7 @@ export function BreaksTab({
                 onBlur={() => update("custom_css", customCss)}
               />
             </label>
-          </section>
+          </CollapsibleSection>
         </>
       )}
     </>

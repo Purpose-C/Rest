@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { t } from "../../../lib/i18n";
+import { CollapsibleSection } from "../components/collapsible-section";
 import { formatClockList, parseClockList } from "../../../lib/clock-list";
 import { useLocalDraft } from "../../../lib/use-local-draft";
 import { formatScreenTime, progressPercent } from "../../../lib/screen-time";
@@ -30,8 +31,10 @@ export function ScheduleTab({
 
   return (
     <>
-      <h2 id="settings-active-hours">{t("schedule.activeHours")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-active-hours"
+        title={t("schedule.activeHours")}
+      >
         <CheckboxRow
           label={t("schedule.onlyWithinHours")}
           value={settings.work_window_enabled}
@@ -59,10 +62,12 @@ export function ScheduleTab({
           disabled={!settings.work_window_enabled}
           tip={t("schedule.onTheseDaysTip")}
         />
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-micro-breaks">{t("schedule.microBreaks")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-micro-breaks"
+        title={t("schedule.microBreaks")}
+      >
         <CheckboxRow
           label={t("schedule.enableMicro")}
           value={settings.micro_enabled}
@@ -139,10 +144,12 @@ export function ScheduleTab({
             </Advanced>
           </>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-long-breaks">{t("schedule.longBreaks")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-long-breaks"
+        title={t("schedule.longBreaks")}
+      >
         <CheckboxRow
           label={t("schedule.enableLong")}
           value={settings.long_enabled}
@@ -219,10 +226,9 @@ export function ScheduleTab({
             </Advanced>
           </>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-bedtime">{t("schedule.bedtime")}</h2>
-      <section>
+      <CollapsibleSection id="settings-bedtime" title={t("schedule.bedtime")}>
         <CheckboxRow
           label={t("schedule.persistentSleepReminders")}
           value={settings.bedtime_enabled}
@@ -271,10 +277,12 @@ export function ScheduleTab({
             </div>
           </>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-screen-time">{t("schedule.dailyScreenTime")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-screen-time"
+        title={t("schedule.dailyScreenTime")}
+      >
         <CheckboxRow
           label={t("schedule.remindWrapUp")}
           value={settings.daily_screen_time_enabled}
@@ -299,7 +307,14 @@ export function ScheduleTab({
                 update("daily_screen_time_remind_again_minutes", v)
               }
             />
-            <div className="screen-time-progress">
+            <div
+              className={`screen-time-progress${
+                (screenTime?.seconds ?? 0) >
+                settings.daily_screen_time_budget_minutes * 60
+                  ? " over-budget"
+                  : ""
+              }`}
+            >
               <span className="screen-time-label">{t("schedule.today")}</span>
               <span className="screen-time-value">
                 {formatScreenTime(screenTime?.seconds ?? 0)} /{" "}
@@ -333,7 +348,7 @@ export function ScheduleTab({
             </div>
           </>
         )}
-      </section>
+      </CollapsibleSection>
 
       <Advanced label={t("schedule.showAdvancedScheduling")}>
         <h3>{t("schedule.inputAwareScheduling")}</h3>

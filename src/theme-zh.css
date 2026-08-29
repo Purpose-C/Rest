@@ -1,20 +1,138 @@
 .settings {
   --card-bg: #242831;
+  --accent: #78bcc7;
+  --data-1: #c7b6ef;
+  --data-2: #b69de4;
+  --data-3: #a17fd8;
+  --data-4: #dacff4;
+  --warning-color: #f3a6c0;
+  --danger: var(--warning-color);
 }
 
 @media (prefers-color-scheme: light) {
   .settings {
-    --card-bg: #ffffff;
+    --card-bg: #fff;
+    --accent: #2e545d;
+    --data-1: #59417e;
+    --data-2: #6d5193;
+    --data-3: #7c5da3;
+    --data-4: #493269;
+    --warning-color: #963755;
   }
 }
 
 #root .settings h2,
 body .settings h2 {
-  font-size: 1.05rem;
-  font-weight: 650;
+  font-size: 1.3rem;
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
   color: var(--fg);
+}
+
+#root .settings .settings-section-toggle,
+body .settings .settings-section-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+#root .settings .settings-section-toggle:focus-visible,
+body .settings .settings-section-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.settings-section-chevron {
+  width: 0.8em;
+  flex: 0 0 0.8em;
+}
+
+.collapsible-settings-section .section-heading h2 {
+  flex: 1;
+}
+
+#root .settings section[hidden],
+body .settings section[hidden] {
+  display: none;
+}
+
+#root .settings button.link:hover,
+body .settings button.link:hover {
+  color: var(--accent);
+}
+
+#root .settings .hour-bar,
+#root .settings .weekday-bar-taken,
+body .settings .hour-bar,
+body .settings .weekday-bar-taken {
+  background: var(--data-1);
+}
+
+#root .settings .weekday-bar-dismissed,
+body .settings .weekday-bar-dismissed {
+  background: var(--data-3);
+  opacity: 1;
+}
+
+#root .settings .heatmap-cell[data-level="1"],
+body .settings .heatmap-cell[data-level="1"] {
+  background: var(--data-4);
+  border-color: var(--data-4);
+}
+
+#root .settings .heatmap-cell[data-level="2"],
+body .settings .heatmap-cell[data-level="2"] {
+  background: var(--data-1);
+  border-color: var(--data-1);
+}
+
+#root .settings .heatmap-cell[data-level="3"],
+body .settings .heatmap-cell[data-level="3"] {
+  background: var(--data-2);
+  border-color: var(--data-2);
+}
+
+#root .settings .heatmap-cell[data-level="4"],
+body .settings .heatmap-cell[data-level="4"] {
+  background: var(--data-3);
+  border-color: var(--data-3);
+}
+
+.settings .suppression-bars,
+.settings .donut-wrap {
+  --primary-color: var(--data-1);
+  --secondary-color: var(--data-2);
+  --accent-color: var(--data-3);
+  --light-primary-color: var(--data-4);
+}
+
+#root .settings .profile-actions .link.danger,
+#root .settings .content-pack-err,
+#root .settings .profile-error,
+#root .settings button.danger,
+#root .settings .screen-time-progress.over-budget .screen-time-value,
+body .settings .profile-actions .link.danger,
+body .settings .content-pack-err,
+body .settings .profile-error,
+body .settings button.danger,
+body .settings .screen-time-progress.over-budget .screen-time-value,
+#settings-supporter .settings-section-toggle,
+#settings-custom-css .settings-section-toggle {
+  color: var(--warning-color);
+}
+
+#root .settings .screen-time-progress.over-budget .screen-time-bar > span,
+body .settings .screen-time-progress.over-budget .screen-time-bar > span {
+  background: var(--warning-color);
 }
 
 #root .settings h3,

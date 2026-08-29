@@ -209,7 +209,7 @@ To bound that failure, `fire_break` arms a monotonic epoch in [`scheduler::overl
 
 ## Accessibility contract
 
-The renderer has four windows (`main`, `overlay`, `pause`, `quick`) and each has a documented assistive-technology surface. Keep these contracts intact when touching the relevant files. Settings tabs × scheme and the break overlay are gated by [`scripts/audit-a11y.mjs`](https://github.com/drmowinckels/entracte/blob/main/scripts/audit-a11y.mjs); the pause picker and quick panel are covered at the unit level (accessible names, live regions, keyboard shortcuts).
+The renderer has three windows (`main`, `overlay`, `pause`) and each has a documented assistive-technology surface. Keep these contracts intact when touching the relevant files. Settings tabs × scheme and the break overlay are gated by [`scripts/audit-a11y.mjs`](https://github.com/drmowinckels/entracte/blob/main/scripts/audit-a11y.mjs); the pause picker is covered at the unit level (accessible names and keyboard shortcuts).
 
 ### Document titles
 
@@ -222,6 +222,8 @@ The Settings window follows the W3C [Tabs pattern](https://www.w3.org/WAI/ARIA/a
 A `Skip to settings content` link is the first focusable element of the shell. It is visually hidden via `transform: translateY(-200%)` until `:focus-visible`, then jumps to the **active tabpanel's id** so focus lands directly on content (no intermediate wrapper). Its `href` tracks the active tab via `tabPanelId(tab)`.
 
 All seven tabpanels render at all times with the inactive ones `hidden` — this keeps every tab's `aria-controls` pointing at an element that exists in the DOM, as required by the W3C APG Tabs pattern.
+
+Every settings chapter uses a disclosure button inside its `h2`. The button exposes `aria-expanded` and `aria-controls`, and controls the immediately following `section`; collapsed state is local renderer state persisted under `settings.collapsed.<sectionId>`. Existing nested Advanced disclosures remain independent.
 
 | Element        | Role       | Required attrs                                                                                        |
 | -------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
@@ -247,10 +249,6 @@ Strict mode swaps the dialog for an `aria-live="assertive"` `role="alert"` regio
 When a long break is enforceable it intentionally renders no Skip control. In that case (and only that case — not micro/sleep breaks, not when Skip or Postpone are available) the overlay surfaces a static `role="note"` line explaining why and where to change it. The decision is the pure [`shouldShowEnforceableHint`](https://github.com/drmowinckels/entracte/blob/main/src/views/break-overlay/skip-hint.ts) helper; the hint is informational, not interactive, and is part of the dialog's described content rather than a live region.
 
 On a skippable break, **Escape** dismisses the overlay (the same action as Skip) via [`use-escape-to-dismiss.ts`](https://github.com/drmowinckels/entracte/blob/main/src/views/break-overlay/hooks/use-escape-to-dismiss.ts). The Skip button carries `aria-keyshortcuts="Escape"` so assistive tech announces the shortcut on the equivalent control. An enforceable break has no Escape handler and no Skip button, so there's no shortcut to advertise.
-
-### Quick panel
-
-The quick panel (`?window=quick`) provides an at-a-glance countdown and fast pause triggers from the system tray. The ticking digits are `aria-hidden`; an `aria-live="polite"` region announces the status (`Next break` / `Paused` / `On break`, etc.) so assistive tech is not spoken every second. Those attributes are asserted in the quick-panel unit tests; `audit-a11y.mjs` does not load this window.
 
 ### Keyboard shortcuts and the VoiceOver modifier
 

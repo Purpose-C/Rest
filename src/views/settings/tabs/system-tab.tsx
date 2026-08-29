@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { t } from "../../../lib/i18n";
+import { CollapsibleSection } from "../components/collapsible-section";
 import {
   TRAY_COUNTDOWN_TARGETS,
   type TrayCountdownTarget,
@@ -81,17 +82,15 @@ export function SystemTab({
 
   return (
     <>
-      <h2 id="settings-startup">{t("system.startup")}</h2>
-      <section>
+      <CollapsibleSection id="settings-startup" title={t("system.startup")}>
         <CheckboxRow
           label={t("system.autostart")}
           value={settings.autostart_enabled}
           onChange={(v) => setAutostart(v)}
         />
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-display">{t("system.display")}</h2>
-      <section>
+      <CollapsibleSection id="settings-display" title={t("system.display")}>
         <label className="row">
           <span>{t("system.timeFormat")}</span>
           <select
@@ -104,10 +103,12 @@ export function SystemTab({
             <option value="12h">{t("system.format12h")}</option>
           </select>
         </label>
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-notifications">{t("system.notifications")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-notifications"
+        title={t("system.notifications")}
+      >
         <CheckboxRow
           label={t("system.prebreakNotify")}
           value={settings.prebreak_notification_enabled}
@@ -121,15 +122,13 @@ export function SystemTab({
           multiplier={1}
           onChange={(v) => update("prebreak_notification_seconds", v)}
         />
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-hotkeys">{t("system.hotkeys")}</h2>
-      <section>
+      <CollapsibleSection id="settings-hotkeys" title={t("system.hotkeys")}>
         <HotkeysSection settings={settings} update={update} />
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-tray">{t("system.tray")}</h2>
-      <section>
+      <CollapsibleSection id="settings-tray" title={t("system.tray")}>
         <CheckboxRow
           label={t("system.trayCountdown")}
           value={settings.tray_countdown_enabled}
@@ -166,18 +165,15 @@ export function SystemTab({
             ))}
           </select>
         </label>
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-plugins">{t("system.plugins")}</h2>
-      <section>
+      <CollapsibleSection id="settings-plugins" title={t("system.plugins")}>
         <Plugins reload={reload} />
-      </section>
+      </CollapsibleSection>
 
       <Advanced label={t("system.showAdvancedHooks")}>
         <h3 id="settings-hooks">{t("system.eventHooks")}</h3>
-        <p className="placeholder hook-warning">
-          {t("system.hooksWarning")}
-        </p>
+        <p className="placeholder hook-warning">{t("system.hooksWarning")}</p>
         <label className="row">
           <span>{t("system.runShellCommands")}</span>
           <input
@@ -209,7 +205,9 @@ export function SystemTab({
             disabled={hooks.saving || !hooks.isDirty(settings)}
             onClick={hooks.save}
           >
-            {hooks.saving ? t("system.waitingConfirmation") : t("system.saveHooks")}
+            {hooks.saving
+              ? t("system.waitingConfirmation")
+              : t("system.saveHooks")}
           </button>
           <button
             className="secondary"

@@ -86,7 +86,7 @@ pub fn update_notification(info: &UpdateInfo) -> Option<(String, String)> {
     Some((
         "发现新版本".to_string(),
         format!(
-            "Entracte {} 已发布（当前版本为 {}）。请打开 偏好设置 → 关于 进行更新。",
+            "Entracte {} 已发布（当前版本为 {}）。请打开设置 → 关于进行更新。",
             info.latest, info.current
         ),
     ))

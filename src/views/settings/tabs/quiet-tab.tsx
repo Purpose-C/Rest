@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { t } from "../../../lib/i18n";
+import { CollapsibleSection } from "../components/collapsible-section";
 import {
   hasToken,
   suggestionsForPlatform,
@@ -41,11 +42,8 @@ export function QuietTab({
 
   return (
     <>
-      <h2 id="settings-auto-pause">{t("quiet.autoPause")}</h2>
-      <section>
-        <p className="placeholder">
-          {t("quiet.autoPauseDesc")}
-        </p>
+      <CollapsibleSection id="settings-auto-pause" title={t("quiet.autoPause")}>
+        <p className="placeholder">{t("quiet.autoPauseDesc")}</p>
         <CheckboxRow
           label={t("quiet.dnd")}
           value={settings.pause_during_dnd}
@@ -73,10 +71,12 @@ export function QuietTab({
               : t("quiet.fullscreenVideoTipUnreliable")
           }
         />
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-during-breaks">{t("quiet.duringBreaks")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-during-breaks"
+        title={t("quiet.duringBreaks")}
+      >
         <CheckboxRow
           label={t("quiet.pauseMedia")}
           value={settings.pause_media_during_breaks}
@@ -88,10 +88,9 @@ export function QuietTab({
               : t("quiet.pauseMediaTipFallback")
           }
         />
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-app-pause">{t("quiet.appPause")}</h2>
-      <section>
+      <CollapsibleSection id="settings-app-pause" title={t("quiet.appPause")}>
         <CheckboxRow
           label={t("quiet.appPauseCheckbox")}
           value={settings.app_pause_enabled}
@@ -101,9 +100,7 @@ export function QuietTab({
         {settings.app_pause_enabled && (
           <>
             <label className="row stacked">
-              <span>
-                {t("quiet.appPausePlaceholder")}
-              </span>
+              <span>{t("quiet.appPausePlaceholder")}</span>
               <textarea
                 className="textarea"
                 rows={4}
@@ -143,10 +140,12 @@ export function QuietTab({
             </div>
           </>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-manual-pause">{t("quiet.manualPause")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-manual-pause"
+        title={t("quiet.manualPause")}
+      >
         {pauseInfo.paused ? (
           <div className="pause-control">
             <button
@@ -167,9 +166,7 @@ export function QuietTab({
           </div>
         ) : (
           <>
-            <p className="placeholder">
-              {t("quiet.manualPauseDesc")}
-            </p>
+            <p className="placeholder">{t("quiet.manualPauseDesc")}</p>
             <label className="row">
               <span>{t("quiet.pauseUntil")}</span>
               <input
@@ -195,7 +192,7 @@ export function QuietTab({
             </div>
           </>
         )}
-      </section>
+      </CollapsibleSection>
     </>
   );
 }

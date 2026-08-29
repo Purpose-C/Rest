@@ -6,6 +6,7 @@ import {
   save as saveDialog,
 } from "@tauri-apps/plugin-dialog";
 import { t } from "../../../lib/i18n";
+import { CollapsibleSection } from "../components/collapsible-section";
 import {
   deltaDirection,
   deltaPct,
@@ -141,8 +142,10 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
 
   return (
     <>
-      <h2 id="settings-insights">{t("insights.thisSession")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-insights"
+        title={t("insights.thisSession")}
+      >
         <p className="placeholder">{t("insights.thisSessionDesc")}</p>
         <div className="stats-grid">
           <div className="stat">
@@ -167,10 +170,12 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
             {t("insights.resetCounters")}
           </button>
         </div>
-      </section>
+      </CollapsibleSection>
 
-      <h2>{t("insights.range")}</h2>
-      <section>
+      <CollapsibleSection
+        id="settings-insights-range"
+        title={t("insights.range")}
+      >
         <div className="range-toggle">
           <button
             className={range === "week" ? "active" : "secondary"}
@@ -185,14 +190,16 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
             {t("insights.pastMonth")}
           </button>
         </div>
-      </section>
+      </CollapsibleSection>
 
       {!digest || digestLoading ? (
         <p className="placeholder">{t("insights.loadingStats")}</p>
       ) : (
         <>
-          <h2>{t("insights.summary")}</h2>
-          <section>
+          <CollapsibleSection
+            id="settings-insights-summary"
+            title={t("insights.summary")}
+          >
             <div className="stat-grid">
               <div className="stat-card">
                 <span className="stat-card-value">
@@ -265,47 +272,59 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
                 days: range === "month" ? 30 : 7,
               })}
             </p>
-          </section>
+          </CollapsibleSection>
 
           {digest.postpone_follow_through.total > 0 && (
             <>
-              <h2>{t("insights.postponeFollowThrough")}</h2>
-              <section>
+              <CollapsibleSection
+                id="settings-insights-postpone-follow-through"
+                title={t("insights.postponeFollowThrough")}
+              >
                 <p className="stat-card-sub">
                   {t("insights.postponeFollowThroughDesc")}
                 </p>
                 <PostponeDonut data={digest.postpone_follow_through} />
-              </section>
+              </CollapsibleSection>
             </>
           )}
 
           {digest.suppressions_by_kind.length > 0 && (
             <>
-              <h2>{t("insights.breaksSuppressedBy")}</h2>
-              <section>
+              <CollapsibleSection
+                id="settings-insights-suppressions"
+                title={t("insights.breaksSuppressedBy")}
+              >
                 <SuppressionBars rows={digest.suppressions_by_kind} />
-              </section>
+              </CollapsibleSection>
             </>
           )}
 
-          <h2>{t("insights.byWeekday")}</h2>
-          <section>
+          <CollapsibleSection
+            id="settings-insights-weekday"
+            title={t("insights.byWeekday")}
+          >
             <WeekdayHistogram days={digest.by_weekday} />
             <p className="stat-card-sub">{t("insights.byWeekdayDesc")}</p>
-          </section>
+          </CollapsibleSection>
 
-          <h2>{t("insights.timeOfDay")}</h2>
-          <section>
+          <CollapsibleSection
+            id="settings-insights-time-of-day"
+            title={t("insights.timeOfDay")}
+          >
             <HourHistogram values={digest.by_hour} />
-          </section>
+          </CollapsibleSection>
 
-          <h2>{t("insights.past12Weeks")}</h2>
-          <section>
+          <CollapsibleSection
+            id="settings-insights-past-weeks"
+            title={t("insights.past12Weeks")}
+          >
             <Heatmap days={digest.by_day} />
-          </section>
+          </CollapsibleSection>
 
-          <h2 id="settings-manage-data">{t("insights.manageData")}</h2>
-          <section>
+          <CollapsibleSection
+            id="settings-manage-data"
+            title={t("insights.manageData")}
+          >
             <div className="actions inline">
               <button onClick={onExportCsv}>{t("insights.exportCsv")}</button>
               <button className="secondary" onClick={onExportBackup}>
@@ -318,7 +337,9 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
                 {t("insights.clearHistory")}
               </button>
             </div>
-            <p className="stat-card-sub">{t("insights.backupSecurityNotice")}</p>
+            <p className="stat-card-sub">
+              {t("insights.backupSecurityNotice")}
+            </p>
             {backupStatus && (
               <p
                 className={
@@ -329,7 +350,7 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
                 {backupStatus.message}
               </p>
             )}
-          </section>
+          </CollapsibleSection>
         </>
       )}
     </>

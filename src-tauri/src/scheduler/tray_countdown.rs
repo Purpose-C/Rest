@@ -2,8 +2,7 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 use super::pause::PauseState;
-use super::settings::Settings;
-use super::timers::{current_minutes, in_window, BreakTimers};
+use super::timers::{current_minutes, in_window};
 use super::types::{BreakKind, SuppressReason};
 use super::Scheduler;
 
@@ -60,85 +59,6 @@ pub fn pick_countdown_secs(target: &str, micro: Option<u64>, long: Option<u64>) 
     }
 }
 
-fn interval_kind_secs(s: &Settings, t: &BreakTimers, now: Instant, kind: BreakKind) -> Option<u64> {
-    let (enabled, last, interval) = match kind {
-        BreakKind::Micro => (s.micro_enabled, t.last_micro, s.micro_interval_secs),
-        BreakKind::Long => (s.long_enabled, t.last_long, s.long_interval_secs),
-        BreakKind::Sleep => return None,
-    };
-    if enabled && s.interval_active(kind) {
-        let elapsed = now.saturating_duration_since(last).as_secs();
-        Some(interval.saturating_sub(elapsed))
-    } else {
-        None
-    }
-}
-
-fn merge_countdown(a: Option<u64>, b: Option<u64>) -> Option<u64> {
-    match (a, b) {
-        (Some(x), Some(y)) => Some(x.min(y)),
-        (Some(x), None) | (None, Some(x)) => Some(x),
-        (None, None) => None,
-    }
-}
-
-pub(crate) fn secs_until_next_fixed(now_min: u32, now_sec: u32, times: &[u32]) -> Option<u64> {
-    if times.is_empty() {
-        return None;
-    }
-    let now_secs = now_min as u64 * 60 + now_sec as u64;
-    let day = 24 * 3600;
-    times
-        .iter()
-        .map(|&m| {
-            let target = m as u64 * 60;
-            if target > now_secs {
-                target - now_secs
-            } else {
-                day - now_secs + target
-            }
-        })
-        .min()
-}
-
-fn fixed_kind_secs(s: &Settings, kind: BreakKind, now_min: u32, now_sec: u32) -> Option<u64> {
-    let view = s.for_kind(kind)?;
-    if !view.enabled || !s.fixed_active(kind) {
-        return None;
-    }
-    secs_until_next_fixed(now_min, now_sec, view.fixed_minutes)
-}
-
-pub(crate) fn countdown_secs_from_timers(
-    s: &Settings,
-    t: &BreakTimers,
-    now: Instant,
-) -> Option<u64> {
-    pick_countdown_secs(
-        &s.tray_countdown_target,
-        interval_kind_secs(s, t, now, BreakKind::Micro),
-        interval_kind_secs(s, t, now, BreakKind::Long),
-    )
-}
-
-pub(crate) fn next_break_countdown_secs(
-    s: &Settings,
-    t: &BreakTimers,
-    now: Instant,
-    now_min: u32,
-    now_sec: u32,
-) -> Option<u64> {
-    let micro = merge_countdown(
-        interval_kind_secs(s, t, now, BreakKind::Micro),
-        fixed_kind_secs(s, BreakKind::Micro, now_min, now_sec),
-    );
-    let long = merge_countdown(
-        interval_kind_secs(s, t, now, BreakKind::Long),
-        fixed_kind_secs(s, BreakKind::Long, now_min, now_sec),
-    );
-    pick_countdown_secs("next", micro, long)
-}
-
 impl Scheduler {
     /// Snapshot the per-tick state the tray ticker needs. Polled once
     /// per second on macOS/Linux. See `TrayCountdownSnapshot` for the
@@ -169,7 +89,20 @@ impl Scheduler {
             None
         } else {
             let t = self.timers.lock().await;
-            countdown_secs_from_timers(&s, &t, Instant::now())
+            let now = Instant::now();
+            let micro_secs = if s.micro_enabled && s.interval_active(BreakKind::Micro) {
+                let elapsed = now.saturating_duration_since(t.last_micro).as_secs();
+                Some(s.micro_interval_secs.saturating_sub(elapsed))
+            } else {
+                None
+            };
+            let long_secs = if s.long_enabled && s.interval_active(BreakKind::Long) {
+                let elapsed = now.saturating_duration_since(t.last_long).as_secs();
+                Some(s.long_interval_secs.saturating_sub(elapsed))
+            } else {
+                None
+            };
+            pick_countdown_secs(&s.tray_countdown_target, micro_secs, long_secs)
         };
 
         let snapshot = decide_tray_snapshot(
@@ -343,83 +276,6 @@ mod tests {
         assert_eq!(pick_countdown_secs("next", None, Some(120)), Some(120));
         assert_eq!(pick_countdown_secs("next", None, None), None);
         assert_eq!(pick_countdown_secs("garbage", Some(5), Some(9)), Some(5));
-    }
-
-    #[test]
-    fn countdown_secs_from_timers_subtracts_elapsed() {
-        use std::time::Duration;
-
-        let s = Settings {
-            micro_enabled: true,
-            long_enabled: false,
-            micro_interval_secs: 100,
-            tray_countdown_target: "short".to_string(),
-            ..Settings::default()
-        };
-        let mut s = s;
-        s.rebuild_derived();
-        let mut t = BreakTimers::new();
-        let now = Instant::now();
-        t.last_micro = now - Duration::from_secs(40);
-        let secs = countdown_secs_from_timers(&s, &t, now);
-        assert_eq!(secs, Some(60));
-    }
-
-    #[test]
-    fn secs_until_next_fixed_picks_soonest_slot() {
-        assert_eq!(
-            secs_until_next_fixed(14 * 60, 0, &[15 * 60, 18 * 60]),
-            Some(3600)
-        );
-        assert_eq!(
-            secs_until_next_fixed(15 * 60, 0, &[15 * 60]),
-            Some(24 * 3600)
-        );
-        assert_eq!(secs_until_next_fixed(23 * 60 + 59, 30, &[0]), Some(30));
-        assert_eq!(secs_until_next_fixed(12 * 60, 0, &[]), None);
-    }
-
-    #[test]
-    fn next_break_countdown_secs_ignores_tray_target_and_includes_fixed() {
-        use crate::scheduler::settings::ScheduleMode;
-
-        let mut s = Settings {
-            tray_countdown_target: "long".to_string(),
-            micro_enabled: true,
-            long_enabled: true,
-            micro_interval_secs: 60,
-            long_interval_secs: 3600,
-            ..Settings::default()
-        };
-        s.rebuild_derived();
-        let t = BreakTimers::new();
-        let now = Instant::now();
-        let next = next_break_countdown_secs(&s, &t, now, 0, 0).unwrap();
-        let tray = countdown_secs_from_timers(&s, &t, now).unwrap();
-        assert!(
-            next <= 60,
-            "panel follows whichever break is sooner, got {next}"
-        );
-        assert!(
-            tray >= 3500,
-            "tray target=long still tracks the long interval, got {tray}"
-        );
-
-        let mut fixed_only = Settings {
-            micro_enabled: true,
-            long_enabled: false,
-            micro_schedule_mode: ScheduleMode::Fixed,
-            micro_fixed_times: vec!["15:00".into()],
-            ..Settings::default()
-        };
-        fixed_only.rebuild_derived();
-        let secs = next_break_countdown_secs(&fixed_only, &t, now, 14 * 60, 0);
-        assert_eq!(secs, Some(3600));
-        assert_eq!(
-            countdown_secs_from_timers(&fixed_only, &t, now),
-            None,
-            "tray interval helper stays idle for fixed-only schedules"
-        );
     }
 
     #[test]

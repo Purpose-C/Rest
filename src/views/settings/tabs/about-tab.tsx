@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { getVersion } from "@tauri-apps/api/app";
 import { t } from "../../../lib/i18n";
+import { CollapsibleSection } from "../components/collapsible-section";
 import { useUpdateCheck } from "../hooks/use-update-check";
 import type { UseSupporter } from "../hooks/use-supporter";
 import type { UseSettings } from "../hooks/use-settings";
@@ -69,9 +70,7 @@ export function AboutTab({
     try {
       const report = await invoke<string>("build_diagnostics_report");
       const ok = await writeToClipboard(report);
-      flashDiagnostics(
-        ok ? t("about.reportCopied") : t("about.copyFailed"),
-      );
+      flashDiagnostics(ok ? t("about.reportCopied") : t("about.copyFailed"));
     } catch (e) {
       console.error("copy diagnostics report failed", e);
       flashDiagnostics(t("about.couldNotBuildReport"));
@@ -80,8 +79,7 @@ export function AboutTab({
 
   return (
     <>
-      <h2 id="settings-about">{t("about.title")}</h2>
-      <section>
+      <CollapsibleSection id="settings-about" title={t("about.title")}>
         <div className="about-title-row">
           <p className="about-title">Entracte</p>
           <button onClick={update.check} disabled={update.checking}>
@@ -123,13 +121,13 @@ export function AboutTab({
                 className={downloadInstaller ? "secondary" : undefined}
                 onClick={() => openUrl(update.info!.release_url!)}
               >
-                {downloadInstaller ? t("about.allDownloads") : t("about.openReleasePage")}
+                {downloadInstaller
+                  ? t("about.allDownloads")
+                  : t("about.openReleasePage")}
               </button>
             </div>
             {caps.installerUnsignedWarning && (
-              <p className="about-meta">
-                {t("about.windowsUnsignedWarning")}
-              </p>
+              <p className="about-meta">{t("about.windowsUnsignedWarning")}</p>
             )}
           </>
         )}
@@ -143,17 +141,20 @@ export function AboutTab({
             {t("about.checkFailed", { error: update.error })}
           </p>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <h2 id="settings-supporter">
-        {t("about.supporter")}{supporter.status.is_supporter ? " ✓" : ""}
-      </h2>
-      <section>
+      <CollapsibleSection
+        id="settings-supporter"
+        title={
+          <>
+            {t("about.supporter")}
+            {supporter.status.is_supporter ? " ✓" : ""}
+          </>
+        }
+      >
         {supporter.status.is_supporter ? (
           <>
-            <p className="about-meta">
-              {t("about.supporterUnlocked")}
-            </p>
+            <p className="about-meta">{t("about.supporterUnlocked")}</p>
             <p className="about-meta">
               {t("about.licenseKey", {
                 key: supporter.status.masked_key ?? "",
@@ -171,17 +172,13 @@ export function AboutTab({
           </>
         ) : (
           <>
-            <p className="about-meta">
-              {t("about.supporterPitch")}
-            </p>
+            <p className="about-meta">{t("about.supporterPitch")}</p>
             <div className="actions inline">
               <button onClick={() => openUrl(SUPPORTER_CHECKOUT_URL)}>
                 {t("about.becomeSupporter")}
               </button>
             </div>
-            <p className="about-meta">
-              {t("about.alreadyHaveLicense")}
-            </p>
+            <p className="about-meta">{t("about.alreadyHaveLicense")}</p>
             <div className="supporter-entry">
               <input
                 type="text"
@@ -208,44 +205,44 @@ export function AboutTab({
         {supporter.message && (
           <p className="diagnostics-status">{supporter.message}</p>
         )}
-      </section>
+      </CollapsibleSection>
 
-      <div className="section-heading">
-        <h2>{t("about.author")}</h2>
-        <button
-          onClick={() => openUrl("https://buymeacoffee.com/drmowinckels")}
-        >
-          {t("about.buyMeACoffee")}
-        </button>
-      </div>
-      <section>
-        <p className="about-meta">
-          {t("about.authorName")}
-        </p>
-        <p className="about-meta">
-          {t("about.authorBio")}
-        </p>
-      </section>
+      <CollapsibleSection
+        id="settings-author"
+        title={t("about.author")}
+        action={
+          <button
+            onClick={() => openUrl("https://buymeacoffee.com/drmowinckels")}
+          >
+            {t("about.buyMeACoffee")}
+          </button>
+        }
+      >
+        <p className="about-meta">{t("about.authorName")}</p>
+        <p className="about-meta">{t("about.authorBio")}</p>
+      </CollapsibleSection>
 
-      <h2>{t("about.companionApp")}</h2>
-      <section>
-        <p className="about-meta">
-          {t("about.cairnPitch")}
-        </p>
+      <CollapsibleSection
+        id="settings-companion-app"
+        title={t("about.companionApp")}
+      >
+        <p className="about-meta">{t("about.cairnPitch")}</p>
         <div className="actions inline">
           <button onClick={() => openUrl("https://cairn.drmowinckels.io/")}>
             {t("about.tryCairn")}
           </button>
         </div>
-      </section>
+      </CollapsibleSection>
 
-      <div className="section-heading">
-        <h2 id="settings-diagnostics">{t("about.diagnostics")}</h2>
-        <button onClick={onCopyDiagnosticsReport}>
-          {t("about.copyDiagnosticsReport")}
-        </button>
-      </div>
-      <section>
+      <CollapsibleSection
+        id="settings-diagnostics"
+        title={t("about.diagnostics")}
+        action={
+          <button onClick={onCopyDiagnosticsReport}>
+            {t("about.copyDiagnosticsReport")}
+          </button>
+        }
+      >
         {diagnosticsStatus && (
           <p className="diagnostics-status">{diagnosticsStatus}</p>
         )}
@@ -254,7 +251,7 @@ export function AboutTab({
             link: "github.com/drmowinckels/entracte/issues",
           })}
         </p>
-      </section>
+      </CollapsibleSection>
     </>
   );
 }

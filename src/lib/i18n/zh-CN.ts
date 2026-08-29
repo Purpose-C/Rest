@@ -149,7 +149,7 @@ export const zhCN: Record<string, string> = {
   "breaks.choresPlaceholder": "浇花\n清理洗碗机\n回复邮件",
   "breaks.promptChoresMorning": "每天早晨提醒我规划今日杂事",
   "breaks.promptChoresMorningTip":
-    "开启（默认）时，每天活动时段首次开始且杂事列表为空时，Entracte 会自动打开此偏好设置窗口以便您规划今日杂事。关闭后将不再提示 —— 您仍可随时手动填写列表。",
+    "开启（默认）时，每天活动时段首次开始且杂事列表为空时，Entracte 会自动打开设置窗口以便您规划今日杂事。关闭后将不再提示 —— 您仍可随时手动填写列表。",
   "breaks.longSoloPool": "独处提示池（拉伸、呼吸新鲜空气、点心、整理）",
   "breaks.longSocialPool": "社交提示池（打电话、一同散步、喝杯咖啡）",
   "breaks.bedtime": "就寝提醒",
@@ -722,22 +722,6 @@ export const zhCN: Record<string, string> = {
   "app.areaPause": "暂停选择器",
   "app.areaQuick": "快速面板",
   "app.areaSettings": "设置",
-
-  // quick-panel
-  "quickPanel.nextBreak": "下次休息",
-  "quickPanel.paused": "已暂停",
-  "quickPanel.pausedLabel": "已暂停",
-  "quickPanel.onBreak": "正在休息",
-  "quickPanel.bedtime": "就寝提醒",
-  "quickPanel.suppressed": "已拦截",
-  "quickPanel.disabled": "已关闭休息",
-  "quickPanel.idle": "空闲中",
-  "quickPanel.resume": "恢复",
-  "quickPanel.pause15m": "15 分钟",
-  "quickPanel.pause30m": "30 分钟",
-  "quickPanel.pause1h": "1 小时",
-  "quickPanel.pauseIndef": "无限期",
-  "quickPanel.more": "更多…",
 
   // error-boundary
   "error.areaHitError": "{area}发生错误",
