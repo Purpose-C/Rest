@@ -28,17 +28,16 @@ pub enum TrayCountdownSnapshot {
     Running(u64),
 }
 
-/// Format remaining seconds as `M:SS` (or `MM:SS` past ten minutes)
-/// for the tray title. macOS/Linux only; Windows trays don't render text.
+/// Format remaining seconds as whole minutes (`"5m"`) for the tray title.
+/// macOS/Linux only; Windows trays don't render text.
+///
+/// Rounds *up*, so a break that is 1 second away still reads `1m` and the
+/// countdown never sits on `0m` for a whole minute before firing. Minutes
+/// are not wrapped into hours — the menu bar is narrow and a long-break
+/// interval past an hour is unusual, so `75m` beats `1h 15m`.
 #[cfg_attr(target_os = "windows", allow(dead_code))]
 pub fn format_countdown(secs: u64) -> String {
-    let m = secs / 60;
-    let s = secs % 60;
-    if m >= 10 {
-        format!("{m:02}:{s:02}")
-    } else {
-        format!("{m}:{s:02}")
-    }
+    format!("{}m", secs.div_ceil(60))
 }
 
 /// Select which countdown the tray should show according to the
@@ -271,21 +270,24 @@ mod tests {
     }
 
     #[test]
-    fn format_countdown_under_ten_minutes() {
-        assert_eq!(format_countdown(0), "0:00");
-        assert_eq!(format_countdown(5), "0:05");
-        assert_eq!(format_countdown(59), "0:59");
-        assert_eq!(format_countdown(60), "1:00");
-        assert_eq!(format_countdown(125), "2:05");
-        assert_eq!(format_countdown(9 * 60 + 59), "9:59");
+    fn format_countdown_rounds_up_to_whole_minutes() {
+        assert_eq!(format_countdown(0), "0m");
+        assert_eq!(format_countdown(1), "1m");
+        assert_eq!(format_countdown(5), "1m");
+        assert_eq!(format_countdown(59), "1m");
+        assert_eq!(format_countdown(60), "1m");
+        assert_eq!(format_countdown(61), "2m");
+        assert_eq!(format_countdown(125), "3m");
+        assert_eq!(format_countdown(9 * 60 + 59), "10m");
     }
 
     #[test]
-    fn format_countdown_ten_minutes_or_more() {
-        assert_eq!(format_countdown(10 * 60), "10:00");
-        assert_eq!(format_countdown(12 * 60 + 34), "12:34");
-        assert_eq!(format_countdown(59 * 60 + 59), "59:59");
-        assert_eq!(format_countdown(60 * 60), "60:00");
+    fn format_countdown_past_ten_minutes_and_an_hour() {
+        assert_eq!(format_countdown(10 * 60), "10m");
+        assert_eq!(format_countdown(12 * 60 + 34), "13m");
+        assert_eq!(format_countdown(59 * 60 + 59), "60m");
+        assert_eq!(format_countdown(60 * 60), "60m");
+        assert_eq!(format_countdown(75 * 60), "75m");
     }
 
     // ----- Scheduler::tray_countdown_snapshot integration -----

@@ -778,11 +778,11 @@ mod tests {
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Running(754), on),
-            Some(" 12:34".to_string())
+            Some(" 13m".to_string())
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Running(65), on),
-            Some(" 1:05".to_string())
+            Some(" 2m".to_string())
         );
     }
 
