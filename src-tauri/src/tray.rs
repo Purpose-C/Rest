@@ -407,11 +407,13 @@ fn tray_title_for(snapshot: &TrayCountdownSnapshot, text_enabled: bool) -> Optio
         TrayCountdownSnapshot::Paused => "已暂停".to_string(),
         TrayCountdownSnapshot::Bedtime => return Some(String::new()),
         TrayCountdownSnapshot::OnBreak => return Some(String::new()),
-        TrayCountdownSnapshot::Suppressed(r) => return Some(format!(" {}", r.short_label())),
+        TrayCountdownSnapshot::Suppressed(r) => return Some(r.short_label().to_string()),
         TrayCountdownSnapshot::Idle => return Some(String::new()),
         TrayCountdownSnapshot::Running(secs) => format_countdown(*secs),
     };
-    Some(format!(" {body}"))
+    // No leading space: AppKit already sets the icon/title gap, and the
+    // padded glyph no longer carries transparent margin on its right edge.
+    Some(body)
 }
 
 /// Whether the tray icon should be registered as a template image.
@@ -508,32 +510,34 @@ fn outline_glyph_for_panels(rgba: &[u8], width: u32, height: u32) -> Vec<u8> {
     )
 }
 
-/// Fraction of the padded canvas the glyph occupies. The shipped assets
-/// bleed to all four edges, so the OS scales them to the full menu-bar
-/// height and the glyph reads noticeably chunkier than system icons,
-/// which conventionally leave a couple of points of breathing room.
-/// Centring the glyph in a larger transparent canvas shrinks it by the
-/// same ratio once the OS scales the whole thing down.
+/// Fraction of the padded canvas *height* the glyph occupies. The shipped
+/// assets bleed to all four edges, so the OS scales them to the full
+/// menu-bar height and the glyph reads noticeably chunkier than system
+/// icons, which conventionally leave a couple of points of breathing room.
 #[cfg_attr(target_os = "windows", allow(dead_code))]
 const TRAY_GLYPH_SCALE: f32 = 0.78;
 
-/// Centre `rgba` in a transparent canvas sized so the glyph occupies
-/// `TRAY_GLYPH_SCALE` of it. Pure translation — no resampling, so the
-/// glyph stays pixel-exact and only gains margin.
+/// Centre `rgba` vertically in a taller transparent canvas so the glyph
+/// occupies `TRAY_GLYPH_SCALE` of the height. Pure translation — no
+/// resampling, so the glyph stays pixel-exact and only gains margin.
+///
+/// Height only, deliberately. The OS scales the canvas to the menu-bar
+/// height, so vertical margin is what shrinks the glyph; horizontal margin
+/// would ride along as dead transparent pixels and waste menu-bar width —
+/// the one resource the menu bar is actually short of. Keeping the width
+/// tight also narrows the whole status item as the glyph shrinks.
 #[cfg_attr(target_os = "windows", allow(dead_code))]
 fn pad_glyph(rgba: &[u8], width: u32, height: u32) -> (Vec<u8>, u32, u32) {
-    let out_w = ((width as f32) / TRAY_GLYPH_SCALE).round() as u32;
     let out_h = ((height as f32) / TRAY_GLYPH_SCALE).round() as u32;
-    let off_x = (out_w - width) / 2;
     let off_y = (out_h - height) / 2;
-    let mut out = vec![0u8; (out_w * out_h * 4) as usize];
+    let row_len = (width * 4) as usize;
+    let mut out = vec![0u8; (width * out_h * 4) as usize];
     for row in 0..height {
         let src = (row * width * 4) as usize;
-        let dst = (((row + off_y) * out_w + off_x) * 4) as usize;
-        let len = (width * 4) as usize;
-        out[dst..dst + len].copy_from_slice(&rgba[src..src + len]);
+        let dst = ((row + off_y) * width * 4) as usize;
+        out[dst..dst + row_len].copy_from_slice(&rgba[src..src + row_len]);
     }
-    (out, out_w, out_h)
+    (out, width, out_h)
 }
 
 /// Decode a tray-icon asset and adapt it to the platform: macOS keeps the
@@ -774,7 +778,7 @@ mod tests {
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Paused, on),
-            Some(" 已暂停".to_string())
+            Some("已暂停".to_string())
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Bedtime, on),
@@ -786,21 +790,21 @@ mod tests {
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Suppressed(SuppressReason::Dnd), on),
-            Some(" 勿扰".to_string())
+            Some("勿扰".to_string())
         );
         assert_eq!(
             tray_title_for(
                 &TrayCountdownSnapshot::Suppressed(SuppressReason::Camera),
                 on
             ),
-            Some(" 摄像头".to_string())
+            Some("摄像头".to_string())
         );
         assert_eq!(
             tray_title_for(
                 &TrayCountdownSnapshot::Suppressed(SuppressReason::Video),
                 on
             ),
-            Some(" 视频".to_string())
+            Some("视频".to_string())
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Idle, on),
@@ -808,11 +812,11 @@ mod tests {
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Running(754), on),
-            Some(" 13".to_string())
+            Some("13".to_string())
         );
         assert_eq!(
             tray_title_for(&TrayCountdownSnapshot::Running(65), on),
-            Some(" 2".to_string())
+            Some("2".to_string())
         );
     }
 
@@ -985,17 +989,20 @@ mod tests {
     }
 
     #[test]
-    fn pad_glyph_centres_the_source_and_grows_the_canvas() {
+    fn pad_glyph_grows_height_only_and_centres_the_source() {
         let raw = Image::from_bytes(TRAY_ICON_BYTES).unwrap();
         let (w, h) = (raw.width(), raw.height());
         let (out, ow, oh) = pad_glyph(raw.rgba(), w, h);
-        assert!(ow > w && oh > h, "canvas must grow to make room");
+        // Width stays tight: horizontal margin would only waste menu-bar
+        // width, which is the whole reason padding is vertical-only.
+        assert_eq!(ow, w, "width must not grow");
+        assert!(oh > h, "height must grow to shrink the rendered glyph");
         assert_eq!(out.len(), (ow * oh * 4) as usize);
         // The added margin is fully transparent: the first row is untouched.
         assert!(out[..(ow * 4) as usize].iter().all(|&b| b == 0));
-        // The glyph lands intact at the centre offset.
-        let (off_x, off_y) = ((ow - w) / 2, (oh - h) / 2);
-        let dst = ((off_y * ow + off_x) * 4) as usize;
+        // The glyph lands intact at the centred vertical offset.
+        let off_y = (oh - h) / 2;
+        let dst = (off_y * ow * 4) as usize;
         assert_eq!(
             &out[dst..dst + (w * 4) as usize],
             &raw.rgba()[..(w * 4) as usize]
