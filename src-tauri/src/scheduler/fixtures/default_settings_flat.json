@@ -181,6 +181,7 @@
   "daily_screen_time_remind_again_minutes": 60,
   "tray_countdown_enabled": true,
   "tray_countdown_target": "next",
+  "tray_style": "icon_and_countdown",
   "tray_icon_enabled": true,
   "micro_break_mode": "overlay",
   "long_break_mode": "overlay",

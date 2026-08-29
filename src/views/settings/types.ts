@@ -19,6 +19,10 @@ type ScheduleMode = "interval" | "fixed" | "both";
 type BreakDeliveryMode = "overlay" | "windowed" | "notification";
 type MicroHintMix = "both" | "physical" | "psychological";
 type LongHintMix = "both" | "solo" | "social";
+export type TrayStyle =
+  | "icon_and_countdown"
+  | "countdown_only"
+  | "progress_ring";
 
 export type HookEvent =
   | "break_start"
@@ -212,6 +216,7 @@ export type SchedulerSettings = {
   daily_screen_time_remind_again_minutes: number;
   tray_countdown_enabled: boolean;
   tray_countdown_target: TrayCountdownTarget;
+  tray_style: TrayStyle;
   tray_icon_enabled: boolean;
   micro_break_mode: BreakDeliveryMode;
   long_break_mode: BreakDeliveryMode;

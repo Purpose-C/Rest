@@ -351,6 +351,39 @@ fn default_tray_countdown_target() -> String {
     "next".to_string()
 }
 
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum TrayStyle {
+    #[default]
+    IconAndCountdown,
+    CountdownOnly,
+    ProgressRing,
+}
+
+impl TrayStyle {
+    fn from_disk_str(raw: &str) -> Option<Self> {
+        match raw {
+            "icon_and_countdown" => Some(Self::IconAndCountdown),
+            "countdown_only" => Some(Self::CountdownOnly),
+            "progress_ring" => Some(Self::ProgressRing),
+            _ => None,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for TrayStyle {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(deserialize_with_fallback(
+            deserializer,
+            "tray_style",
+            Self::from_disk_str,
+        ))
+    }
+}
+
 fn default_true() -> bool {
     true
 }
@@ -692,13 +725,14 @@ pub struct Settings {
     pub daily_screen_time_enabled: bool,
     pub daily_screen_time_budget_minutes: u64,
     pub daily_screen_time_remind_again_minutes: u64,
+    /// Legacy compatibility field retained for existing settings files.
+    /// `tray_style` is the sole UI and runtime source of truth.
     pub tray_countdown_enabled: bool,
     pub tray_countdown_target: String,
-    /// Whether the tray shows its glyph. Off leaves just the countdown
-    /// number in the menu bar. The glyph comes back whenever there is no
-    /// number to show (paused, bedtime, on-break, idle, countdown off) —
-    /// otherwise the status item would collapse to zero width and the
-    /// menu would become unreachable.
+    #[serde(default)]
+    pub tray_style: TrayStyle,
+    /// Legacy compatibility field retained for existing settings files.
+    /// `tray_style` is the sole UI and runtime source of truth.
     #[serde(default = "default_true")]
     pub tray_icon_enabled: bool,
     pub micro_break_mode: BreakMode,
@@ -818,6 +852,7 @@ impl Default for Settings {
             daily_screen_time_remind_again_minutes: 60,
             tray_countdown_enabled: true,
             tray_countdown_target: default_tray_countdown_target(),
+            tray_style: TrayStyle::default(),
             tray_icon_enabled: true,
             micro_break_mode: BreakMode::default(),
             long_break_mode: BreakMode::default(),
@@ -2324,7 +2359,7 @@ mod parity_tests {
     use std::collections::BTreeSet;
     use std::path::PathBuf;
 
-    use super::Settings;
+    use super::{Settings, TrayStyle};
 
     fn rust_settings_keys() -> BTreeSet<String> {
         let value = serde_json::to_value(Settings::default())
@@ -2552,6 +2587,17 @@ mod parity_tests {
         let rust = rust_enum_values(all_variants!(ScheduleMode: Interval, Fixed, Both));
         let ts = ts_union_values(&ts_source(), "ScheduleMode");
         assert_eq!(rust, ts, "ScheduleMode value drift");
+    }
+
+    #[test]
+    fn tray_style_values_match_ts_union() {
+        let rust = rust_enum_values(all_variants!(
+            TrayStyle: IconAndCountdown,
+            CountdownOnly,
+            ProgressRing
+        ));
+        let ts = ts_union_values(&ts_source(), "TrayStyle");
+        assert_eq!(rust, ts, "TrayStyle value drift");
     }
 
     #[test]

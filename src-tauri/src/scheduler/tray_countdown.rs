@@ -2,6 +2,7 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 use super::pause::PauseState;
+use super::settings::TrayStyle;
 use super::timers::{current_minutes, in_window};
 use super::types::{BreakKind, SuppressReason};
 use super::Scheduler;
@@ -105,23 +106,58 @@ impl Scheduler {
             pick_countdown_secs(&s.tray_countdown_target, micro_secs, long_secs)
         };
 
+        let text_enabled = !matches!(s.tray_style, TrayStyle::ProgressRing);
         let snapshot = decide_tray_snapshot(
-            s.tray_countdown_enabled,
+            true,
             paused,
             bedtime_active,
             on_break,
             suppress_reason,
             countdown_secs,
         );
-        (snapshot, s.tray_countdown_enabled)
+        (snapshot, text_enabled)
     }
 
-    /// The user's `tray_icon_enabled` setting. Read on its own so the
-    /// ticker can decide about the glyph without widening the snapshot
-    /// tuple that every other caller destructures.
+    /// Read the mutually-exclusive tray presentation without widening the
+    /// snapshot tuple that existing callers destructure.
     #[cfg_attr(target_os = "windows", allow(dead_code))]
-    pub async fn tray_icon_enabled(&self) -> bool {
-        self.settings.lock().await.tray_icon_enabled
+    pub async fn tray_style(&self) -> TrayStyle {
+        self.settings.lock().await.tray_style
+    }
+
+    /// Interval belonging to the countdown currently selected by
+    /// `tray_countdown_target`. Used only to turn remaining seconds into a
+    /// progress-ring fraction.
+    #[cfg_attr(target_os = "windows", allow(dead_code))]
+    pub async fn tray_countdown_interval_secs(&self) -> Option<u64> {
+        let s = self.settings.lock().await.clone();
+        let t = self.timers.lock().await;
+        let now = Instant::now();
+        let item = |kind: BreakKind| {
+            let (enabled, last, interval) = match kind {
+                BreakKind::Micro => (s.micro_enabled, t.last_micro, s.micro_interval_secs),
+                BreakKind::Long => (s.long_enabled, t.last_long, s.long_interval_secs),
+                BreakKind::Sleep => return None,
+            };
+            if enabled && s.interval_active(kind) {
+                let remaining =
+                    interval.saturating_sub(now.saturating_duration_since(last).as_secs());
+                Some((remaining, interval))
+            } else {
+                None
+            }
+        };
+        let micro = item(BreakKind::Micro);
+        let long = item(BreakKind::Long);
+        match s.tray_countdown_target.as_str() {
+            "short" => micro.map(|(_, interval)| interval),
+            "long" => long.map(|(_, interval)| interval),
+            _ => match (micro, long) {
+                (Some((mr, mi)), Some((lr, li))) => Some(if mr <= lr { mi } else { li }),
+                (Some((_, interval)), None) | (None, Some((_, interval))) => Some(interval),
+                (None, None) => None,
+            },
+        }
     }
 }
 
@@ -424,15 +460,16 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn tray_countdown_snapshot_disabled_when_text_off_and_no_visual_signal() {
+    async fn tray_countdown_snapshot_progress_ring_keeps_running_without_text() {
         let s = Settings {
             tray_countdown_enabled: false,
+            tray_style: TrayStyle::ProgressRing,
             ..Settings::default()
         };
         let (_dir, sched) = build_test_scheduler(s);
         let (snap, text_on) = sched.tray_countdown_snapshot().await;
         assert!(!text_on);
-        assert_eq!(snap, TrayCountdownSnapshot::Disabled);
+        assert!(matches!(snap, TrayCountdownSnapshot::Running(_)));
     }
 
     #[tokio::test]

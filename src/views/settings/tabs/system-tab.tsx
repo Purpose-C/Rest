@@ -12,7 +12,12 @@ import { HookRow } from "../components/hook-row";
 import { Plugins } from "../components/plugins";
 import type { UseHooks } from "../hooks/use-hooks";
 import type { UseSettings } from "../hooks/use-settings";
-import type { ClockFormat, HookConfig, SchedulerSettings } from "../types";
+import type {
+  ClockFormat,
+  HookConfig,
+  SchedulerSettings,
+  TrayStyle,
+} from "../types";
 
 function newUiId(): string {
   if (
@@ -129,28 +134,27 @@ export function SystemTab({
       </CollapsibleSection>
 
       <CollapsibleSection id="settings-tray" title={t("system.tray")}>
-        <CheckboxRow
-          label={t("system.trayCountdown")}
-          value={settings.tray_countdown_enabled}
-          onChange={(v) => update("tray_countdown_enabled", v)}
-          onlyOn={["macos", "linux"]}
-          tip={t("system.trayCountdownTip")}
-        />
-        <CheckboxRow
-          label={t("system.trayIcon")}
-          value={settings.tray_icon_enabled}
-          onChange={(v) => update("tray_icon_enabled", v)}
-          onlyOn={["macos", "linux"]}
-          disabled={!settings.tray_countdown_enabled}
-          tip={t("system.trayIconTip")}
-        />
-        <label
-          className={`row${settings.tray_countdown_enabled ? "" : " disabled"}`}
-        >
+        <label className="row">
+          <span>{t("system.tray")}</span>
+          <select
+            value={settings.tray_style}
+            onChange={(e) => update("tray_style", e.target.value as TrayStyle)}
+          >
+            <option value="icon_and_countdown">
+              {t("system.trayStyle.iconAndCountdown")}
+            </option>
+            <option value="countdown_only">
+              {t("system.trayStyle.countdownOnly")}
+            </option>
+            <option value="progress_ring">
+              {t("system.trayStyle.progressRing")}
+            </option>
+          </select>
+        </label>
+        <label className="row">
           <span>{t("system.countdownTo")}</span>
           <select
             value={settings.tray_countdown_target}
-            disabled={!settings.tray_countdown_enabled}
             onChange={(e) =>
               update(
                 "tray_countdown_target",

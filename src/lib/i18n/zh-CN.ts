@@ -440,6 +440,9 @@ export const zhCN: Record<string, string> = {
   "system.leadTimeSeconds": "提前预警时间（秒）",
   "system.hotkeys": "全局快捷键",
   "system.tray": "托盘倒计时",
+  "system.trayStyle.iconAndCountdown": "图标 + 数字",
+  "system.trayStyle.countdownOnly": "仅数字",
+  "system.trayStyle.progressRing": "进度环",
   "system.trayCountdown": "在系统托盘图标旁显示下次休息倒计时",
   "system.trayCountdownTip":
     "在托盘图标旁显示距下次休息还有多少分钟。仅支持 macOS 和 Linux —— Windows 托盘不支持文字显示。",

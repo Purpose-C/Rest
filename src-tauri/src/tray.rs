@@ -10,7 +10,7 @@ use tauri::{
 };
 
 use crate::scheduler::{
-    format_countdown, BreakKind, LastBreakInfo, Scheduler, TrayCountdownSnapshot,
+    format_countdown, BreakKind, LastBreakInfo, Scheduler, TrayCountdownSnapshot, TrayStyle,
 };
 
 const TRAY_ICON_BYTES: &[u8] = include_bytes!("../icons/trayIconTemplate.png");
@@ -41,6 +41,13 @@ enum TrayIconKind {
 }
 
 #[cfg_attr(target_os = "windows", allow(dead_code))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RenderedTrayIcon {
+    Static(TrayIconKind),
+    Progress(u8),
+}
+
+#[cfg_attr(target_os = "windows", allow(dead_code))]
 impl TrayIconKind {
     fn bytes(self) -> &'static [u8] {
         match self {
@@ -52,6 +59,7 @@ impl TrayIconKind {
     }
 }
 
+#[tauri::command]
 pub fn seconds_until_tomorrow_morning() -> u64 {
     let now = Local::now();
     let target = (now + chrono::Duration::days(1))
@@ -529,6 +537,87 @@ fn outline_glyph_for_panels(rgba: &[u8], width: u32, height: u32) -> Vec<u8> {
     )
 }
 
+const PROGRESS_RING_SIZE: u32 = 200;
+const PROGRESS_RING_RADIUS: f64 = 70.0;
+const PROGRESS_TRACK_WIDTH: f64 = 10.0;
+const PROGRESS_ARC_WIDTH: f64 = 24.0;
+const PROGRESS_VISUAL_GAP_RADIANS: f64 = 10.0 * std::f64::consts::PI / 180.0;
+
+fn progress_bucket(remaining_secs: u64, interval_secs: u64) -> u8 {
+    if interval_secs == 0 {
+        return 60;
+    }
+    let progress = 1.0 - remaining_secs.min(interval_secs) as f64 / interval_secs as f64;
+    (progress * 60.0).round().clamp(0.0, 60.0) as u8
+}
+
+fn progress_ring_rgba(progress: f64) -> Vec<u8> {
+    let size = PROGRESS_RING_SIZE as usize;
+    let center = PROGRESS_RING_SIZE as f64 / 2.0;
+    let cap_angle = (PROGRESS_ARC_WIDTH / 2.0 / PROGRESS_RING_RADIUS).asin();
+    let centerline_gap = PROGRESS_VISUAL_GAP_RADIANS + 2.0 * cap_angle;
+    let start = centerline_gap / 2.0;
+    let sweep = (std::f64::consts::TAU - centerline_gap) * progress.clamp(0.0, 1.0);
+    let arc_end = start + sweep;
+    let point = |angle: f64| {
+        (
+            center + PROGRESS_RING_RADIUS * angle.sin(),
+            center - PROGRESS_RING_RADIUS * angle.cos(),
+        )
+    };
+    let start_point = point(start);
+    let end_point = point(arc_end);
+    let mut rgba = vec![0u8; size * size * 4];
+    for y in 0..size {
+        for x in 0..size {
+            let mut track_hits = 0u8;
+            let mut arc_hits = 0u8;
+            for sy in 0..4 {
+                for sx in 0..4 {
+                    let px = x as f64 + (sx as f64 + 0.5) / 4.0;
+                    let py = y as f64 + (sy as f64 + 0.5) / 4.0;
+                    let dx = px - center;
+                    let dy = py - center;
+                    let distance = (dx * dx + dy * dy).sqrt();
+                    if (distance - PROGRESS_RING_RADIUS).abs() <= PROGRESS_TRACK_WIDTH / 2.0 {
+                        track_hits += 1;
+                    }
+                    if sweep > 0.0 {
+                        let angle = dx.atan2(-dy).rem_euclid(std::f64::consts::TAU);
+                        let on_arc = angle >= start && angle <= arc_end;
+                        let cap_radius = PROGRESS_ARC_WIDTH / 2.0;
+                        let in_start_cap =
+                            (px - start_point.0).hypot(py - start_point.1) <= cap_radius;
+                        let in_end_cap = (px - end_point.0).hypot(py - end_point.1) <= cap_radius;
+                        if ((distance - PROGRESS_RING_RADIUS).abs() <= cap_radius && on_arc)
+                            || in_start_cap
+                            || in_end_cap
+                        {
+                            arc_hits += 1;
+                        }
+                    }
+                }
+            }
+            let alpha = ((track_hits as u16 * 80) / 16).max((arc_hits as u16 * 255) / 16) as u8;
+            rgba[(y * size + x) * 4 + 3] = alpha;
+        }
+    }
+    rgba
+}
+
+fn progress_ring_image(bucket: u8, os: &str) -> tauri::Result<Image<'static>> {
+    let rgba = progress_ring_rgba(bucket.min(60) as f64 / 60.0);
+    let (padded, width, height) = pad_glyph(&rgba, PROGRESS_RING_SIZE, PROGRESS_RING_SIZE);
+    if icon_is_template(os) {
+        return Ok(Image::new_owned(padded, width, height));
+    }
+    Ok(Image::new_owned(
+        outline_glyph_for_panels(&padded, width, height),
+        width,
+        height,
+    ))
+}
+
 /// Fraction of the padded canvas *height* the glyph occupies. The shipped
 /// assets bleed to all four edges, so the OS scales them to the full
 /// menu-bar height and the glyph reads noticeably chunkier than system
@@ -591,7 +680,7 @@ fn spawn_countdown_ticker(
     tauri::async_runtime::spawn(async move {
         // `Some(None)` means "currently hidden"; the outer `None` only
         // means "nothing pushed yet", so the first tick always writes.
-        let mut last_icon: Option<Option<TrayIconKind>> = None;
+        let mut last_icon: Option<Option<RenderedTrayIcon>> = None;
         let mut last_tooltip: Option<String> = None;
         #[cfg(not(target_os = "windows"))]
         let mut last_title: Option<String> = None;
@@ -601,6 +690,7 @@ fn spawn_countdown_ticker(
             tokio::time::sleep(Duration::from_secs(1)).await;
             let scheduler = app.state::<Scheduler>().inner().clone();
             let (snapshot, text_enabled) = scheduler.tray_countdown_snapshot().await;
+            let tray_style = scheduler.tray_style().await;
             let _ = countdown.set_text(countdown_menu_label(&snapshot));
 
             #[cfg(not(target_os = "windows"))]
@@ -612,16 +702,39 @@ fn spawn_countdown_ticker(
             // width — the menu would become unreachable. Windows renders no
             // title at all, so the glyph is unconditional there.
             #[cfg(not(target_os = "windows"))]
-            let show_icon =
-                scheduler.tray_icon_enabled().await || title.as_deref().unwrap_or("").is_empty();
+            let show_icon = !matches!(tray_style, TrayStyle::CountdownOnly)
+                || title.as_deref().unwrap_or("").is_empty();
             #[cfg(target_os = "windows")]
             let show_icon = true;
 
-            let icon_kind = show_icon.then(|| tray_icon_kind_for(&snapshot));
-            if Some(icon_kind) != last_icon {
-                match icon_kind {
-                    Some(kind) => {
-                        if let Ok(icon) = tray_image(kind, std::env::consts::OS) {
+            let rendered_icon = if show_icon {
+                match (tray_style, snapshot) {
+                    (TrayStyle::ProgressRing, TrayCountdownSnapshot::Running(remaining)) => {
+                        scheduler
+                            .tray_countdown_interval_secs()
+                            .await
+                            .map(|interval| {
+                                RenderedTrayIcon::Progress(progress_bucket(remaining, interval))
+                            })
+                            .or(Some(RenderedTrayIcon::Static(TrayIconKind::Normal)))
+                    }
+                    _ => Some(RenderedTrayIcon::Static(tray_icon_kind_for(&snapshot))),
+                }
+            } else {
+                None
+            };
+            if Some(rendered_icon) != last_icon {
+                match rendered_icon {
+                    Some(rendered) => {
+                        let icon = match rendered {
+                            RenderedTrayIcon::Static(kind) => {
+                                tray_image(kind, std::env::consts::OS)
+                            }
+                            RenderedTrayIcon::Progress(bucket) => {
+                                progress_ring_image(bucket, std::env::consts::OS)
+                            }
+                        };
+                        if let Ok(icon) = icon {
                             let _ = tray.set_icon(Some(icon));
                             let _ =
                                 tray.set_icon_as_template(icon_is_template(std::env::consts::OS));
@@ -631,7 +744,7 @@ fn spawn_countdown_ticker(
                         let _ = tray.set_icon(None);
                     }
                 }
-                last_icon = Some(icon_kind);
+                last_icon = Some(rendered_icon);
             }
             // Tooltip refresh also runs on Windows — that platform's
             // tray doesn't render a title, but the tooltip is the only
@@ -839,6 +952,32 @@ mod tests {
         assert_eq!(
             countdown_menu_label(&TrayCountdownSnapshot::Disabled),
             "休息未启用"
+        );
+    }
+
+    #[test]
+    fn progress_bucket_quantizes_sixty_steps() {
+        assert_eq!(progress_bucket(3_000, 3_000), 0);
+        assert_eq!(progress_bucket(1_500, 3_000), 30);
+        assert_eq!(progress_bucket(0, 3_000), 60);
+        assert_eq!(progress_bucket(9_000, 3_000), 0);
+    }
+
+    #[test]
+    fn progress_ring_keeps_a_faint_track_at_zero_and_adds_a_solid_arc() {
+        let empty = progress_ring_rgba(0.0);
+        let half = progress_ring_rgba(0.5);
+        assert_eq!(
+            empty.len(),
+            (PROGRESS_RING_SIZE * PROGRESS_RING_SIZE * 4) as usize
+        );
+        assert!(empty.chunks_exact(4).any(|pixel| pixel[3] > 0));
+        assert!(empty.chunks_exact(4).all(|pixel| pixel[3] <= 80));
+        assert!(half.chunks_exact(4).any(|pixel| pixel[3] == 255));
+        assert_eq!(
+            half[((30 * PROGRESS_RING_SIZE + 100) * 4 + 3) as usize],
+            80,
+            "the 12 o'clock gap keeps only the faint track",
         );
     }
 

@@ -9,7 +9,7 @@ vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn().mockResolvedValue("linux"),
 }));
 
-let currentPlatform: Platform = "linux";
+const currentPlatform: Platform = "linux";
 vi.mock("../../../lib/platform", async () => {
   const actual = await vi.importActual<typeof import("../../../lib/platform")>(
     "../../../lib/platform",
@@ -230,33 +230,33 @@ describe("SystemTab — Notifications", () => {
 });
 
 describe("SystemTab — Tray countdown", () => {
-  it("disables the 'count down to' select when the tray countdown checkbox is off", () => {
+  it("offers the three tray styles and dispatches their stable value", () => {
+    const update = vi.fn();
     renderTab({
-      settings: { tray_countdown_enabled: false },
+      settings: { tray_style: "icon_and_countdown" },
+      update,
     });
-    const select = screen.getByLabelText("Count down to") as HTMLSelectElement;
-    expect(select.disabled).toBe(true);
+
+    const select = screen.getByLabelText("Tray countdown") as HTMLSelectElement;
+    expect(Array.from(select.options, (option) => option.value)).toEqual([
+      "icon_and_countdown",
+      "countdown_only",
+      "progress_ring",
+    ]);
+
+    fireEvent.change(select, { target: { value: "progress_ring" } });
+    expect(update).toHaveBeenCalledWith("tray_style", "progress_ring");
   });
 
-  it("enables the select once the checkbox is on", () => {
+  it("keeps the countdown target available regardless of legacy booleans", () => {
     renderTab({
-      settings: { tray_countdown_enabled: true },
+      settings: {
+        tray_icon_enabled: false,
+        tray_countdown_enabled: false,
+      },
     });
     const select = screen.getByLabelText("Count down to") as HTMLSelectElement;
     expect(select.disabled).toBe(false);
-  });
-
-  it("appends the '(macOS/Linux only)' suffix when running on Windows", () => {
-    currentPlatform = "windows";
-    try {
-      renderTab();
-      const cb = screen.getByRole("checkbox", {
-        name: /show countdown to next break in the tray.*macOS\/Linux only/i,
-      });
-      expect((cb as HTMLInputElement).disabled).toBe(true);
-    } finally {
-      currentPlatform = "linux";
-    }
   });
 
   it("changing the 'count down to' target dispatches the new value", () => {

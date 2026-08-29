@@ -57,7 +57,7 @@ pub use pause::PauseState;
 // `scheduler::get_routines` for the handler in lib.rs (same reason the
 // command modules above are re-exported with `*`).
 pub use routines::*;
-pub use settings::Settings;
+pub use settings::{Settings, TrayStyle};
 // `MonitorPlacement` only has consumers inside `config::tests`; preserve the
 // pre-split flat path so the test doesn't have to know the new module layout.
 #[allow(unused_imports)]
@@ -219,6 +219,10 @@ impl Scheduler {
         let profiles_file = config::load(&config_path);
         let initial = profiles_file.active_settings();
         let active_name = profiles_file.active.clone();
+        let break_stats = BreakStats::from_events_on_date(
+            &crate::stats::read_all(&events_path),
+            chrono::Local::now().date_naive(),
+        );
         let logger = Logger::spawn(events_path.clone());
         let pause_state = restore_pause_state(&pause_path);
         let today = local_today_string();
@@ -246,7 +250,7 @@ impl Scheduler {
             plugins: Arc::new(Mutex::new(plugins)),
             plugin_dialog_busy: Arc::new(AtomicBool::new(false)),
             timers: Arc::new(Mutex::new(BreakTimers::new())),
-            stats: Arc::new(Mutex::new(BreakStats::default())),
+            stats: Arc::new(Mutex::new(break_stats)),
             screen_time: Arc::new(Mutex::new(screen_time)),
             chores: Arc::new(Mutex::new(chores)),
             current_break: Arc::new(std::sync::Mutex::new(None)),

@@ -213,6 +213,7 @@ pub fn run() {
             platform::get_arch,
             platform::get_platform_capabilities,
             platform::get_locale,
+            tray::seconds_until_tomorrow_morning,
             window::close_pause_window,
             renderer_log::report_renderer_error,
             audio::play_sound,

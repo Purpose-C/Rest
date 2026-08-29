@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "pause",
-  "description": "Minimal capability for the Quick panel-launched Pause picker window. Only needs IPC to call `pause` and `close_pause_window`; no dialog/notification/window-management permissions.",
+  "description": "Minimal capability for the tray-launched Pause picker window. Only needs IPC to call pause commands and close itself; no dialog/notification/window-management permissions.",
   "windows": ["pause"],
   "permissions": ["core:default", "core:event:default", "log:default"]
 }

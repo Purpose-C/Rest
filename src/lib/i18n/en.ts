@@ -458,6 +458,9 @@ export const en: Record<string, string> = {
   "system.leadTimeSeconds": "Lead time (seconds)",
   "system.hotkeys": "Global hotkeys",
   "system.tray": "Tray countdown",
+  "system.trayStyle.iconAndCountdown": "Icon + countdown",
+  "system.trayStyle.countdownOnly": "Countdown only",
+  "system.trayStyle.progressRing": "Progress ring",
   "system.trayCountdown": "Show countdown to next break in the tray",
   "system.trayCountdownTip":
     "Shows the minutes until the next break next to the tray icon. macOS and Linux only — Windows doesn't support tray text.",

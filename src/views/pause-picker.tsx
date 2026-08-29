@@ -20,14 +20,7 @@ function clampDay(year: number, month: number, day: number): number {
   return Math.min(day, new Date(year, month + 1, 0).getDate());
 }
 
-export function secondsUntilTomorrowMorning(now: Date = new Date()): number {
-  const target = new Date(now);
-  target.setDate(target.getDate() + 1);
-  target.setHours(6, 0, 0, 0);
-  return Math.floor((target.getTime() - now.getTime()) / 1000);
-}
-
-/** Standalone popup launched from the Quick panel's "More…" button. Renders
+/** Standalone popup launched from the tray's "Pause until…" item. Renders
  * its own date (locale-ordered) and time (honouring the app's 12h/24h
  * setting) fields rather than a native `datetime-local`, whose format the
  * WebView locks to its own locale (en-US in a non-localised app) regardless
@@ -94,6 +87,10 @@ export function PausePicker() {
   const pauseFor = async (durationSecs: number) => {
     await invoke("pause", { durationSecs });
     close();
+  };
+  const pauseUntilTomorrowMorning = async () => {
+    const durationSecs = await invoke<number>("seconds_until_tomorrow_morning");
+    await pauseFor(durationSecs);
   };
   const submit = async () => {
     if (secs === null) return;
@@ -175,7 +172,7 @@ export function PausePicker() {
         <button
           type="button"
           className="secondary"
-          onClick={() => void pauseFor(secondsUntilTomorrowMorning())}
+          onClick={() => void pauseUntilTomorrowMorning()}
         >
           {t("pausePicker.tomorrowMorning")}
         </button>

@@ -156,6 +156,7 @@ export const schedulerSettingsSchema = z.object({
   daily_screen_time_remind_again_minutes: z.number(),
   tray_countdown_enabled: z.boolean(),
   tray_countdown_target: z.enum(["next", "short", "long"]),
+  tray_style: z.enum(["icon_and_countdown", "countdown_only", "progress_ring"]),
   tray_icon_enabled: z.boolean(),
   micro_break_mode: z.enum(["overlay", "windowed", "notification"]),
   long_break_mode: z.enum(["overlay", "windowed", "notification"]),

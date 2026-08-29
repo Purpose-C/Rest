@@ -30,6 +30,16 @@ pub fn migrate_legacy_settings(value: &mut Value) {
         );
     }
     migrate_sound_fields(obj);
+    if !obj.contains_key("tray_style") {
+        let style = match (
+            obj.get("tray_countdown_enabled").and_then(Value::as_bool),
+            obj.get("tray_icon_enabled").and_then(Value::as_bool),
+        ) {
+            (Some(true), Some(false)) => "countdown_only",
+            _ => "icon_and_countdown",
+        };
+        obj.insert("tray_style".to_string(), Value::String(style.to_string()));
+    }
 }
 
 // Map legacy global `sound_theme` to per-kind `micro_sound` + `long_sound`.
@@ -407,6 +417,31 @@ mod tests {
         let mut v: Value = serde_json::from_str(r#"{"micro_interval_secs": 60}"#).unwrap();
         migrate_legacy_settings(&mut v);
         assert!(v.get("monitor_placement").is_none());
+    }
+
+    #[test]
+    fn migrate_legacy_tray_booleans_to_mutually_exclusive_style() {
+        for (countdown, icon, expected) in [
+            (true, true, "icon_and_countdown"),
+            (true, false, "countdown_only"),
+            (false, true, "icon_and_countdown"),
+            (false, false, "icon_and_countdown"),
+        ] {
+            let mut value = serde_json::json!({
+                "tray_countdown_enabled": countdown,
+                "tray_icon_enabled": icon,
+            });
+            migrate_legacy_settings(&mut value);
+            assert_eq!(value["tray_style"], expected);
+        }
+
+        let mut current = serde_json::json!({
+            "tray_countdown_enabled": true,
+            "tray_icon_enabled": true,
+            "tray_style": "progress_ring",
+        });
+        migrate_legacy_settings(&mut current);
+        assert_eq!(current["tray_style"], "progress_ring");
     }
 
     #[test]
