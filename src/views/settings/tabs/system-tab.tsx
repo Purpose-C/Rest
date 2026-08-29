@@ -142,6 +142,7 @@ export function SystemTab({
           value={settings.tray_icon_enabled}
           onChange={(v) => update("tray_icon_enabled", v)}
           onlyOn={["macos", "linux"]}
+          disabled={!settings.tray_countdown_enabled}
           tip={t("system.trayIconTip")}
         />
         <label
