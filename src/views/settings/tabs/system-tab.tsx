@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { t } from "../../../lib/i18n";
 import { CollapsibleSection } from "../components/collapsible-section";
+import { PLATFORM_LABELS, usePlatform } from "../../../lib/platform";
 import {
   TRAY_COUNTDOWN_TARGETS,
   type TrayCountdownTarget,
@@ -42,6 +43,18 @@ export function SystemTab({
   hooks: UseHooks;
   reload: () => Promise<unknown>;
 }) {
+  // Tray text is macOS/Linux only — Windows trays render no title, so
+  // "countdown only" would silently do nothing there. The backend already
+  // forces the glyph back on Windows so the tray can never vanish; this
+  // gate is what tells the *user* the choice is unavailable, which is the
+  // half `CheckboxRow`'s `onlyOn` used to cover before the checkboxes
+  // became a select.
+  const platform = usePlatform();
+  const trayStyleOnlyOn = ["macos", "linux"] as const;
+  const trayStyleSupported = trayStyleOnlyOn.includes(
+    platform as (typeof trayStyleOnlyOn)[number],
+  );
+
   // Stable IDs for hook rows so React keys survive reordering / mid-list edits.
   // The IDs are local UI state only; they never leave the component.
   const idsRef = useRef<string[]>([]);
@@ -134,10 +147,19 @@ export function SystemTab({
       </CollapsibleSection>
 
       <CollapsibleSection id="settings-tray" title={t("system.tray")}>
-        <label className="row">
-          <span>{t("system.tray")}</span>
+        <label className={`row${trayStyleSupported ? "" : " disabled"}`}>
+          <span>
+            {trayStyleSupported
+              ? t("system.tray")
+              : `${t("system.tray")}${t("rows.platformOnly", {
+                  platforms: trayStyleOnlyOn
+                    .map((p) => PLATFORM_LABELS[p])
+                    .join("/"),
+                })}`}
+          </span>
           <select
             value={settings.tray_style}
+            disabled={!trayStyleSupported}
             onChange={(e) => update("tray_style", e.target.value as TrayStyle)}
           >
             <option value="icon_and_countdown">
