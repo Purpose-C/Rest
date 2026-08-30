@@ -205,6 +205,15 @@ describe("Settings shell ARIA + keyboard", () => {
     expect(visible[0].id).toBe("settings-tabpanel-schedule");
   });
 
+  it("keeps search and tabs in the same header so short panels do not jump the chrome", () => {
+    mockSettings = hydratedSettings;
+    const { container } = render(<Settings />);
+    const header = container.querySelector(".settings-header");
+    expect(header).not.toBeNull();
+    expect(header?.querySelector(".settings-search")).not.toBeNull();
+    expect(header?.querySelector(".tabs")).not.toBeNull();
+  });
+
   it("shows a Loading… message instead of any tabpanel while settings are unresolved", () => {
     mockSettings = null;
     render(<Settings />);

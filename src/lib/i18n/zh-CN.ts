@@ -427,6 +427,7 @@ export const zhCN: Record<string, string> = {
   "quiet.pauseUntilThen": "暂停直到该时刻",
 
   // system-tab
+  "system.general": "常规",
   "system.startup": "启动",
   "system.autostart": "登录系统时启动 Entracte",
   "system.display": "显示",
@@ -487,6 +488,8 @@ export const zhCN: Record<string, string> = {
 
   // about-tab
   "about.title": "关于",
+  "about.app": "应用",
+  "about.supportAndAuthors": "支持与作者",
   "about.checking": "正在检查…",
   "about.checkUpdates": "检查更新",
   "about.version": "版本 {version}",

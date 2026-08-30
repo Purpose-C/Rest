@@ -274,3 +274,4 @@ What's _not_ covered yet:
 
 - Integration test driving `run_loop` with a frozen clock — tracked in [#10](https://github.com/drmowinckels/entracte/issues/10).
 - Serde roundtrip parity between the Rust `Settings` and the TS `SchedulerSettings` — tracked in [#13](https://github.com/drmowinckels/entracte/issues/13).
+- Left-click tray icon to open Settings on Linux — some Linux desktop environments (e.g. libappindicator / GNOME AppIndicator) intercept left-clicks to open the context menu directly without forwarding raw click events to Tauri.

@@ -51,7 +51,7 @@ pub use commands::plugins::*;
 pub use commands::profiles::*;
 pub use commands::settings::*;
 pub use commands::stats::*;
-pub use hotkeys::{apply_hotkeys, execute_hotkey_action, HotkeyAction};
+pub use hotkeys::apply_hotkeys;
 pub use pause::PauseState;
 // Glob so the `#[tauri::command]` `__cmd__get_routines` sibling resolves at
 // `scheduler::get_routines` for the handler in lib.rs (same reason the

@@ -79,7 +79,7 @@ export function AboutTab({
 
   return (
     <>
-      <CollapsibleSection id="settings-about" title={t("about.title")}>
+      <CollapsibleSection id="settings-about" title={t("about.app")}>
         <div className="about-title-row">
           <p className="about-title">Entracte</p>
           <button onClick={update.check} disabled={update.checking}>
@@ -141,17 +141,30 @@ export function AboutTab({
             {t("about.checkFailed", { error: update.error })}
           </p>
         )}
+        <div className="section-heading">
+          <h3 id="settings-diagnostics">{t("about.diagnostics")}</h3>
+          <button onClick={onCopyDiagnosticsReport}>
+            {t("about.copyDiagnosticsReport")}
+          </button>
+        </div>
+        {diagnosticsStatus && (
+          <p className="diagnostics-status">{diagnosticsStatus}</p>
+        )}
+        <p className="diagnostics-hint">
+          {t("about.diagnosticsHint", {
+            link: "github.com/drmowinckels/entracte/issues",
+          })}
+        </p>
       </CollapsibleSection>
 
       <CollapsibleSection
         id="settings-supporter"
-        title={
-          <>
-            {t("about.supporter")}
-            {supporter.status.is_supporter ? " ✓" : ""}
-          </>
-        }
+        title={t("about.supportAndAuthors")}
       >
+        <h3>
+          {t("about.supporter")}
+          {supporter.status.is_supporter ? " ✓" : ""}
+        </h3>
         {supporter.status.is_supporter ? (
           <>
             <p className="about-meta">{t("about.supporterUnlocked")}</p>
@@ -205,52 +218,23 @@ export function AboutTab({
         {supporter.message && (
           <p className="diagnostics-status">{supporter.message}</p>
         )}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id="settings-author"
-        title={t("about.author")}
-        action={
+        <div className="section-heading">
+          <h3 id="settings-author">{t("about.author")}</h3>
           <button
             onClick={() => openUrl("https://buymeacoffee.com/drmowinckels")}
           >
             {t("about.buyMeACoffee")}
           </button>
-        }
-      >
+        </div>
         <p className="about-meta">{t("about.authorName")}</p>
         <p className="about-meta">{t("about.authorBio")}</p>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id="settings-companion-app"
-        title={t("about.companionApp")}
-      >
+        <h3 id="settings-companion-app">{t("about.companionApp")}</h3>
         <p className="about-meta">{t("about.cairnPitch")}</p>
         <div className="actions inline">
           <button onClick={() => openUrl("https://cairn.drmowinckels.io/")}>
             {t("about.tryCairn")}
           </button>
         </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id="settings-diagnostics"
-        title={t("about.diagnostics")}
-        action={
-          <button onClick={onCopyDiagnosticsReport}>
-            {t("about.copyDiagnosticsReport")}
-          </button>
-        }
-      >
-        {diagnosticsStatus && (
-          <p className="diagnostics-status">{diagnosticsStatus}</p>
-        )}
-        <p className="diagnostics-hint">
-          {t("about.diagnosticsHint", {
-            link: "github.com/drmowinckels/entracte/issues",
-          })}
-        </p>
       </CollapsibleSection>
     </>
   );

@@ -1319,18 +1319,9 @@ mod tests {
 
     #[test]
     fn prebreak_message_titles_per_kind() {
-        assert_eq!(
-            prebreak_message(BreakKind::Micro, 30).0,
-            "即将开始短休息"
-        );
-        assert_eq!(
-            prebreak_message(BreakKind::Long, 30).0,
-            "即将开始长休息"
-        );
-        assert_eq!(
-            prebreak_message(BreakKind::Sleep, 30).0,
-            "即将开始就寝提醒"
-        );
+        assert_eq!(prebreak_message(BreakKind::Micro, 30).0, "即将开始短休息");
+        assert_eq!(prebreak_message(BreakKind::Long, 30).0, "即将开始长休息");
+        assert_eq!(prebreak_message(BreakKind::Sleep, 30).0, "即将开始就寝提醒");
         assert_eq!(prebreak_message(BreakKind::Micro, 45).1, "45 秒后开始");
     }
 

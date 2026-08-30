@@ -71,12 +71,7 @@ export function QuietTab({
               : t("quiet.fullscreenVideoTipUnreliable")
           }
         />
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id="settings-during-breaks"
-        title={t("quiet.duringBreaks")}
-      >
+        <h3 id="settings-during-breaks">{t("quiet.duringBreaks")}</h3>
         <CheckboxRow
           label={t("quiet.pauseMedia")}
           value={settings.pause_media_during_breaks}

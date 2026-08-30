@@ -148,7 +148,7 @@ export function Plugins({
               </div>
               <button
                 type="button"
-                className="secondary"
+                className="secondary danger"
                 onClick={() => onUninstall(p)}
                 disabled={busy}
                 aria-label={t("plugins.uninstallAria", { name: p.name })}

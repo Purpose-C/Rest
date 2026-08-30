@@ -172,26 +172,6 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection
-        id="settings-insights-range"
-        title={t("insights.range")}
-      >
-        <div className="range-toggle">
-          <button
-            className={range === "week" ? "active" : "secondary"}
-            onClick={() => setRange("week")}
-          >
-            {t("insights.pastWeek")}
-          </button>
-          <button
-            className={range === "month" ? "active" : "secondary"}
-            onClick={() => setRange("month")}
-          >
-            {t("insights.pastMonth")}
-          </button>
-        </div>
-      </CollapsibleSection>
-
       {!digest || digestLoading ? (
         <p className="placeholder">{t("insights.loadingStats")}</p>
       ) : (
@@ -199,6 +179,26 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
           <CollapsibleSection
             id="settings-insights-summary"
             title={t("insights.summary")}
+            action={
+              <div
+                className="range-toggle"
+                role="group"
+                aria-label={t("insights.range")}
+              >
+                <button
+                  className={range === "week" ? "active" : "secondary"}
+                  onClick={() => setRange("week")}
+                >
+                  {t("insights.pastWeek")}
+                </button>
+                <button
+                  className={range === "month" ? "active" : "secondary"}
+                  onClick={() => setRange("month")}
+                >
+                  {t("insights.pastMonth")}
+                </button>
+              </div>
+            }
           >
             <div className="stat-grid">
               <div className="stat-card">
@@ -333,7 +333,7 @@ export function InsightsTab({ stats }: { stats: UseStats }) {
               <button className="secondary" onClick={onImportBackup}>
                 {t("insights.importBackup")}
               </button>
-              <button className="secondary" onClick={onClearLog}>
+              <button className="secondary danger" onClick={onClearLog}>
                 {t("insights.clearHistory")}
               </button>
             </div>

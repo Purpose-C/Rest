@@ -191,9 +191,7 @@ export function BreaksTab({
             {t("breaks.takeLongNow")}
           </button>
         </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection id="settings-overlay" title={t("breaks.overlay")}>
+        <h3 id="settings-overlay">{t("breaks.overlay")}</h3>
         <label className="row">
           <span>
             {t("breaks.transparency")}
@@ -722,12 +720,7 @@ export function BreaksTab({
             </label>
           </>
         )}
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id="settings-content-packs"
-        title={t("breaks.contentPacks")}
-      >
+        <h3 id="settings-content-packs">{t("breaks.contentPacks")}</h3>
         <ContentPacks
           reload={async () => {
             await reload();

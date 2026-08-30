@@ -242,10 +242,7 @@ mod tests {
         assert!(s.contains("cmd-0"));
         assert!(s.contains(&format!("cmd-{}", HOOK_DIALOG_MAX_HOOKS_SHOWN - 1)));
         assert!(!s.contains(&format!("cmd-{HOOK_DIALOG_MAX_HOOKS_SHOWN}")));
-        assert!(s.contains(&format!(
-            "以及另外 {} 条",
-            15 - HOOK_DIALOG_MAX_HOOKS_SHOWN
-        )));
+        assert!(s.contains(&format!("以及另外 {} 条", 15 - HOOK_DIALOG_MAX_HOOKS_SHOWN)));
     }
 
     #[test]

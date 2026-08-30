@@ -100,15 +100,13 @@ export function SystemTab({
 
   return (
     <>
-      <CollapsibleSection id="settings-startup" title={t("system.startup")}>
+      <CollapsibleSection id="settings-startup" title={t("system.general")}>
         <CheckboxRow
           label={t("system.autostart")}
           value={settings.autostart_enabled}
           onChange={(v) => setAutostart(v)}
         />
-      </CollapsibleSection>
-
-      <CollapsibleSection id="settings-display" title={t("system.display")}>
+        <h3 id="settings-display">{t("system.display")}</h3>
         <label className="row">
           <span>{t("system.timeFormat")}</span>
           <select
@@ -121,12 +119,7 @@ export function SystemTab({
             <option value="12h">{t("system.format12h")}</option>
           </select>
         </label>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        id="settings-notifications"
-        title={t("system.notifications")}
-      >
+        <h3 id="settings-notifications">{t("system.notifications")}</h3>
         <CheckboxRow
           label={t("system.prebreakNotify")}
           value={settings.prebreak_notification_enabled}
@@ -195,10 +188,8 @@ export function SystemTab({
 
       <CollapsibleSection id="settings-plugins" title={t("system.plugins")}>
         <Plugins reload={reload} />
-      </CollapsibleSection>
-
-      <Advanced label={t("system.showAdvancedHooks")}>
-        <h3 id="settings-hooks">{t("system.eventHooks")}</h3>
+        <Advanced label={t("system.showAdvancedHooks")}>
+          <h3 id="settings-hooks">{t("system.eventHooks")}</h3>
         <p className="placeholder hook-warning">{t("system.hooksWarning")}</p>
         <label className="row">
           <span>{t("system.runShellCommands")}</span>
@@ -244,7 +235,8 @@ export function SystemTab({
           </button>
         </div>
         {hooks.error && <p className="placeholder">{hooks.error}</p>}
-      </Advanced>
+        </Advanced>
+      </CollapsibleSection>
     </>
   );
 }

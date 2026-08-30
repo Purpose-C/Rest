@@ -445,6 +445,7 @@ export const en: Record<string, string> = {
   "quiet.pauseUntilThen": "Pause until then",
 
   // system-tab
+  "system.general": "General",
   "system.startup": "Startup",
   "system.autostart": "Start Entracte at login",
   "system.display": "Display",
@@ -505,6 +506,8 @@ export const en: Record<string, string> = {
 
   // about-tab
   "about.title": "About",
+  "about.app": "App",
+  "about.supportAndAuthors": "Support",
   "about.checking": "Checking…",
   "about.checkUpdates": "Check for updates",
   "about.version": "Version {version}",

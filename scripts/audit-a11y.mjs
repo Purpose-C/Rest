@@ -27,13 +27,13 @@ const DEFAULT_SETTINGS_JSON = readFileSync(
 );
 
 const TABS = [
-  "Schedule",
-  "Breaks",
-  "Pausing",
-  "System",
-  "Insights",
-  "Profiles",
-  "About",
+  "schedule",
+  "breaks",
+  "quiet",
+  "system",
+  "insights",
+  "profiles",
+  "about",
 ];
 
 const SCHEMES = ["light", "dark"];
@@ -257,10 +257,18 @@ async function runAxe(page, disabledRules = []) {
 }
 
 async function auditTab(page, tab) {
-  await page.evaluate((label) => {
-    const buttons = Array.from(document.querySelectorAll(".tabs button"));
-    const btn = buttons.find((b) => b.textContent?.trim() === label);
-    btn?.click();
+  await page.evaluate((tabIdOrLabel) => {
+    const targetId = `settings-tab-${tabIdOrLabel.toLowerCase()}`;
+    let btn = document.getElementById(targetId);
+    if (!btn) {
+      const buttons = Array.from(document.querySelectorAll(".tabs button"));
+      btn = buttons.find((b) => b.textContent?.trim() === tabIdOrLabel);
+    }
+    if (btn) {
+      btn.click();
+    } else {
+      console.error(`auditTab failed to find tab button for: ${tabIdOrLabel}`);
+    }
   }, tab);
   await page.evaluate(() => {
     document

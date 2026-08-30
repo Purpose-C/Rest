@@ -348,41 +348,40 @@ export function ScheduleTab({
             </div>
           </>
         )}
+        <Advanced label={t("schedule.showAdvancedScheduling")}>
+          <h3>{t("schedule.inputAwareScheduling")}</h3>
+          <CheckboxRow
+            label={t("schedule.delayBreakIfTyping")}
+            value={settings.delay_break_if_typing}
+            onChange={(v) => update("delay_break_if_typing", v)}
+            tip={t("schedule.delayBreakIfTypingTip")}
+          />
+          {settings.delay_break_if_typing && (
+            <>
+              <NumberRow
+                label={t("schedule.typingGraceSeconds")}
+                value={settings.typing_grace_secs}
+                min={1}
+                multiplier={1}
+                onChange={(v) => update("typing_grace_secs", v)}
+              />
+              <NumberRow
+                label={t("schedule.typingMaxDeferralSeconds")}
+                value={settings.typing_max_deferral_secs}
+                min={1}
+                multiplier={1}
+                onChange={(v) => update("typing_max_deferral_secs", v)}
+              />
+            </>
+          )}
+          <CheckboxRow
+            label={t("schedule.pauseCountdownIfTyping")}
+            value={settings.pause_countdown_if_typing}
+            onChange={(v) => update("pause_countdown_if_typing", v)}
+            tip={t("schedule.pauseCountdownIfTypingTip")}
+          />
+        </Advanced>
       </CollapsibleSection>
-
-      <Advanced label={t("schedule.showAdvancedScheduling")}>
-        <h3>{t("schedule.inputAwareScheduling")}</h3>
-        <CheckboxRow
-          label={t("schedule.delayBreakIfTyping")}
-          value={settings.delay_break_if_typing}
-          onChange={(v) => update("delay_break_if_typing", v)}
-          tip={t("schedule.delayBreakIfTypingTip")}
-        />
-        {settings.delay_break_if_typing && (
-          <>
-            <NumberRow
-              label={t("schedule.typingGraceSeconds")}
-              value={settings.typing_grace_secs}
-              min={1}
-              multiplier={1}
-              onChange={(v) => update("typing_grace_secs", v)}
-            />
-            <NumberRow
-              label={t("schedule.typingMaxDeferralSeconds")}
-              value={settings.typing_max_deferral_secs}
-              min={1}
-              multiplier={1}
-              onChange={(v) => update("typing_max_deferral_secs", v)}
-            />
-          </>
-        )}
-        <CheckboxRow
-          label={t("schedule.pauseCountdownIfTyping")}
-          value={settings.pause_countdown_if_typing}
-          onChange={(v) => update("pause_countdown_if_typing", v)}
-          tip={t("schedule.pauseCountdownIfTypingTip")}
-        />
-      </Advanced>
     </>
   );
 }

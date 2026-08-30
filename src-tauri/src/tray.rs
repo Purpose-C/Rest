@@ -140,10 +140,6 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         false,
         None::<&str>,
     )?;
-    let micro_break_now =
-        MenuItem::with_id(app, "micro_break_now", "立即进行短休息", true, None::<&str>)?;
-    let long_break_now =
-        MenuItem::with_id(app, "long_break_now", "立即进行长休息", true, None::<&str>)?;
 
     let pause_15m = MenuItem::with_id(app, "pause_15m", "15 分钟", true, None::<&str>)?;
     let pause_30m = MenuItem::with_id(app, "pause_30m", "30 分钟", true, None::<&str>)?;
@@ -179,6 +175,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let sep2 = PredefinedMenuItem::separator(app)?;
     let sep3 = PredefinedMenuItem::separator(app)?;
     let sep4 = PredefinedMenuItem::separator(app)?;
+    let sep5 = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "quit", "退出 Entracte", true, None::<&str>)?;
 
     let menu = Menu::with_items(
@@ -186,16 +183,15 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         &[
             &countdown,
             &sep1,
+            &prefs,
+            &sep2,
             &resume,
             &pause_submenu,
-            &sep2,
-            &profile_submenu,
             &sep3,
-            &resume_break,
-            &micro_break_now,
-            &long_break_now,
+            &profile_submenu,
             &sep4,
-            &prefs,
+            &resume_break,
+            &sep5,
             &quit,
         ],
     )?;
@@ -213,7 +209,18 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         .icon_as_template(icon_is_template(std::env::consts::OS))
         .menu(&menu)
         .tooltip(tooltip_for(&initial_active))
-        .show_menu_on_left_click(true)
+        .show_menu_on_left_click(false)
+        .on_tray_icon_event(|tray, event| {
+            if let tauri::tray::TrayIconEvent::Click {
+                button: tauri::tray::MouseButton::Left,
+                button_state: tauri::tray::MouseButtonState::Up,
+                ..
+            } = event
+            {
+                let app = tray.app_handle();
+                crate::window::show_main_window(app);
+            }
+        })
         .on_menu_event(move |app, event| {
             let id = event.id.as_ref();
             if let Some(profile_name) = id.strip_prefix("profile:") {
@@ -258,25 +265,6 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                         let scheduler = app_handle.state::<Scheduler>().inner().clone();
                         let _ =
                             crate::scheduler::resume_last_break_impl(&app_handle, &scheduler).await;
-                    });
-                }
-                "micro_break_now" => {
-                    let app_handle = app.clone();
-                    tauri::async_runtime::spawn(async move {
-                        let scheduler = app_handle.state::<Scheduler>().inner().clone();
-                        crate::scheduler::execute_hotkey_action(
-                            &app_handle,
-                            &scheduler,
-                            crate::scheduler::HotkeyAction::TriggerMicro,
-                        )
-                        .await;
-                    });
-                }
-                "long_break_now" => {
-                    let app_handle = app.clone();
-                    tauri::async_runtime::spawn(async move {
-                        let scheduler = app_handle.state::<Scheduler>().inner().clone();
-                        crate::scheduler::start_long_break_now_impl(&app_handle, &scheduler).await;
                     });
                 }
                 _ => {}
@@ -334,12 +322,11 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let resume_for_rebuild = resume.clone();
     let pause_submenu_for_rebuild = pause_submenu.clone();
     let resume_break_for_rebuild = resume_break.clone();
-    let micro_break_now_for_rebuild = micro_break_now.clone();
-    let long_break_now_for_rebuild = long_break_now.clone();
     let sep1_for_rebuild = sep1.clone();
     let sep2_for_rebuild = sep2.clone();
     let sep3_for_rebuild = sep3.clone();
     let sep4_for_rebuild = sep4.clone();
+    let sep5_for_rebuild = sep5.clone();
     let quit_for_rebuild = quit.clone();
     app.listen("profile:changed", move |_event| {
         let app = app_for_profile.clone();
@@ -351,12 +338,11 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         let resume = resume_for_rebuild.clone();
         let pause_submenu = pause_submenu_for_rebuild.clone();
         let resume_break = resume_break_for_rebuild.clone();
-        let micro_break_now = micro_break_now_for_rebuild.clone();
-        let long_break_now = long_break_now_for_rebuild.clone();
         let sep1 = sep1_for_rebuild.clone();
         let sep2 = sep2_for_rebuild.clone();
         let sep3 = sep3_for_rebuild.clone();
         let sep4 = sep4_for_rebuild.clone();
+        let sep5 = sep5_for_rebuild.clone();
         let quit = quit_for_rebuild.clone();
         tauri::async_runtime::spawn(async move {
             let scheduler = app.state::<Scheduler>().inner().clone();
@@ -376,16 +362,15 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                 &[
                     &countdown,
                     &sep1,
+                    &prefs,
+                    &sep2,
                     &resume,
                     &pause_submenu,
-                    &sep2,
-                    &new_submenu,
                     &sep3,
-                    &resume_break,
-                    &micro_break_now,
-                    &long_break_now,
+                    &new_submenu,
                     &sep4,
-                    &prefs,
+                    &resume_break,
+                    &sep5,
                     &quit,
                 ],
             ) else {
@@ -409,7 +394,9 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
 
 fn countdown_menu_label(snapshot: &TrayCountdownSnapshot) -> String {
     match snapshot {
-        TrayCountdownSnapshot::Running(secs) => format!("下次休息 {}:{:02}", secs / 60, secs % 60),
+        TrayCountdownSnapshot::Running(secs) => {
+            format!("下次休息  {}:{:02}", secs / 60, secs % 60)
+        }
         TrayCountdownSnapshot::Paused => "已暂停".to_string(),
         TrayCountdownSnapshot::Bedtime => "就寝提醒进行中".to_string(),
         TrayCountdownSnapshot::OnBreak => "正在休息".to_string(),
@@ -538,10 +525,19 @@ fn outline_glyph_for_panels(rgba: &[u8], width: u32, height: u32) -> Vec<u8> {
 }
 
 const PROGRESS_RING_SIZE: u32 = 200;
-const PROGRESS_RING_RADIUS: f64 = 70.0;
-const PROGRESS_TRACK_WIDTH: f64 = 10.0;
-const PROGRESS_ARC_WIDTH: f64 = 24.0;
-const PROGRESS_VISUAL_GAP_RADIANS: f64 = 10.0 * std::f64::consts::PI / 180.0;
+// Two clockwise comets on a slightly wide ellipse, tilted 30°. Template
+// tint: one system colour, three alphas (upper / lower / fill).
+const RING_PATH_RX: f64 = 76.0;
+const RING_PATH_RY: f64 = 71.0;
+const COMET_HEAD_HALF: f64 = 23.0;
+const COMET_GAP: f64 = 22.0 * std::f64::consts::PI / 180.0;
+const COMET_TILT: f64 = std::f64::consts::FRAC_PI_6;
+const COMET_TAPER: f64 = 0.85;
+const COMET_UPPER_ALPHA: u8 = 200;
+const COMET_LOWER_ALPHA: u8 = 118;
+const COMET_FILL_ALPHA: u8 = 255;
+// Match the static glyphs so the ring doesn't sit taller than ChatGPT.
+const PROGRESS_GLYPH_SCALE: f32 = 0.78;
 
 fn progress_bucket(remaining_secs: u64, interval_secs: u64) -> u8 {
     if interval_secs == 0 {
@@ -551,55 +547,169 @@ fn progress_bucket(remaining_secs: u64, interval_secs: u64) -> u8 {
     (progress * 60.0).round().clamp(0.0, 60.0) as u8
 }
 
+fn wrap_2pi(angle: f64) -> f64 {
+    let tau = std::f64::consts::TAU;
+    let wrapped = angle % tau;
+    if wrapped < 0.0 {
+        wrapped + tau
+    } else {
+        wrapped
+    }
+}
+
+fn comet_half_width(s: f64) -> f64 {
+    // Needle at the tail, full width at the round head, thickening along
+    // the whole body — no uniform-sausage plateau.
+    COMET_HEAD_HALF * s.clamp(0.0, 1.0).powf(COMET_TAPER)
+}
+
+fn arc_param(theta: f64, start: f64, span: f64) -> Option<f64> {
+    let d = wrap_2pi(theta - start);
+    if d <= span {
+        Some(d / span)
+    } else {
+        None
+    }
+}
+
+fn path_point(ang: f64) -> (f64, f64) {
+    (RING_PATH_RX * ang.sin(), -RING_PATH_RY * ang.cos())
+}
+
+fn eccentric_angle(px: f64, py: f64) -> f64 {
+    (px / RING_PATH_RX).atan2(-py / RING_PATH_RY)
+}
+
+fn dist2_on_path(px: f64, py: f64, ang: f64) -> f64 {
+    let (cx, cy) = path_point(ang);
+    let dx = px - cx;
+    let dy = py - cy;
+    dx * dx + dy * dy
+}
+
+fn dist_to_centerline(px: f64, py: f64) -> (f64, f64) {
+    let theta = eccentric_angle(px, py);
+    let (cx, cy) = path_point(theta);
+    ((px - cx).hypot(py - cy), theta)
+}
+
+/// Cover of one comet: `(on_full_shape, on_fill)`. `fill_s` is 0..=1 along
+/// the comet from tail to round head. A local-width cap sits at the fill
+/// frontier so the growing end is round, not a radial slice.
+fn comet_cover(
+    px: f64,
+    py: f64,
+    dist: f64,
+    theta: f64,
+    fill_s: f64,
+    tail: f64,
+    span: f64,
+) -> (bool, bool) {
+    let mut on_full = false;
+    let mut on_fill = false;
+    if let Some(s) = arc_param(theta, tail, span) {
+        if dist <= comet_half_width(s) {
+            on_full = true;
+            if fill_s > 0.0 && s <= fill_s {
+                on_fill = true;
+            }
+        }
+    }
+    let head = wrap_2pi(tail + span);
+    if dist2_on_path(px, py, head) <= COMET_HEAD_HALF * COMET_HEAD_HALF {
+        on_full = true;
+        if fill_s >= 1.0 {
+            on_fill = true;
+        }
+    }
+    if fill_s > 0.0 && fill_s < 1.0 {
+        let cap = wrap_2pi(tail + span * fill_s);
+        let rw = comet_half_width(fill_s);
+        if dist2_on_path(px, py, cap) <= rw * rw {
+            on_fill = true;
+        }
+    }
+    (on_full, on_fill)
+}
+
+fn comet_fills(progress: f64) -> (f64, f64) {
+    let p = progress.clamp(0.0, 1.0);
+    if p <= 0.5 {
+        (p / 0.5, 0.0)
+    } else {
+        (1.0, (p - 0.5) / 0.5)
+    }
+}
+
+fn comet_geometry() -> (f64, f64, f64) {
+    let span = std::f64::consts::PI - COMET_GAP;
+    let tail_left = COMET_TILT + std::f64::consts::PI + COMET_GAP * 0.5;
+    let tail_right = COMET_TILT + COMET_GAP * 0.5;
+    (tail_left, tail_right, span)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn comet_sample(
+    px: f64,
+    py: f64,
+    dist: f64,
+    theta: f64,
+    fill_left: f64,
+    fill_right: f64,
+    tail_left: f64,
+    tail_right: f64,
+    span: f64,
+) -> Option<u8> {
+    let (full_l, fill_l) = comet_cover(px, py, dist, theta, fill_left, tail_left, span);
+    if fill_l {
+        return Some(COMET_FILL_ALPHA);
+    }
+    if full_l {
+        return Some(COMET_UPPER_ALPHA);
+    }
+    let (full_r, fill_r) = comet_cover(px, py, dist, theta, fill_right, tail_right, span);
+    if fill_r {
+        return Some(COMET_FILL_ALPHA);
+    }
+    if full_r {
+        return Some(COMET_LOWER_ALPHA);
+    }
+    None
+}
+
 fn progress_ring_rgba(progress: f64) -> Vec<u8> {
     let size = PROGRESS_RING_SIZE as usize;
     let center = PROGRESS_RING_SIZE as f64 / 2.0;
-    let cap_angle = (PROGRESS_ARC_WIDTH / 2.0 / PROGRESS_RING_RADIUS).asin();
-    let centerline_gap = PROGRESS_VISUAL_GAP_RADIANS + 2.0 * cap_angle;
-    let start = centerline_gap / 2.0;
-    let sweep = (std::f64::consts::TAU - centerline_gap) * progress.clamp(0.0, 1.0);
-    let arc_end = start + sweep;
-    let point = |angle: f64| {
-        (
-            center + PROGRESS_RING_RADIUS * angle.sin(),
-            center - PROGRESS_RING_RADIUS * angle.cos(),
-        )
-    };
-    let start_point = point(start);
-    let end_point = point(arc_end);
+    let (tail_left, tail_right, span) = comet_geometry();
+    let (fill_left, fill_right) = comet_fills(progress);
     let mut rgba = vec![0u8; size * size * 4];
     for y in 0..size {
         for x in 0..size {
-            let mut track_hits = 0u8;
-            let mut arc_hits = 0u8;
+            let mut alpha_sum = 0u32;
             for sy in 0..4 {
                 for sx in 0..4 {
-                    let px = x as f64 + (sx as f64 + 0.5) / 4.0;
-                    let py = y as f64 + (sy as f64 + 0.5) / 4.0;
-                    let dx = px - center;
-                    let dy = py - center;
-                    let distance = (dx * dx + dy * dy).sqrt();
-                    if (distance - PROGRESS_RING_RADIUS).abs() <= PROGRESS_TRACK_WIDTH / 2.0 {
-                        track_hits += 1;
-                    }
-                    if sweep > 0.0 {
-                        let angle = dx.atan2(-dy).rem_euclid(std::f64::consts::TAU);
-                        let on_arc = angle >= start && angle <= arc_end;
-                        let cap_radius = PROGRESS_ARC_WIDTH / 2.0;
-                        let in_start_cap =
-                            (px - start_point.0).hypot(py - start_point.1) <= cap_radius;
-                        let in_end_cap = (px - end_point.0).hypot(py - end_point.1) <= cap_radius;
-                        if ((distance - PROGRESS_RING_RADIUS).abs() <= cap_radius && on_arc)
-                            || in_start_cap
-                            || in_end_cap
-                        {
-                            arc_hits += 1;
-                        }
+                    let px = x as f64 + (sx as f64 + 0.5) / 4.0 - center;
+                    let py = y as f64 + (sy as f64 + 0.5) / 4.0 - center;
+                    let (dist, theta) = dist_to_centerline(px, py);
+                    if let Some(a) = comet_sample(
+                        px,
+                        py,
+                        dist,
+                        theta,
+                        fill_left,
+                        fill_right,
+                        tail_left,
+                        tail_right,
+                        span,
+                    ) {
+                        alpha_sum += u32::from(a);
                     }
                 }
             }
-            let alpha = ((track_hits as u16 * 80) / 16).max((arc_hits as u16 * 255) / 16) as u8;
-            rgba[(y * size + x) * 4 + 3] = alpha;
+            if alpha_sum > 0 {
+                // Black body, alpha carries the template tint weight.
+                rgba[(y * size + x) * 4 + 3] = (alpha_sum / 16) as u8;
+            }
         }
     }
     rgba
@@ -607,14 +717,19 @@ fn progress_ring_rgba(progress: f64) -> Vec<u8> {
 
 fn progress_ring_image(bucket: u8, os: &str) -> tauri::Result<Image<'static>> {
     let rgba = progress_ring_rgba(bucket.min(60) as f64 / 60.0);
-    let (padded, width, height) = pad_glyph(&rgba, PROGRESS_RING_SIZE, PROGRESS_RING_SIZE);
+    let (padded, w, h) = pad_glyph_scaled(
+        &rgba,
+        PROGRESS_RING_SIZE,
+        PROGRESS_RING_SIZE,
+        PROGRESS_GLYPH_SCALE,
+    );
     if icon_is_template(os) {
-        return Ok(Image::new_owned(padded, width, height));
+        return Ok(Image::new_owned(padded, w, h));
     }
     Ok(Image::new_owned(
-        outline_glyph_for_panels(&padded, width, height),
-        width,
-        height,
+        outline_glyph_for_panels(&padded, w, h),
+        w,
+        h,
     ))
 }
 
@@ -636,7 +751,17 @@ const TRAY_GLYPH_SCALE: f32 = 0.78;
 /// tight also narrows the whole status item as the glyph shrinks.
 #[cfg_attr(target_os = "windows", allow(dead_code))]
 fn pad_glyph(rgba: &[u8], width: u32, height: u32) -> (Vec<u8>, u32, u32) {
-    let out_h = ((height as f32) / TRAY_GLYPH_SCALE).round() as u32;
+    pad_glyph_scaled(rgba, width, height, TRAY_GLYPH_SCALE)
+}
+
+#[cfg_attr(target_os = "windows", allow(dead_code))]
+fn pad_glyph_scaled(
+    rgba: &[u8],
+    width: u32,
+    height: u32,
+    scale: f32,
+) -> (Vec<u8>, u32, u32) {
+    let out_h = ((height as f32) / scale).round() as u32;
     let off_y = (out_h - height) / 2;
     let row_len = (width * 4) as usize;
     let mut out = vec![0u8; (width * out_h * 4) as usize];
@@ -687,11 +812,11 @@ fn spawn_countdown_ticker(
         #[cfg(not(target_os = "windows"))]
         let mut last_standalone: Option<bool> = None;
         loop {
-            tokio::time::sleep(Duration::from_secs(1)).await;
             let scheduler = app.state::<Scheduler>().inner().clone();
             let (snapshot, text_enabled) = scheduler.tray_countdown_snapshot().await;
             let tray_style = scheduler.tray_style().await;
             let _ = countdown.set_text(countdown_menu_label(&snapshot));
+            let _ = countdown.set_enabled(false);
 
             #[cfg(not(target_os = "windows"))]
             let title = tray_title_for(&snapshot, text_enabled);
@@ -775,6 +900,13 @@ fn spawn_countdown_ticker(
             // Windows skips that block so we silence the unused warning.
             #[cfg(target_os = "windows")]
             let _ = text_enabled;
+            // After set_text / set_icon / set_title so we overwrite tray-icon's
+            // 18pt image size and Tauri's plain (gray, disabled) menu title.
+            #[cfg(target_os = "macos")]
+            {
+                let _ = app.run_on_main_thread(polish_macos_tray);
+            }
+            tokio::time::sleep(Duration::from_secs(1)).await;
         }
     });
 }
@@ -896,6 +1028,96 @@ fn apply_monospaced_status_titles(standalone: bool) {
     }
 }
 
+/// Colour the countdown row blue and stretch the glyph to the menu-bar
+/// height. Must run on the main thread, after `set_text` / `set_icon`.
+///
+/// Disabled `NSMenuItem`s draw gray unless they carry an attributed title;
+/// the dropdown font is the system menu font (not the 0.82 tray-title scale,
+/// which only applies to the number beside the glyph).
+///
+/// tray-icon hardcodes the image at 18pt inside a ~22pt bar. Setting the
+/// `NSImage` size to the bar thickness, and zeroing the private left/right
+/// paddings when they exist, is as close to "no inset" as AppKit allows —
+/// the four empty corners of a circle in a square are geometry, not padding.
+#[cfg(target_os = "macos")]
+fn polish_macos_tray() {
+    use objc2::msg_send;
+    use objc2::rc::Retained;
+    use objc2::runtime::AnyObject;
+    use objc2::AnyThread;
+    use objc2_app_kit::{
+        NSColor, NSFont, NSFontAttributeName, NSForegroundColorAttributeName, NSImageScaling,
+        NSStatusBar,
+    };
+    use objc2_foundation::{MainThreadMarker, NSAttributedString, NSDictionary, NSSize, NSString};
+
+    let Some(mtm) = MainThreadMarker::new() else {
+        return;
+    };
+
+    unsafe {
+        let bar = NSStatusBar::systemStatusBar();
+        let thickness = bar.thickness();
+        let responds: bool = msg_send![&*bar, respondsToSelector: objc2::sel!(_statusItems)];
+        if !responds {
+            return;
+        }
+        let items: Retained<AnyObject> = msg_send![&*bar, _statusItems];
+        let n: usize = msg_send![&*items, count];
+        if n == 0 {
+            return;
+        }
+
+        let font = NSFont::menuFontOfSize(0.0);
+        let color = NSColor::systemBlueColor();
+        let attrs = NSDictionary::from_slices::<NSString>(
+            &[NSForegroundColorAttributeName, NSFontAttributeName],
+            &[&*color as &AnyObject, &*font as &AnyObject],
+        );
+
+        for i in 0..n {
+            let item: *mut objc2_app_kit::NSStatusItem = msg_send![&*items, pointerAtIndex: i];
+            if item.is_null() {
+                continue;
+            }
+            let item_ref: &objc2_app_kit::NSStatusItem = &*item;
+
+            if let Some(menu) = item_ref.menu(mtm) {
+                if let Some(countdown) = menu.itemAtIndex(0) {
+                    countdown.setEnabled(false);
+                    let title = countdown.title();
+                    if title.length() > 0 {
+                        let attr_str = NSAttributedString::initWithString_attributes(
+                            NSAttributedString::alloc(),
+                            &title,
+                            Some(&attrs),
+                        );
+                        countdown.setAttributedTitle(Some(&attr_str));
+                    }
+                }
+            }
+
+            let Some(button) = item_ref.button(mtm) else {
+                continue;
+            };
+            if let Some(image) = button.image() {
+                let current = image.size();
+                if current.height > 0.1 {
+                    let width = current.width / current.height * thickness;
+                    image.setSize(NSSize::new(width, thickness));
+                }
+                button.setImageScaling(NSImageScaling::ScaleProportionallyUpOrDown);
+            }
+            let has_left_pad: bool =
+                msg_send![&*button, respondsToSelector: objc2::sel!(setStatusBarLeftPadding:)];
+            if has_left_pad {
+                let _: () = msg_send![&*button, setStatusBarLeftPadding: 0.0f64];
+                let _: () = msg_send![&*button, setStatusBarRightPadding: 0.0f64];
+            }
+        }
+    }
+}
+
 fn read_profiles_blocking(app: &AppHandle) -> (Vec<String>, String) {
     let scheduler = app.state::<Scheduler>().inner().clone();
     tauri::async_runtime::block_on(async move {
@@ -927,7 +1149,7 @@ mod tests {
     fn countdown_menu_label_covers_each_scheduler_state() {
         assert_eq!(
             countdown_menu_label(&TrayCountdownSnapshot::Running(277)),
-            "下次休息 4:37"
+            "下次休息  4:37"
         );
         assert_eq!(
             countdown_menu_label(&TrayCountdownSnapshot::Paused),
@@ -963,21 +1185,141 @@ mod tests {
         assert_eq!(progress_bucket(9_000, 3_000), 0);
     }
 
+    fn alpha_at(img: &[u8], x: u32, y: u32) -> u8 {
+        img[((y * PROGRESS_RING_SIZE + x) * 4 + 3) as usize]
+    }
+
+    fn alpha_near(got: u8, want: u8, tol: u8) -> bool {
+        got.abs_diff(want) <= tol
+    }
+
+    fn painted_count(img: &[u8]) -> usize {
+        img.chunks_exact(4).filter(|p| p[3] >= 80).count()
+    }
+
+    fn ring_xy(ang: f64) -> (u32, u32) {
+        let x = (100.0 + RING_PATH_RX * ang.sin()).round() as u32;
+        let y = (100.0 - RING_PATH_RY * ang.cos()).round() as u32;
+        (x, y)
+    }
+
     #[test]
-    fn progress_ring_keeps_a_faint_track_at_zero_and_adds_a_solid_arc() {
+    fn two_comets_fill_left_then_right() {
         let empty = progress_ring_rgba(0.0);
+        let quarter = progress_ring_rgba(0.25);
         let half = progress_ring_rgba(0.5);
+        let full = progress_ring_rgba(1.0);
         assert_eq!(
             empty.len(),
             (PROGRESS_RING_SIZE * PROGRESS_RING_SIZE * 4) as usize
         );
-        assert!(empty.chunks_exact(4).any(|pixel| pixel[3] > 0));
-        assert!(empty.chunks_exact(4).all(|pixel| pixel[3] <= 80));
-        assert!(half.chunks_exact(4).any(|pixel| pixel[3] == 255));
-        assert_eq!(
-            half[((30 * PROGRESS_RING_SIZE + 100) * 4 + 3) as usize],
-            80,
-            "the 12 o'clock gap keeps only the faint track",
+        assert_eq!(alpha_at(&empty, 100, 100), 0, "centre must stay hollow");
+        assert_eq!(alpha_at(&full, 100, 100), 0, "a full ring is still hollow");
+        for (x, y) in [(100, 90), (100, 110), (90, 100), (110, 100)] {
+            assert_eq!(alpha_at(&full, x, y), 0, "hollow disc at ({x},{y})");
+        }
+
+        let n0 = painted_count(&empty);
+        let n100 = painted_count(&full);
+        assert!(n0 > 2_000, "0% already paints both comets, got {n0}");
+        assert!(
+            (n0 as i32 - n100 as i32).unsigned_abs() < n0 as u32 / 3,
+            "fill changes alpha, not the silhouette, {n0} vs {n100}"
+        );
+
+        let (x9, y9) = ring_xy(std::f64::consts::PI * 1.5);
+        let (x3, y3) = ring_xy(std::f64::consts::FRAC_PI_2);
+        let (x12, y12) = ring_xy(0.0);
+        let (x6, y6) = ring_xy(std::f64::consts::PI);
+
+        assert!(
+            alpha_near(alpha_at(&empty, x12, y12), COMET_UPPER_ALPHA, 30),
+            "12 o'clock is the upper comet at 0%, got {}",
+            alpha_at(&empty, x12, y12)
+        );
+        assert!(
+            alpha_near(alpha_at(&empty, x6, y6), COMET_LOWER_ALPHA, 30),
+            "6 o'clock is the lower comet at 0%, got {}",
+            alpha_at(&empty, x6, y6)
+        );
+        assert!(
+            alpha_near(alpha_at(&quarter, x9, y9), COMET_FILL_ALPHA, 30),
+            "left fill has reached 9 o'clock by 25%, got {}",
+            alpha_at(&quarter, x9, y9)
+        );
+        assert!(
+            alpha_near(alpha_at(&quarter, x12, y12), COMET_UPPER_ALPHA, 30),
+            "12 o'clock still upper-alpha at 25%, got {}",
+            alpha_at(&quarter, x12, y12)
+        );
+        assert!(
+            alpha_near(alpha_at(&half, x12, y12), COMET_FILL_ALPHA, 30)
+                && alpha_near(alpha_at(&half, x9, y9), COMET_FILL_ALPHA, 30),
+            "50% paints the whole left comet at fill alpha"
+        );
+        assert!(
+            alpha_near(alpha_at(&half, x6, y6), COMET_LOWER_ALPHA, 30)
+                && alpha_near(alpha_at(&half, x3, y3), COMET_LOWER_ALPHA, 30),
+            "right comet is still lower-alpha at 50%, got 3={} 6={}",
+            alpha_at(&half, x3, y3),
+            alpha_at(&half, x6, y6)
+        );
+        assert!(alpha_near(alpha_at(&full, x3, y3), COMET_FILL_ALPHA, 30));
+        assert!(alpha_near(alpha_at(&full, x9, y9), COMET_FILL_ALPHA, 30));
+    }
+
+    #[test]
+    fn comets_leave_a_gap_on_the_tilted_seams() {
+        let full = progress_ring_rgba(1.0);
+        // Gap centres sit at 1:00 and 7:00; the round head eats the 12-side
+        // of each gap, so sample toward the opposing tail.
+        let (gx, gy) = ring_xy(COMET_TILT + COMET_GAP * 0.5);
+        assert!(
+            alpha_at(&full, gx, gy) < 80,
+            "1:30 seam must stay open, got {} at ({gx},{gy})",
+            alpha_at(&full, gx, gy)
+        );
+        let (gx2, gy2) = ring_xy(COMET_TILT + std::f64::consts::PI + COMET_GAP * 0.5);
+        assert!(
+            alpha_at(&full, gx2, gy2) < 80,
+            "7:30 seam must stay open, got {} at ({gx2},{gy2})",
+            alpha_at(&full, gx2, gy2)
+        );
+        let (x12, y12) = ring_xy(0.0);
+        assert!(
+            alpha_at(&full, x12, y12) >= 200,
+            "tilt is 30°: 12 o'clock is on the left comet, not a seam"
+        );
+    }
+
+    #[test]
+    fn ring_reaches_near_the_canvas_edge() {
+        let img = progress_ring_rgba(1.0);
+        let mut max_r2 = 0u32;
+        for y in 0..PROGRESS_RING_SIZE {
+            for x in 0..PROGRESS_RING_SIZE {
+                if alpha_at(&img, x, y) > 80 {
+                    let dx = x as i32 - 100;
+                    let dy = y as i32 - 100;
+                    max_r2 = max_r2.max((dx * dx + dy * dy) as u32);
+                }
+            }
+        }
+        assert!(
+            max_r2 >= 80 * 80,
+            "glyph must reach the outer rim, max r²={max_r2}"
+        );
+        assert_eq!(alpha_at(&img, 0, 0), 0, "circle cannot fill the corner");
+    }
+
+    #[test]
+    fn progress_ring_image_is_padded_like_static_glyphs() {
+        let icon = progress_ring_image(30, "macos").unwrap();
+        assert_eq!(icon.width(), PROGRESS_RING_SIZE, "width stays tight");
+        assert!(
+            icon.height() > PROGRESS_RING_SIZE,
+            "vertical pad shrinks the glyph in the menu bar, h={}",
+            icon.height()
         );
     }
 

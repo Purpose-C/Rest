@@ -1,6 +1,19 @@
+html:has(.settings),
+#root:has(.settings) {
+  --settings-bg: #16181d;
+  background: var(--settings-bg);
+  scrollbar-gutter: stable;
+}
+
 .settings {
-  --card-bg: #242831;
-  --accent: #78bcc7;
+  --settings-bg: #16181d;
+  --card-bg: #232730;
+  --card-border: transparent;
+  --card-shadow: none;
+  --accent: #7ab0bc;
+  --accent-strong: #7ab0bc;
+  --accent-hover: #8ec4ce;
+  --on-accent: #142326;
   --data-1: #c7b6ef;
   --data-2: #b69de4;
   --data-3: #a17fd8;
@@ -10,9 +23,21 @@
 }
 
 @media (prefers-color-scheme: light) {
+  html:has(.settings),
+  #root:has(.settings) {
+    --settings-bg: #eceff4;
+    background: var(--settings-bg);
+  }
+
   .settings {
+    --settings-bg: #eceff4;
     --card-bg: #fff;
-    --accent: #2e545d;
+    --card-border: rgba(0, 0, 0, 0.06);
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --accent: #1e6470;
+    --accent-strong: #1e6470;
+    --accent-hover: #277f8c;
+    --on-accent: #fff;
     --data-1: #59417e;
     --data-2: #6d5193;
     --data-3: #7c5da3;
@@ -21,22 +46,52 @@
   }
 }
 
-#root .settings h2,
-body .settings h2 {
-  font-size: 1.3rem;
+#root .settings {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1.75rem 2.25rem 2.75rem;
+  background: var(--settings-bg);
+}
+
+#root .settings::-webkit-scrollbar {
+  width: 6px;
+}
+
+#root .settings::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.25);
+  border-radius: 999px;
+}
+
+#root .settings h2 {
+  font-size: 1.12rem;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
   color: var(--fg);
+  margin: 1.4rem 0 0.5rem;
 }
 
-#root .settings .settings-section-toggle,
-body .settings .settings-section-toggle {
+#root .settings .tab-content > :first-child h2 {
+  margin-top: 0.15rem;
+}
+
+#root .settings h3 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--fg);
+  margin: 0.85rem 0 0.2rem;
+}
+
+#root .settings section .section-heading {
+  margin: 0.85rem 0 0.25rem;
+}
+
+#root .settings .settings-section-toggle {
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0;
+  gap: 0.5rem;
+  padding: 0.1rem 0;
   border: 0;
   background: none;
   color: inherit;
@@ -45,8 +100,7 @@ body .settings .settings-section-toggle {
   cursor: pointer;
 }
 
-#root .settings .settings-section-toggle:focus-visible,
-body .settings .settings-section-toggle:focus-visible {
+#root .settings .settings-section-toggle:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
@@ -60,49 +114,189 @@ body .settings .settings-section-toggle:focus-visible {
   flex: 1;
 }
 
-#root .settings section[hidden],
-body .settings section[hidden] {
+#root .settings section[hidden] {
   display: none;
 }
 
-#root .settings button.link:hover,
-body .settings button.link:hover {
+#root .settings section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  padding: 0.8rem 1.25rem 1rem;
+  margin-bottom: 0.35rem;
+}
+
+#root .settings .advanced-section {
+  margin: 0.65rem 0 0.15rem;
+  padding: 0.35rem 0.8rem 0.45rem;
+  border-top: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+#root .settings .advanced-section > summary {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0;
+}
+
+#root .settings .advanced-section > summary::before {
+  font-size: 0.85rem;
+  width: 0.8em;
+}
+
+#root .settings .tab-content button:not([class]),
+#root .settings .tab-content button.primary {
+  background: var(--accent-strong);
+  color: var(--on-accent);
+}
+
+#root .settings .tab-content button:not([class]):hover:not(:disabled),
+#root .settings .tab-content button.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+#root .settings button.link,
+#root .settings button.icon-action,
+#root .settings button.reorder-btn,
+#root .settings button.app-suggestion-chip,
+#root .settings button.weekday-chip,
+#root .settings button.settings-section-toggle {
+  background: transparent;
+  color: var(--fg);
+}
+
+#root .settings button.secondary {
+  background: var(--input-bg);
+  color: var(--fg);
+  border: 1px solid var(--input-border);
+}
+
+#root .settings button.secondary:hover:not(:disabled) {
+  background: var(--input-hover);
+}
+
+#root .settings .settings-header {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  background: var(--settings-bg);
+}
+
+#root .settings .settings-search {
+  margin: 0;
+}
+
+#root .settings .tabs {
+  flex-wrap: nowrap;
+}
+
+#root .settings .tabs button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-left: 0.28rem;
+  padding-right: 0.28rem;
+  text-align: center;
+  white-space: nowrap;
+  background: transparent;
+  color: var(--muted-fg);
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+#root .settings .tabs button:hover,
+#root .settings .tabs button:focus-visible,
+#root .settings .tabs button.active {
+  background: transparent;
+  color: var(--fg);
+  outline: none;
+}
+
+#root .settings .range-toggle button.active {
+  background: var(--accent-strong);
+  color: var(--on-accent);
+}
+
+#root .settings .section-heading .range-toggle {
+  margin: 0;
+}
+
+#root .settings button.link:hover {
   color: var(--accent);
 }
 
+#root .settings input[type="text"],
+#root .settings input[type="number"],
+#root .settings select,
+#root .settings textarea {
+  border-radius: 6px;
+}
+
+#root .settings input:focus-visible,
+#root .settings select:focus-visible,
+#root .settings textarea:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+#root .settings .hotkey-input button {
+  white-space: nowrap;
+  min-width: 3.2rem;
+  flex-shrink: 0;
+}
+
+#root .settings .weekday-chip.active {
+  background: color-mix(in srgb, var(--accent) 22%, var(--card-bg));
+  border-color: var(--accent);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+#root .settings .profile-badge {
+  color: var(--accent);
+  border-color: var(--accent);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 #root .settings .hour-bar,
-#root .settings .weekday-bar-taken,
-body .settings .hour-bar,
-body .settings .weekday-bar-taken {
+#root .settings .weekday-bar-taken {
   background: var(--data-1);
 }
 
-#root .settings .weekday-bar-dismissed,
-body .settings .weekday-bar-dismissed {
+#root .settings .weekday-bar-dismissed {
   background: var(--data-3);
   opacity: 1;
 }
 
-#root .settings .heatmap-cell[data-level="1"],
-body .settings .heatmap-cell[data-level="1"] {
+#root .settings .heatmap-cell[data-level="1"] {
   background: var(--data-4);
   border-color: var(--data-4);
 }
 
-#root .settings .heatmap-cell[data-level="2"],
-body .settings .heatmap-cell[data-level="2"] {
+#root .settings .heatmap-cell[data-level="2"] {
   background: var(--data-1);
   border-color: var(--data-1);
 }
 
-#root .settings .heatmap-cell[data-level="3"],
-body .settings .heatmap-cell[data-level="3"] {
+#root .settings .heatmap-cell[data-level="3"] {
   background: var(--data-2);
   border-color: var(--data-2);
 }
 
-#root .settings .heatmap-cell[data-level="4"],
-body .settings .heatmap-cell[data-level="4"] {
+#root .settings .heatmap-cell[data-level="4"] {
   background: var(--data-3);
   border-color: var(--data-3);
 }
@@ -119,33 +313,21 @@ body .settings .heatmap-cell[data-level="4"] {
 #root .settings .content-pack-err,
 #root .settings .profile-error,
 #root .settings button.danger,
-#root .settings .screen-time-progress.over-budget .screen-time-value,
-body .settings .profile-actions .link.danger,
-body .settings .content-pack-err,
-body .settings .profile-error,
-body .settings button.danger,
-body .settings .screen-time-progress.over-budget .screen-time-value,
-#settings-supporter .settings-section-toggle,
-#settings-custom-css .settings-section-toggle {
+#root .settings .screen-time-progress.over-budget .screen-time-value {
   color: var(--warning-color);
 }
 
-#root .settings .screen-time-progress.over-budget .screen-time-bar > span,
-body .settings .screen-time-progress.over-budget .screen-time-bar > span {
+#root .settings button.danger {
+  background: transparent;
+  color: var(--warning-color);
+  border: 1px solid color-mix(in srgb, var(--warning-color) 40%, transparent);
+}
+
+#root .settings button.danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--warning-color) 12%, transparent);
+  border-color: var(--warning-color);
+}
+
+#root .settings .screen-time-progress.over-budget .screen-time-bar > span {
   background: var(--warning-color);
-}
-
-#root .settings h3,
-body .settings h3 {
-  font-size: 0.98rem;
-  font-weight: 600;
-  color: var(--fg);
-}
-
-#root .settings section,
-body .settings section {
-  background: var(--card-bg);
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  margin-bottom: 0.75rem;
 }

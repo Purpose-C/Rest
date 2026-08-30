@@ -670,7 +670,9 @@ mod tests {
         assert!(s.contains("http://127.0.0.1:8080/entracte"));
         assert!(s.contains("将您的休息统计数据发送至"));
         assert!(s.contains("这会将数据发送到您设备之外"));
-        let warn = s.find("请仅在您自行选择了此插件文件的情况下点击“安装”").unwrap();
+        let warn = s
+            .find("请仅在您自行选择了此插件文件的情况下点击“安装”")
+            .unwrap();
         let body = s.find("此插件将").unwrap();
         assert!(warn < body);
     }
@@ -727,7 +729,9 @@ mod tests {
         let s = format_install_summary(&detector_manifest("com.example.focus"));
         assert!(s.contains("仅被授予以下权限"));
         assert!(s.contains("detect:processes"));
-        let warn = s.find("请仅在您自行选择了此插件文件的情况下点击“安装”").unwrap();
+        let warn = s
+            .find("请仅在您自行选择了此插件文件的情况下点击“安装”")
+            .unwrap();
         let perms = s.find("仅被授予以下权限").unwrap();
         assert!(warn < perms, "safety warning must come first");
     }
@@ -1037,7 +1041,9 @@ mod tests {
         assert!(s.contains("1.0.0"));
         assert!(s.contains("签名密钥："));
         assert!(s.contains("最多添加 1 条提示和 1 个引导流程"));
-        let warn = s.find("请仅在您自行选择了此插件文件的情况下点击“安装”").unwrap();
+        let warn = s
+            .find("请仅在您自行选择了此插件文件的情况下点击“安装”")
+            .unwrap();
         let body = s.find("最多添加").unwrap();
         assert!(warn < body, "safety warning must come first");
     }

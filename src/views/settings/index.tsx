@@ -100,8 +100,8 @@ export default function Settings() {
             onFinish={onboarding.complete}
           />
         )}
-        <SettingsSearch onNavigate={onSearchNavigate} />
         <header className="settings-header">
+          <SettingsSearch onNavigate={onSearchNavigate} />
           <div
             className="tabs"
             aria-label={t("settings.sectionsAria")}

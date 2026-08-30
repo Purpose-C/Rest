@@ -78,7 +78,7 @@ windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Com"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
-objc2-app-kit = { version = "0.3", features = ["NSStatusBar", "NSStatusItem", "NSStatusBarButton", "NSButton", "NSControl", "NSFont", "NSFontDescriptor", "NSAttributedString", "NSEvent", "NSGraphicsContext", "objc2-core-graphics"] }
+objc2-app-kit = { version = "0.3", features = ["NSStatusBar", "NSStatusItem", "NSStatusBarButton", "NSButton", "NSControl", "NSCell", "NSImage", "NSFont", "NSFontDescriptor", "NSAttributedString", "NSColor", "NSMenu", "NSMenuItem", "NSEvent", "NSGraphicsContext", "objc2-core-graphics"] }
 objc2-core-graphics = { version = "0.3", features = ["CGEvent", "CGEventTypes"] }
 # Default features pull in objc2/block2/dispatch2/objc2-foundation, needed for
 # the CoreAudio process-tap APIs (CATapDescription, the IOProc block, the
