@@ -154,7 +154,7 @@ export const SETTINGS_INDEX: SettingsSearchEntry[] = [
     anchorId: "settings-chores",
     keywords: kw(
       "search.chores",
-      "tasks post-it morning prompt to do list 杂事 待办 晨间 列表",
+      "tasks post-it morning prompt to do list 杂事 待办 提醒 晨间 列表",
     ),
   },
   {

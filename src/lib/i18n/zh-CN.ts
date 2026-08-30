@@ -142,14 +142,14 @@ export const zhCN: Record<string, string> = {
   "breaks.playPluginSoundCues": "播放插件提示音效",
   "breaks.playPluginSoundCuesTip":
     "开启（默认）时，来自插件的引导流程可以播放简短提示音 —— 例如吸气/呼气提示音或动作切换提示音。提示音始终遵循全局音量设置；关闭此项可静音。",
-  "breaks.todaysChores": "今日杂事",
+  "breaks.todaysChores": "今日提醒",
   "breaks.choresDesc":
-    "记下您今天想完成的杂事 —— 每行一条。在长休息期间，Entracte 会提醒您完成其中一项（这些提醒优先于轮换的健康提示）。列表在每天早晨清空。",
-  "breaks.oneChorePerLine": "每行一条杂事",
+    "记下您今天想完成的提醒 —— 每行一条。在短休息和长休息期间，Entracte 会提醒您完成其中一项（这些提醒优先于轮换的健康提示）。列表在每天早晨清空。",
+  "breaks.oneChorePerLine": "每行一条提醒",
   "breaks.choresPlaceholder": "浇花\n清理洗碗机\n回复邮件",
-  "breaks.promptChoresMorning": "每天早晨提醒我规划今日杂事",
+  "breaks.promptChoresMorning": "每天早晨提示您规划今日提醒",
   "breaks.promptChoresMorningTip":
-    "开启（默认）时，每天活动时段首次开始且杂事列表为空时，Entracte 会自动打开设置窗口以便您规划今日杂事。关闭后将不再提示 —— 您仍可随时手动填写列表。",
+    "开启（默认）时，每天活动时段首次开始且提醒列表为空时，Entracte 会自动打开设置窗口以便您规划今日提醒。关闭后将不再提示 —— 您仍可随时手动填写列表。",
   "breaks.longSoloPool": "独处提示池（拉伸、呼吸新鲜空气、点心、整理）",
   "breaks.longSocialPool": "社交提示池（打电话、一同散步、喝杯咖啡）",
   "breaks.bedtime": "就寝提醒",
@@ -228,7 +228,7 @@ export const zhCN: Record<string, string> = {
   "search.sound": "音效",
   "search.skipPostpone": "跳过与推迟",
   "search.breakIdeas": "健康提示内容",
-  "search.chores": "今日杂事",
+  "search.chores": "今日提醒",
   "search.contentPacks": "内容包",
   "search.customCss": "自定义 CSS",
   "search.autoPause": "自动暂停",
@@ -774,8 +774,8 @@ export const zhCN: Record<string, string> = {
   "a11y.nounBreak": "休息",
 
   // chore-prompt
-  "chorePrompt.withMinutes": "您有约 {mins} 分钟 —— 完成这项杂事：{chore}",
-  "chorePrompt.quick": "快速完成 —— 这项杂事：{chore}",
+  "chorePrompt.withMinutes": "您有约 {mins} 分钟 —— 完成这项提醒：{chore}",
+  "chorePrompt.quick": "快速完成 —— 这项提醒：{chore}",
 
   // postpone
   "postpone.withCount": "推迟（第 {count} 次，共 {max} 次）",
@@ -803,7 +803,7 @@ export const zhCN: Record<string, string> = {
   "overlay.stepSeconds": " · {seconds} 秒",
   "overlay.stepProgressAria": "第 {curr} 步，共 {total} 步：{text}",
   "overlay.stepProgress": "第 {curr} 步，共 {total} 步",
-  "overlay.choreAria": "本次休息杂事：{chore}",
+  "overlay.choreAria": "本次休息提醒：{chore}",
   "overlay.wellnessTipAria": "健康提示：{hint}",
   "overlay.typingPaused": "已暂停 —— 停止打字后将恢复休息倒计时",
   "overlay.imBack": "我回来了",

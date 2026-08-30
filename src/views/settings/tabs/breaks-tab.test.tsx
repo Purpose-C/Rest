@@ -186,18 +186,6 @@ describe("BreaksTab break ideas", () => {
     expect(update).toHaveBeenCalledWith("micro_hint_mix", "physical");
   });
 
-  it("hides the editable hint textareas from free users", () => {
-    renderTab(false);
-    expect(
-      screen.queryByText("Solo (stretch, fresh air, snack, tidy)"),
-    ).toBeNull();
-    expect(
-      screen.queryByText("Social (call, walk together, share a coffee)"),
-    ).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Bedtime" })).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Custom CSS" })).toBeNull();
-  });
-
   it("shows the editable hint textareas and Custom CSS to supporters", () => {
     renderTab(true);
     expect(

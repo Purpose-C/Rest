@@ -5,7 +5,7 @@ import { useTauriListen } from "../../lib/use-tauri-listen";
 import { OnboardingWizard } from "./components/onboarding/onboarding-wizard";
 import { SettingsSearch } from "./components/settings-search";
 import { TABS } from "./constants";
-import type { SettingsSearchEntry } from "./search-index";
+import { SETTINGS_INDEX, type SettingsSearchEntry } from "./search-index";
 import { useHooks } from "./hooks/use-hooks";
 import { useOnboarding } from "./hooks/use-onboarding";
 import { usePause } from "./hooks/use-pause";
@@ -69,6 +69,17 @@ export default function Settings() {
     setTab(entry.tabId);
     setNavNonce((n) => n + 1);
   }, []);
+  // Tray "今日提醒" rows: same navigation path as search — switch to the
+  // Breaks tab, scroll to the chores section, flash it. The entry object is
+  // the single source of the section's coordinates (see search-index).
+  useTauriListen(
+    "chores:open",
+    () => {
+      const entry = SETTINGS_INDEX.find((e) => e.id === "chores");
+      if (entry) onSearchNavigate(entry);
+    },
+    [onSearchNavigate],
+  );
   // After the target tab renders (its panel is no longer `hidden`), scroll the
   // matched section into view and flash it briefly.
   useEffect(() => {

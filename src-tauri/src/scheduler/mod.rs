@@ -263,12 +263,13 @@ impl Scheduler {
         }
     }
 
-    /// Resolve the day's chore nudge for a firing break. Long breaks only —
-    /// micro is too short and bedtime is for winding down. Rolls the list
-    /// over at local midnight, advances the rotation cursor so consecutive
-    /// long breaks suggest different tasks, and persists whenever either
-    /// changed. Shared by the scheduled-fire and manual-trigger paths so the
-    /// rollover/rotation logic lives in exactly one place.
+    /// Resolve the day's reminder nudge for a firing break. Long and micro
+    /// breaks draw (the reminder takes the health hints' place); bedtime is
+    /// for winding down. Rolls the list over at local midnight, advances the
+    /// rotation cursor so consecutive breaks suggest different tasks, and
+    /// persists whenever either changed. Shared by the scheduled-fire and
+    /// manual-trigger paths so the rollover/rotation logic lives in exactly
+    /// one place.
     pub(crate) async fn resolve_chore_prompt(&self, kind: BreakKind) -> Option<String> {
         let today = local_today_string();
         let mut c = self.chores.lock().await;

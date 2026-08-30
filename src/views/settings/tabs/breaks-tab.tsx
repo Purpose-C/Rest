@@ -41,19 +41,24 @@ const CHORES_AUTOSAVE_DELAY_MS = 800;
 export function BreaksTab({
   settings,
   update,
-  supporter,
   reload,
   focusChoresNonce = 0,
 }: {
   settings: SchedulerSettings;
   update: UseSettings["update"];
+  /** Upstream gates appearance features on a supporter licence. This fork
+   * deliberately ignores it (see `isSupporter` below); the prop stays so
+   * upstream call sites and tests keep type-checking. */
   supporter: SupporterStatus;
   reload: () => Promise<unknown>;
   /// Bumped by the shell when the morning chore prompt fires, to pull focus
   /// to the chores input. `0` is the initial value and never focuses.
   focusChoresNonce?: number;
 }) {
-  const isSupporter = supporter.is_supporter;
+  // Personal fork: unlock the supporter-only appearance features (hint
+  // pools, rotate/custom overlay themes, custom CSS) for local use.
+  // Apache-2.0 permits this; upstream gates them to fund development.
+  const isSupporter: boolean = true;
   const { routines, reload: reloadRoutines } = useRoutines();
   const { chores, save: saveChores } = useChores();
   const [choreLines, setChoreLines] = useLocalDraft(

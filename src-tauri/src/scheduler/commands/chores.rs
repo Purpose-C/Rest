@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn resolve_chore_prompt_long_cycles_micro_skips() {
+    async fn resolve_chore_prompt_cycles_across_micro_and_long() {
         let (_dir, sched) = test_scheduler(Settings::default());
         // Empty list: no nudge even on a long break.
         assert_eq!(sched.resolve_chore_prompt(BreakKind::Long).await, None);
@@ -121,12 +121,11 @@ mod tests {
             sched.resolve_chore_prompt(BreakKind::Long).await.as_deref(),
             Some("a")
         );
+        // Micro draws too and shares the same rotation cursor.
         assert_eq!(
-            sched.resolve_chore_prompt(BreakKind::Long).await.as_deref(),
+            sched.resolve_chore_prompt(BreakKind::Micro).await.as_deref(),
             Some("b")
         );
-        // Micro never draws and never advances the rotation.
-        assert_eq!(sched.resolve_chore_prompt(BreakKind::Micro).await, None);
         assert_eq!(
             sched.resolve_chore_prompt(BreakKind::Long).await.as_deref(),
             Some("a")

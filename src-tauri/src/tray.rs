@@ -129,6 +129,162 @@ fn build_profile_submenu(
     Submenu::with_items(app, "当前情景", true, &item_refs)
 }
 
+/// Chore rows shown in the tray menu before the rest collapse into a
+/// "还有 N 条…" row.
+const TRAY_CHORES_SHOWN: usize = 3;
+/// A chore longer than this many characters is truncated with an ellipsis;
+/// the full text lives in the settings window.
+const TRAY_CHORES_MAX_CHARS: usize = 20;
+
+/// The tray menu's chore group: up to [`TRAY_CHORES_SHOWN`] chore labels
+/// (sanitised + truncated) and, when more exist, a final "还有 N 条…" row.
+/// Empty when there are no chores today — the caller then omits the whole
+/// group and its trailing separator. Pure so the shape is unit-testable.
+fn chore_menu_rows(items: &[String]) -> Vec<String> {
+    let mut rows: Vec<String> = items
+        .iter()
+        .take(TRAY_CHORES_SHOWN)
+        .map(|c| truncate_label(c, TRAY_CHORES_MAX_CHARS))
+        .collect();
+    let hidden = items.len().saturating_sub(TRAY_CHORES_SHOWN);
+    if hidden > 0 {
+        rows.push(format!("还有 {hidden} 条…"));
+    }
+    rows
+}
+
+/// Flatten a chore to one menu-safe line and truncate past `max` characters
+/// with an ellipsis. Pure.
+fn truncate_label(s: &str, max_chars: usize) -> String {
+    let flat = s.replace(['\r', '\n'], " ").trim().to_string();
+    if flat.chars().count() <= max_chars {
+        flat
+    } else {
+        let cut: String = flat.chars().take(max_chars).collect();
+        format!("{cut}…")
+    }
+}
+
+/// Build the tray's chore menu items for `items`, disabled group header
+/// first. Every row shares one click behaviour (open Settings at the chore
+/// section), so the ids only need to share the `chore` prefix. Empty input
+/// builds nothing — the caller omits the group entirely.
+fn build_chore_menu_items(
+    app: &AppHandle,
+    items: &[String],
+) -> tauri::Result<Vec<MenuItem<tauri::Wry>>> {
+    let rows = chore_menu_rows(items);
+    if rows.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut out = Vec::with_capacity(rows.len() + 1);
+    out.push(MenuItem::with_id(
+        app,
+        "chores_header",
+        "今日提醒",
+        false,
+        None::<&str>,
+    )?);
+    for (i, row) in rows.iter().enumerate() {
+        out.push(MenuItem::with_id(
+            app,
+            format!("chore_{i}"),
+            row,
+            true,
+            None::<&str>,
+        )?);
+    }
+    Ok(out)
+}
+
+/// The menu items that never change across rebuilds. Cloned per rebuild —
+/// `Menu::with_items` only borrows them for construction, but the same
+/// items must stay alive for the tray's lifetime anyway.
+#[derive(Clone)]
+struct FixedTrayItems {
+    countdown: MenuItem<tauri::Wry>,
+    prefs: MenuItem<tauri::Wry>,
+    resume: MenuItem<tauri::Wry>,
+    pause_submenu: Submenu<tauri::Wry>,
+    resume_break: MenuItem<tauri::Wry>,
+    sep1: PredefinedMenuItem<tauri::Wry>,
+    sep2: PredefinedMenuItem<tauri::Wry>,
+    sep3: PredefinedMenuItem<tauri::Wry>,
+    sep4: PredefinedMenuItem<tauri::Wry>,
+    sep5: PredefinedMenuItem<tauri::Wry>,
+    sep_chores_end: PredefinedMenuItem<tauri::Wry>,
+    quit: MenuItem<tauri::Wry>,
+}
+
+/// Assemble the full tray menu. The chore group (header + rows) sits
+/// between the "恢复上次跳过的休息" block and `quit`; with no chores today
+/// the group and its trailing separator are omitted entirely.
+fn assemble_menu(
+    app: &AppHandle,
+    fixed: &FixedTrayItems,
+    profile_submenu: &Submenu<tauri::Wry>,
+    chores: &[String],
+) -> tauri::Result<Menu<tauri::Wry>> {
+    let chore_items = build_chore_menu_items(app, chores)?;
+    let mut items: Vec<&dyn tauri::menu::IsMenuItem<tauri::Wry>> = vec![
+        &fixed.countdown,
+        &fixed.sep1,
+        &fixed.prefs,
+        &fixed.sep2,
+        &fixed.resume,
+        &fixed.pause_submenu,
+        &fixed.sep3,
+        profile_submenu,
+        &fixed.sep4,
+        &fixed.resume_break,
+        &fixed.sep5,
+    ];
+    for chore in &chore_items {
+        items.push(chore);
+    }
+    if !chore_items.is_empty() {
+        items.push(&fixed.sep_chores_end);
+    }
+    items.push(&fixed.quit);
+    Menu::with_items(app, &items)
+}
+
+/// Rebuild the tray menu from the scheduler's current profiles and today's
+/// chores. Shared by the `profile:changed` listener and the chores-change
+/// trigger in the 1Hz ticker so the ordering lives in exactly one place.
+async fn rebuild_tray_menu(
+    app: &AppHandle,
+    menu_holder: &Arc<Mutex<Menu<tauri::Wry>>>,
+    profile_submenu_holder: &Arc<Mutex<Submenu<tauri::Wry>>>,
+    tray: &Arc<TrayIcon<tauri::Wry>>,
+    fixed: &FixedTrayItems,
+) {
+    let scheduler = app.state::<Scheduler>().inner().clone();
+    let profiles: Vec<String> = scheduler
+        .profiles
+        .lock()
+        .await
+        .iter()
+        .map(|p| p.name.clone())
+        .collect();
+    let active = scheduler.active_profile_name.lock().await.clone();
+    let chores = scheduler.chores.lock().await.items.clone();
+    let Ok(new_submenu) = build_profile_submenu(app, &profiles, &active) else {
+        return;
+    };
+    let Ok(new_menu) = assemble_menu(app, fixed, &new_submenu, &chores) else {
+        return;
+    };
+    let _ = tray.set_menu(Some(new_menu.clone()));
+    let _ = tray.set_tooltip(Some(tooltip_for(&active)));
+    if let Ok(mut slot) = menu_holder.lock() {
+        *slot = new_menu;
+    }
+    if let Ok(mut slot) = profile_submenu_holder.lock() {
+        *slot = new_submenu;
+    }
+}
+
 pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let countdown = MenuItem::with_id(app, "countdown", "休息未启用", false, None::<&str>)?;
     let prefs = MenuItem::with_id(app, "preferences", "打开设置", true, None::<&str>)?;
@@ -176,25 +332,25 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let sep3 = PredefinedMenuItem::separator(app)?;
     let sep4 = PredefinedMenuItem::separator(app)?;
     let sep5 = PredefinedMenuItem::separator(app)?;
+    let sep_chores_end = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "quit", "退出 Entracte", true, None::<&str>)?;
 
-    let menu = Menu::with_items(
-        app,
-        &[
-            &countdown,
-            &sep1,
-            &prefs,
-            &sep2,
-            &resume,
-            &pause_submenu,
-            &sep3,
-            &profile_submenu,
-            &sep4,
-            &resume_break,
-            &sep5,
-            &quit,
-        ],
-    )?;
+    let initial_chores = read_chores_blocking(app);
+    let fixed = FixedTrayItems {
+        countdown: countdown.clone(),
+        prefs: prefs.clone(),
+        resume: resume.clone(),
+        pause_submenu: pause_submenu.clone(),
+        resume_break: resume_break.clone(),
+        sep1: sep1.clone(),
+        sep2: sep2.clone(),
+        sep3: sep3.clone(),
+        sep4: sep4.clone(),
+        sep5: sep5.clone(),
+        sep_chores_end: sep_chores_end.clone(),
+        quit: quit.clone(),
+    };
+    let menu = assemble_menu(app, &fixed, &profile_submenu, &initial_chores)?;
 
     let pause_submenu_for_event = pause_submenu.clone();
     let resume_for_event = resume.clone();
@@ -235,6 +391,11 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                         eprintln!("set_active_profile failed: {e}");
                     }
                 });
+                return;
+            }
+            if id.starts_with("chore") {
+                crate::window::show_main_window(app);
+                let _ = app.emit("chores:open", ());
                 return;
             }
             match id {
@@ -317,77 +478,45 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let menu_for_profile = menu_holder.clone();
     let profile_submenu_for_profile = profile_submenu_holder.clone();
     let tray_for_profile = tray_holder.clone();
-    let countdown_for_rebuild = countdown.clone();
-    let prefs_for_rebuild = prefs.clone();
-    let resume_for_rebuild = resume.clone();
-    let pause_submenu_for_rebuild = pause_submenu.clone();
-    let resume_break_for_rebuild = resume_break.clone();
-    let sep1_for_rebuild = sep1.clone();
-    let sep2_for_rebuild = sep2.clone();
-    let sep3_for_rebuild = sep3.clone();
-    let sep4_for_rebuild = sep4.clone();
-    let sep5_for_rebuild = sep5.clone();
-    let quit_for_rebuild = quit.clone();
+    let fixed_for_profile = fixed.clone();
     app.listen("profile:changed", move |_event| {
         let app = app_for_profile.clone();
         let menu_holder = menu_for_profile.clone();
         let profile_submenu_holder = profile_submenu_for_profile.clone();
         let tray = tray_for_profile.clone();
-        let countdown = countdown_for_rebuild.clone();
-        let prefs = prefs_for_rebuild.clone();
-        let resume = resume_for_rebuild.clone();
-        let pause_submenu = pause_submenu_for_rebuild.clone();
-        let resume_break = resume_break_for_rebuild.clone();
-        let sep1 = sep1_for_rebuild.clone();
-        let sep2 = sep2_for_rebuild.clone();
-        let sep3 = sep3_for_rebuild.clone();
-        let sep4 = sep4_for_rebuild.clone();
-        let sep5 = sep5_for_rebuild.clone();
-        let quit = quit_for_rebuild.clone();
+        let fixed = fixed_for_profile.clone();
         tauri::async_runtime::spawn(async move {
-            let scheduler = app.state::<Scheduler>().inner().clone();
-            let profiles: Vec<String> = scheduler
-                .profiles
-                .lock()
-                .await
-                .iter()
-                .map(|p| p.name.clone())
-                .collect();
-            let active = scheduler.active_profile_name.lock().await.clone();
-            let Ok(new_submenu) = build_profile_submenu(&app, &profiles, &active) else {
-                return;
-            };
-            let Ok(new_menu) = Menu::with_items(
-                &app,
-                &[
-                    &countdown,
-                    &sep1,
-                    &prefs,
-                    &sep2,
-                    &resume,
-                    &pause_submenu,
-                    &sep3,
-                    &new_submenu,
-                    &sep4,
-                    &resume_break,
-                    &sep5,
-                    &quit,
-                ],
-            ) else {
-                return;
-            };
-            let _ = tray.set_menu(Some(new_menu.clone()));
-            let _ = tray.set_tooltip(Some(tooltip_for(&active)));
-            if let Ok(mut slot) = menu_holder.lock() {
-                *slot = new_menu;
-            }
-            if let Ok(mut slot) = profile_submenu_holder.lock() {
-                *slot = new_submenu;
-            }
+            rebuild_tray_menu(&app, &menu_holder, &profile_submenu_holder, &tray, &fixed).await;
         });
     });
 
-    spawn_countdown_ticker(app.clone(), tray_holder.clone(), countdown);
+    // The ticker calls this when today's chore list moves — the menu rows
+    // toggle presence with the list, so a text patch isn't enough.
+    let on_chores_changed = {
+        let app = app.clone();
+        let menu_holder = menu_holder.clone();
+        let profile_submenu_holder = profile_submenu_holder.clone();
+        let tray = tray_holder.clone();
+        let fixed = fixed.clone();
+        Arc::new(move || {
+            let app = app.clone();
+            let menu_holder = menu_holder.clone();
+            let profile_submenu_holder = profile_submenu_holder.clone();
+            let tray = tray.clone();
+            let fixed = fixed.clone();
+            tauri::async_runtime::spawn(async move {
+                rebuild_tray_menu(&app, &menu_holder, &profile_submenu_holder, &tray, &fixed)
+                    .await;
+            });
+        }) as Arc<dyn Fn() + Send + Sync>
+    };
+
+    spawn_countdown_ticker(
+        app.clone(),
+        tray_holder.clone(),
+        countdown.clone(),
+        on_chores_changed,
+    );
 
     Ok(())
 }
@@ -801,12 +930,14 @@ fn spawn_countdown_ticker(
     app: AppHandle,
     tray: Arc<TrayIcon<tauri::Wry>>,
     countdown: MenuItem<tauri::Wry>,
+    on_chores_changed: Arc<dyn Fn() + Send + Sync>,
 ) {
     tauri::async_runtime::spawn(async move {
         // `Some(None)` means "currently hidden"; the outer `None` only
         // means "nothing pushed yet", so the first tick always writes.
         let mut last_icon: Option<Option<RenderedTrayIcon>> = None;
         let mut last_tooltip: Option<String> = None;
+        let mut last_chores_sig: Option<String> = None;
         #[cfg(not(target_os = "windows"))]
         let mut last_title: Option<String> = None;
         #[cfg(not(target_os = "windows"))]
@@ -817,6 +948,18 @@ fn spawn_countdown_ticker(
             let tray_style = scheduler.tray_style().await;
             let _ = countdown.set_text(countdown_menu_label(&snapshot));
             let _ = countdown.set_enabled(false);
+
+            // The tray's chore rows toggle presence with today's list, so
+            // the menu needs a rebuild when — and only when — the list
+            // itself moved (same value-changed rule as icon / title).
+            let chores_sig = {
+                let c = scheduler.chores.lock().await;
+                format!("{}|{}", c.date, c.items.join("\u{1f}"))
+            };
+            if Some(&chores_sig) != last_chores_sig.as_ref() {
+                on_chores_changed();
+                last_chores_sig = Some(chores_sig);
+            }
 
             #[cfg(not(target_os = "windows"))]
             let title = tray_title_for(&snapshot, text_enabled);
@@ -1133,6 +1276,12 @@ fn read_profiles_blocking(app: &AppHandle) -> (Vec<String>, String) {
     })
 }
 
+/// Today's chore list, read synchronously for the initial menu build.
+fn read_chores_blocking(app: &AppHandle) -> Vec<String> {
+    let scheduler = app.state::<Scheduler>().inner().clone();
+    tauri::async_runtime::block_on(async move { scheduler.chores.lock().await.items.clone() })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1143,6 +1292,54 @@ mod tests {
         let secs = seconds_until_tomorrow_morning();
         assert!(secs >= 60);
         assert!(secs <= 36 * 60 * 60);
+    }
+
+    #[test]
+    fn chore_rows_empty_list_builds_nothing() {
+        assert!(chore_menu_rows(&[]).is_empty());
+    }
+
+    #[test]
+    fn chore_rows_short_list_has_no_more_row() {
+        let rows = chore_menu_rows(&["a".to_string(), "b".to_string()]);
+        assert_eq!(rows, vec!["a", "b"]);
+    }
+
+    #[test]
+    fn chore_rows_collapse_overflow_into_more_row() {
+        let items: Vec<String> = ["一", "二", "三", "四", "五"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        let rows = chore_menu_rows(&items);
+        assert_eq!(rows.len(), 4);
+        assert_eq!(rows[3], "还有 2 条…");
+    }
+
+    #[test]
+    fn chore_rows_truncate_long_text_with_ellipsis() {
+        let long = "这是一条特别长的提醒内容远超二十个字的限制".to_string();
+        assert!(long.chars().count() > TRAY_CHORES_MAX_CHARS);
+        let rows = chore_menu_rows(std::slice::from_ref(&long));
+        let shown = &rows[0];
+        assert!(shown.ends_with('…'));
+        assert_eq!(shown.chars().count(), TRAY_CHORES_MAX_CHARS + 1);
+        assert!(
+            long.starts_with(shown.trim_end_matches('…')),
+            "kept prefix must be the label's head"
+        );
+    }
+
+    #[test]
+    fn chore_rows_flatten_newlines_to_one_menu_line() {
+        let rows = chore_menu_rows(&["浇花\n然后\n拖地".to_string()]);
+        assert_eq!(rows[0], "浇花 然后 拖地");
+    }
+
+    #[test]
+    fn truncate_label_keeps_exactly_at_limit() {
+        let exact: String = "字".repeat(TRAY_CHORES_MAX_CHARS);
+        assert_eq!(truncate_label(&exact, TRAY_CHORES_MAX_CHARS), exact);
     }
 
     #[test]

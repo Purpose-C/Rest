@@ -134,14 +134,14 @@ pub fn next_prompt(state: &mut ChoresState) -> Option<String> {
     Some(chosen)
 }
 
-/// Resolve the chore nudge for a break. Only **long** breaks draw a chore —
-/// micro breaks are too short to start a task and bedtime is for winding
-/// down. Advances the rotation cursor as a side effect for long breaks with
-/// a non-empty list.
+/// Resolve the reminder nudge for a break. Long **and** micro breaks draw —
+/// the reminder takes the health hints' place for that break (bedtime stays
+/// for winding down). Advances the rotation cursor as a side effect for
+/// breaks with a non-empty list.
 pub fn prompt_for_break(kind: BreakKind, state: &mut ChoresState) -> Option<String> {
     match kind {
-        BreakKind::Long => next_prompt(state),
-        BreakKind::Micro | BreakKind::Sleep => None,
+        BreakKind::Long | BreakKind::Micro => next_prompt(state),
+        BreakKind::Sleep => None,
     }
 }
 
@@ -374,17 +374,19 @@ mod tests {
     }
 
     #[test]
-    fn prompt_for_break_only_long_draws() {
+    fn prompt_for_break_micro_and_long_draw() {
         let mut st = state_with(&["a", "b"], 0);
-        assert_eq!(prompt_for_break(BreakKind::Micro, &mut st), None);
-        assert_eq!(prompt_for_break(BreakKind::Sleep, &mut st), None);
-        // Neither micro nor sleep advanced the cursor.
-        assert_eq!(st.rotation, 0);
         assert_eq!(
-            prompt_for_break(BreakKind::Long, &mut st).as_deref(),
+            prompt_for_break(BreakKind::Micro, &mut st).as_deref(),
             Some("a")
         );
+        assert_eq!(prompt_for_break(BreakKind::Sleep, &mut st), None);
         assert_eq!(st.rotation, 1);
+        assert_eq!(
+            prompt_for_break(BreakKind::Long, &mut st).as_deref(),
+            Some("b")
+        );
+        assert_eq!(st.rotation, 2);
     }
 
     #[test]
