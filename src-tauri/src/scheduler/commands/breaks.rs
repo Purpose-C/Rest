@@ -9,7 +9,7 @@ use super::super::overlay::{deliver_break, fire_break, hide_overlay_windows};
 use super::super::overlay_watchdog::OVERLAY_ACK;
 use super::super::pause::{persist_pause, PauseInfo, PauseState};
 use super::super::settings::{
-    delivery_for, effective_long_hints, effective_micro_hints, is_windowed_mode,
+    delivery_for, is_windowed_mode,
     windowed_fraction_for, Settings,
 };
 use super::super::timers::{
@@ -543,15 +543,15 @@ fn resume_break_event(kind: BreakKind, s: &Settings, intensity: f32) -> BreakEve
             s.micro_duration_secs,
             s.micro_enforceable || s.strict_mode,
             s.micro_manual_finish,
-            effective_micro_hints(s),
+            s.effective_hints(kind),
         ),
         BreakKind::Long => (
             s.long_duration_secs,
             s.long_enforceable || s.strict_mode,
             s.long_manual_finish,
-            effective_long_hints(s),
+            s.effective_hints(kind),
         ),
-        BreakKind::Sleep => (s.bedtime_duration_secs, true, false, s.sleep_hints.clone()),
+        BreakKind::Sleep => (s.bedtime_duration_secs, true, false, s.effective_hints(kind)),
     };
     let resolved = super::super::routines::resolve_routine(kind, s);
     BreakEvent {

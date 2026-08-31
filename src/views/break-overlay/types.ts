@@ -85,7 +85,6 @@ export type OverlaySettings = {
   sound_volume: number;
   pause_countdown_if_typing: boolean;
   strict_mode: boolean;
-  custom_css: string;
   /** Default pacing for routines that don't declare their own `pacing`.
    *  `true` → fill mode (scale steps to fill the break);
    *  `false` (default) → hold mode (authored durations, hold last step). */
@@ -115,7 +114,6 @@ export const DEFAULT_OVERLAY_SETTINGS: OverlaySettings = {
   sound_volume: 0.5,
   pause_countdown_if_typing: true,
   strict_mode: false,
-  custom_css: "",
   routine_fill: false,
   allow_plugin_sounds: true,
 };

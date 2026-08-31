@@ -26,6 +26,7 @@ export const en: Record<string, string> = {
   "constants.soundMode.ambient": "Ambient (loops during break)",
   "constants.tab.schedule": "Schedule",
   "constants.tab.breaks": "Breaks",
+  "constants.tab.hints": "Reminders",
   "constants.tab.quiet": "Pausing",
   "constants.tab.system": "System",
   "constants.tab.insights": "Insights",
@@ -52,8 +53,8 @@ export const en: Record<string, string> = {
   "breaks.themeTip":
     "Pick a preset, Rotate (different preset every break), or Custom for any colour. Custom colours are auto-darkened so the overlay still dims the screen.",
   "breaks.customColor": "Custom color",
-  "breaks.showHints": "Show wellness hints",
-  "breaks.rotateHints": "Rotate hints during the break",
+  "breaks.showHints": "Show break reminders",
+  "breaks.rotateHints": "Rotate reminders during the break",
   "breaks.rotateHintsTip":
     "Off: one idea is picked per break and stays on screen. On: the overlay cycles through the remaining ideas in the pool every N seconds.",
   "breaks.rotateEverySeconds": "Rotate every (seconds)",
@@ -126,22 +127,9 @@ export const en: Record<string, string> = {
     "Skip and close controls are hidden during the long break.",
   "breaks.breakIdeas": "Break ideas",
   "breaks.breakIdeasDesc":
-    "Choose which kinds of prompt appear during each break.",
-  "breaks.breakIdeasSupporterDesc":
-    " Edit the pools below — one idea per line; each break picks a random starting idea.",
-  "breaks.mix": "Mix",
-  "breaks.microMixTip":
-    "Physical: stretches, eye rest, movement. Psychological: breathing, awareness, tension release.",
-  "breaks.mixBoth": "Both",
-  "breaks.mixPhysicalOnly": "Physical only",
-  "breaks.mixPsychologicalOnly": "Psychological only",
-  "breaks.physicalPool": "Physical (stretches, eye rest, movement)",
-  "breaks.psychologicalPool":
-    "Psychological (breathing, awareness, tension release)",
-  "breaks.longMixTip":
-    "Solo: things to do on your own (stretch, fresh air, snack). Social: things to do with someone (call, walk together, sit outside). Working alone? Pick Solo only to drop the social prompts.",
-  "breaks.mixSoloOnly": "Solo only",
-  "breaks.mixSocialOnly": "Social only",
+    "Guided routines that steer each break, plus today's to-dos.",
+  "breaks.physicalPool": "Body reminders",
+  "breaks.psychologicalPool": "Mind reminders",
   "breaks.spreadRoutineSteps":
     "Spread routine steps across the whole break",
   "breaks.spreadRoutineStepsTip":
@@ -159,15 +147,36 @@ export const en: Record<string, string> = {
     "Prompt me to plan chores each morning",
   "breaks.promptChoresMorningTip":
     "When on (default), the first time your work window opens each day with an empty list, Entracte opens this Preferences window here so you can jot down the day's chores. Turn it off to never be prompted — you can still fill the list in yourself any time.",
-  "breaks.longSoloPool": "Solo (stretch, fresh air, snack, tidy)",
-  "breaks.longSocialPool": "Social (call, walk together, share a coffee)",
-  "breaks.bedtime": "Bedtime",
-  "breaks.oneIdeaPerLine": "One idea per line",
+  "breaks.longSoloPool": "Solo reminders",
+  "breaks.longSocialPool": "Social reminders",
   "breaks.contentPacks": "Content packs",
-  "breaks.customCss": "Custom CSS",
-  "breaks.customCssDesc":
-    "Applied to the settings window and the break overlay. Bad CSS can hide controls — clear this field if anything breaks.",
-  "breaks.stylesheet": "Stylesheet",
+  "breaks.deleteHint": "Delete this hint",
+  "breaks.deleteHintLabel": "Delete \u201c{hint}\u201d from {pool}",
+  "breaks.addHint": "Add one",
+  "breaks.addHintLabel": "Add a hint to {pool}",
+  "breaks.addHintPlaceholder": "Type a new hint…",
+  "breaks.hintRowLabel": "{pool} hint {i}",
+
+  // hints-tab
+  "hints.poolName.physical": "Body reminders",
+  "hints.poolName.psychological": "Mind reminders",
+  "hints.poolName.solo": "Solo reminders",
+  "hints.poolName.social": "Social reminders",
+  "hints.poolName.bedtime": "Wind-down reminders",
+  "hints.dailyTitle": "Daily reminders",
+  "hints.dailyName": "Daily reminders",
+  "hints.dailyDesc":
+    "Things you want to be reminded of every day, one per line. They stay pinned at the top of the tray menu, above the active profile.",
+  "hints.breakReminders": "Break reminders",
+  "hints.breakRemindersDesc":
+    "Short suggestions rotated during breaks. Micro and long breaks share one list; the five categories are grouping only. Clearing every entry falls back to the built-in defaults.",
+  "hints.physicalPoolTip": "Stretches, eye rest, movement.",
+  "hints.psychologicalPoolTip": "Breathing, awareness, tension release.",
+  "hints.soloPoolTip": "Stretch, fresh air, snack, tidy.",
+  "hints.socialPoolTip": "Call, walk together, share a coffee.",
+  "hints.bedtimePool": "Wind-down reminders",
+  "hints.bedtimePoolTip":
+    "Wrap up, prep tomorrow, unwind. Shown by the bedtime reminder.",
 
   // schedule-tab
   "schedule.activeHours": "Active hours",
@@ -241,10 +250,10 @@ export const en: Record<string, string> = {
   "search.overlay": "Overlay appearance",
   "search.sound": "Sound",
   "search.skipPostpone": "Skip & postpone",
-  "search.breakIdeas": "Break ideas",
+  "search.breakIdeas": "Routines & to-dos",
   "search.chores": "Today's chores",
   "search.contentPacks": "Content packs",
-  "search.customCss": "Custom CSS",
+  "search.hints": "Reminders",
   "search.autoPause": "Auto-pause",
   "search.duringBreaks": "Pause media during breaks",
   "search.appPause": "Pause for specific apps",
@@ -356,7 +365,7 @@ export const en: Record<string, string> = {
   "onboarding.stepWelcome": "Welcome",
   "onboarding.stepLogin": "Start at login",
   "onboarding.stepWindow": "Working hours",
-  "onboarding.stepHints": "Wellness hints",
+  "onboarding.stepHints": "Reminders",
   "onboarding.stepWinddown": "Wind down",
   "onboarding.stepDone": "All set",
   "onboarding.stepCount": "Step {curr} of {total}",
@@ -381,16 +390,12 @@ export const en: Record<string, string> = {
   "onboarding.onTheseDays": "On these days",
   "onboarding.onTheseDaysTip":
     "Turn off days you don't work — like the weekend — and Entracte stays quiet then. You can fine-tune this later under Schedule.",
-  "onboarding.hintsTitle": "Wellness hints",
+  "onboarding.hintsTitle": "Reminders",
   "onboarding.hintsBody":
     "Each break can show a suggestion — a stretch, a breath, a moment away from the desk. Long-break ideas come in two flavours.",
-  "onboarding.hintsCheckbox": "Show a wellness hint during breaks",
-  "onboarding.longSuggestions": "Long-break suggestions",
-  "onboarding.longSuggestionsTip":
-    "Solo: things to do on your own (stretch, fresh air, snack). Social: things to do with someone (call, walk together). Working alone? Pick Solo only to drop the social prompts.",
-  "onboarding.longOptionBoth": "Mix of solo and social",
-  "onboarding.longOptionSolo": "Solo only — I work alone",
-  "onboarding.longOptionSocial": "Social only",
+  "onboarding.hintsCheckbox": "Show reminders during breaks",
+  "onboarding.hintsWhereToEdit":
+    "Edit the reminder lists in the Reminders tab.",
   "onboarding.winddownTitle": "Wind down & focus",
   "onboarding.winddownBody":
     "Bedtime prompts gently remind you to log off as the evening winds down. Strict mode removes the skip and postpone buttons so breaks always happen — handy if you tend to dismiss them.",
@@ -505,9 +510,8 @@ export const en: Record<string, string> = {
   "profiles.add": "Add",
 
   // about-tab
-  "about.title": "About",
   "about.app": "App",
-  "about.supportAndAuthors": "Support",
+  "about.supportAndAuthors": "Support & authors",
   "about.checking": "Checking…",
   "about.checkUpdates": "Check for updates",
   "about.version": "Version {version}",

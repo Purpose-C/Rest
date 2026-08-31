@@ -93,30 +93,6 @@ export function BreaksTab({
     return () => clearTimeout(timer);
   }, [choreLines, chores, saveChores]);
   // Local drafts re-seed when the active profile swaps the setting out.
-  const [microPhysical, setMicroPhysical] = useLocalDraft(
-    () => listToLines(settings.micro_physical_hints),
-    [settings.micro_physical_hints],
-  );
-  const [microPsychological, setMicroPsychological] = useLocalDraft(
-    () => listToLines(settings.micro_psychological_hints),
-    [settings.micro_psychological_hints],
-  );
-  const [longSolo, setLongSolo] = useLocalDraft(
-    () => listToLines(settings.long_hints),
-    [settings.long_hints],
-  );
-  const [longSocial, setLongSocial] = useLocalDraft(
-    () => listToLines(settings.long_social_hints),
-    [settings.long_social_hints],
-  );
-  const [sleep, setSleep] = useLocalDraft(
-    () => listToLines(settings.sleep_hints),
-    [settings.sleep_hints],
-  );
-  const [customCss, setCustomCss] = useLocalDraft(
-    () => settings.custom_css,
-    [settings.custom_css],
-  );
 
   const transparencyPct = Math.round((1 - settings.overlay_opacity) * 100);
   const fontScalePct = Math.round(settings.overlay_font_scale * 100);
@@ -258,21 +234,11 @@ export function BreaksTab({
               value={settings.overlay_color}
               onChange={(e) => update("overlay_color", e.target.value)}
             >
-              {OVERLAY_THEMES.map((t) => {
-                const supporterOnly = t.id === "rotate" || t.id === "custom";
-                if (
-                  supporterOnly &&
-                  !isSupporter &&
-                  settings.overlay_color !== t.id
-                ) {
-                  return null;
-                }
-                return (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                );
-              })}
+              {OVERLAY_THEMES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
             </select>
           </span>
         </label>
@@ -312,37 +278,6 @@ export function BreaksTab({
               />
             </span>
           </label>
-        )}
-        <CheckboxRow
-          label={t("breaks.showHints")}
-          value={settings.show_hint}
-          onChange={(v) => update("show_hint", v)}
-        />
-        {settings.show_hint && (
-          <>
-            <label className="row checkbox-row">
-              <span>
-                {t("breaks.rotateHints")}
-                <InfoTip text={t("breaks.rotateHintsTip")} />
-              </span>
-              <input
-                type="checkbox"
-                checked={settings.hint_rotate_seconds > 0}
-                onChange={(e) =>
-                  update("hint_rotate_seconds", e.target.checked ? 12 : 0)
-                }
-              />
-            </label>
-            {settings.hint_rotate_seconds > 0 && (
-              <NumberRow
-                label={t("breaks.rotateEverySeconds")}
-                value={settings.hint_rotate_seconds}
-                min={3}
-                multiplier={1}
-                onChange={(v) => update("hint_rotate_seconds", v)}
-              />
-            )}
-          </>
         )}
         <CheckboxRow
           label={t("breaks.showCurrentTime")}
@@ -577,84 +512,8 @@ export function BreaksTab({
         id="settings-break-ideas"
         title={t("breaks.breakIdeas")}
       >
-        <p className="placeholder">
-          {t("breaks.breakIdeasDesc")}
-          {isSupporter ? t("breaks.breakIdeasSupporterDesc") : ""}
-        </p>
-        <h3>{t("breaks.microBreaks")}</h3>
-        <label className="row">
-          <span>
-            {t("breaks.mix")}
-            <InfoTip text={t("breaks.microMixTip")} />
-          </span>
-          <select
-            value={settings.micro_hint_mix}
-            onChange={(e) =>
-              update(
-                "micro_hint_mix",
-                e.target.value as typeof settings.micro_hint_mix,
-              )
-            }
-          >
-            <option value="both">{t("breaks.mixBoth")}</option>
-            <option value="physical">{t("breaks.mixPhysicalOnly")}</option>
-            <option value="psychological">
-              {t("breaks.mixPsychologicalOnly")}
-            </option>
-          </select>
-        </label>
+        <p className="placeholder">{t("breaks.breakIdeasDesc")}</p>
         {routinePicker("micro")}
-        {isSupporter && (
-          <>
-            <label className="row stacked">
-              <span>{t("breaks.physicalPool")}</span>
-              <textarea
-                className="textarea"
-                rows={6}
-                value={microPhysical}
-                onChange={(e) => setMicroPhysical(e.target.value)}
-                onBlur={() =>
-                  update("micro_physical_hints", linesToList(microPhysical))
-                }
-              />
-            </label>
-            <label className="row stacked">
-              <span>{t("breaks.psychologicalPool")}</span>
-              <textarea
-                className="textarea"
-                rows={6}
-                value={microPsychological}
-                onChange={(e) => setMicroPsychological(e.target.value)}
-                onBlur={() =>
-                  update(
-                    "micro_psychological_hints",
-                    linesToList(microPsychological),
-                  )
-                }
-              />
-            </label>
-          </>
-        )}
-        <h3>{t("breaks.longBreaks")}</h3>
-        <label className="row">
-          <span>
-            {t("breaks.mix")}
-            <InfoTip text={t("breaks.longMixTip")} />
-          </span>
-          <select
-            value={settings.long_hint_mix}
-            onChange={(e) =>
-              update(
-                "long_hint_mix",
-                e.target.value as typeof settings.long_hint_mix,
-              )
-            }
-          >
-            <option value="both">{t("breaks.mixBoth")}</option>
-            <option value="solo">{t("breaks.mixSoloOnly")}</option>
-            <option value="social">{t("breaks.mixSocialOnly")}</option>
-          </select>
-        </label>
         {routinePicker("long")}
         <CheckboxRow
           label={t("breaks.spreadRoutineSteps")}
@@ -688,43 +547,6 @@ export function BreaksTab({
           onChange={(v) => update("morning_chore_prompt_enabled", v)}
           tip={t("breaks.promptChoresMorningTip")}
         />
-        {isSupporter && (
-          <>
-            <label className="row stacked">
-              <span>{t("breaks.longSoloPool")}</span>
-              <textarea
-                className="textarea"
-                rows={8}
-                value={longSolo}
-                onChange={(e) => setLongSolo(e.target.value)}
-                onBlur={() => update("long_hints", linesToList(longSolo))}
-              />
-            </label>
-            <label className="row stacked">
-              <span>{t("breaks.longSocialPool")}</span>
-              <textarea
-                className="textarea"
-                rows={6}
-                value={longSocial}
-                onChange={(e) => setLongSocial(e.target.value)}
-                onBlur={() =>
-                  update("long_social_hints", linesToList(longSocial))
-                }
-              />
-            </label>
-            <h3>{t("breaks.bedtime")}</h3>
-            <label className="row stacked">
-              <span>{t("breaks.oneIdeaPerLine")}</span>
-              <textarea
-                className="textarea"
-                rows={6}
-                value={sleep}
-                onChange={(e) => setSleep(e.target.value)}
-                onBlur={() => update("sleep_hints", linesToList(sleep))}
-              />
-            </label>
-          </>
-        )}
         <h3 id="settings-content-packs">{t("breaks.contentPacks")}</h3>
         <ContentPacks
           reload={async () => {
@@ -733,29 +555,6 @@ export function BreaksTab({
           }}
         />
       </CollapsibleSection>
-
-      {isSupporter && (
-        <>
-          <CollapsibleSection
-            id="settings-custom-css"
-            title={t("breaks.customCss")}
-          >
-            <p className="placeholder">{t("breaks.customCssDesc")}</p>
-            <label className="row stacked">
-              <span>{t("breaks.stylesheet")}</span>
-              <textarea
-                className="textarea"
-                rows={12}
-                spellCheck={false}
-                placeholder=".overlay-card { background: #111; }"
-                value={customCss}
-                onChange={(e) => setCustomCss(e.target.value)}
-                onBlur={() => update("custom_css", customCss)}
-              />
-            </label>
-          </CollapsibleSection>
-        </>
-      )}
     </>
   );
 }

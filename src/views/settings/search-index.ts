@@ -142,7 +142,7 @@ export const SETTINGS_INDEX: SettingsSearchEntry[] = [
     anchorId: "settings-break-ideas",
     keywords: kw(
       "search.breakIdeas",
-      "hints routines mix physical psychological solo social guided 健康提示 引导流程 身体 心理 独处 社交",
+      "routines guided guided routine 引导流程",
     ),
   },
   {
@@ -169,16 +169,17 @@ export const SETTINGS_INDEX: SettingsSearchEntry[] = [
       "import export share routines hints json 内容包 导入 导出 分享 健康提示 引导流程",
     ),
   },
+  // Hints
   {
-    id: "custom-css",
+    id: "hint-pools",
     get label() {
-      return t("search.customCss");
+      return t("search.hints");
     },
-    tabId: "breaks",
-    anchorId: "settings-custom-css",
+    tabId: "hints",
+    anchorId: "settings-break-reminders",
     keywords: kw(
-      "search.customCss",
-      "stylesheet style supporter overlay appearance 样式 自定义 外观 全屏遮罩",
+      "search.hints",
+      "wellness reminders rotate daily physical psychological solo social bedtime 提醒 每日提醒 轮换 身体 心理 独处 社交 睡前",
     ),
   },
   // Pausing

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "../../lib/i18n";
-import { useCustomStylesheet } from "../../lib/use-custom-stylesheet";
 import { useTauriListen } from "../../lib/use-tauri-listen";
 import { OnboardingWizard } from "./components/onboarding/onboarding-wizard";
 import { SettingsSearch } from "./components/settings-search";
@@ -16,6 +15,7 @@ import { useStats } from "./hooks/use-stats";
 import { useSupporter } from "./hooks/use-supporter";
 import { AboutTab } from "./tabs/about-tab";
 import { BreaksTab } from "./tabs/breaks-tab";
+import { HintsTab } from "./tabs/hints-tab";
 import { InsightsTab } from "./tabs/insights-tab";
 import { ProfilesTab } from "./tabs/profiles-tab";
 import { QuietTab } from "./tabs/quiet-tab";
@@ -52,7 +52,6 @@ export default function Settings() {
   const hooks = useHooks(settings, reloadFromActive);
   const supporter = useSupporter();
   const onboarding = useOnboarding();
-  useCustomStylesheet(settings?.custom_css ?? "");
   const { tablistProps, tabProps } = useRovingTabList<Tab>({
     ids: TAB_IDS,
     active: tab,
@@ -160,6 +159,20 @@ export default function Settings() {
                 supporter={supporter.status}
                 reload={reloadFromActive}
                 focusChoresNonce={chorePromptNonce}
+              />
+            </div>
+            <div
+              className="tab-content"
+              role="tabpanel"
+              id={tabPanelId("hints")}
+              aria-labelledby={tabButtonId("hints")}
+              tabIndex={0}
+              hidden={tab !== "hints"}
+            >
+              <HintsTab
+                settings={settings}
+                update={update}
+                supporter={supporter.status}
               />
             </div>
             <div

@@ -17,8 +17,6 @@ export type ClockFormat = "12h" | "24h";
 // outside this file needs them.
 type ScheduleMode = "interval" | "fixed" | "both";
 type BreakDeliveryMode = "overlay" | "windowed" | "notification";
-type MicroHintMix = "both" | "physical" | "psychological";
-type LongHintMix = "both" | "solo" | "social";
 export type TrayStyle =
   | "icon_and_countdown"
   | "countdown_only"
@@ -180,11 +178,10 @@ export type SchedulerSettings = {
   morning_chore_prompt_enabled: boolean;
   micro_physical_hints: string[];
   micro_psychological_hints: string[];
-  micro_hint_mix: MicroHintMix;
   long_hints: string[];
   long_social_hints: string[];
-  long_hint_mix: LongHintMix;
   sleep_hints: string[];
+  daily_reminders: string[];
   micro_routine: string;
   long_routine: string;
   micro_routine_categories: RoutineCategory[];
@@ -220,7 +217,6 @@ export type SchedulerSettings = {
   tray_icon_enabled: boolean;
   micro_break_mode: BreakDeliveryMode;
   long_break_mode: BreakDeliveryMode;
-  custom_css: string;
 };
 
 export type ScreenTimeState = {
@@ -336,6 +332,7 @@ export type StatsRange = "week" | "month";
 export type Tab =
   | "schedule"
   | "breaks"
+  | "hints"
   | "quiet"
   | "system"
   | "insights"

@@ -3,7 +3,6 @@ import { t } from "../../../../lib/i18n";
 import type { UseSettings } from "../../hooks/use-settings";
 import type { SchedulerSettings } from "../../types";
 import { CheckboxRow, TimeRow } from "../rows";
-import { InfoTip } from "../info-tip";
 import { WeekdayToggle } from "../weekday-toggle";
 import "./onboarding.css";
 
@@ -224,25 +223,7 @@ function StepContent({
             onChange={(v) => update("show_hint", v)}
           />
           {settings.show_hint && (
-            <label className="row">
-              <span>
-                {t("onboarding.longSuggestions")}
-                <InfoTip text={t("onboarding.longSuggestionsTip")} />
-              </span>
-              <select
-                value={settings.long_hint_mix}
-                onChange={(e) =>
-                  update(
-                    "long_hint_mix",
-                    e.target.value as SchedulerSettings["long_hint_mix"],
-                  )
-                }
-              >
-                <option value="both">{t("onboarding.longOptionBoth")}</option>
-                <option value="solo">{t("onboarding.longOptionSolo")}</option>
-                <option value="social">{t("onboarding.longOptionSocial")}</option>
-              </select>
-            </label>
+            <p className="placeholder">{t("onboarding.hintsWhereToEdit")}</p>
           )}
         </>
       );

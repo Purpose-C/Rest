@@ -48,8 +48,6 @@ const baseSettings = {
   postpone_escalation_step_secs: 120,
   postpone_max_count: 3,
   postpone_minutes: 5,
-  micro_hint_mix: "both",
-  long_hint_mix: "both",
   micro_physical_hints: ["Look away"],
   micro_psychological_hints: ["Breathe"],
   long_hints: ["Take a walk"],
@@ -85,15 +83,6 @@ function renderTab(
   );
 }
 
-/** The <select> owning an option with the given label. */
-function selectWithOption(optionName: string): HTMLSelectElement {
-  const option = screen.getByRole("option", {
-    name: optionName,
-  }) as HTMLOptionElement;
-  const select = option.closest("select");
-  if (!select) throw new Error(`no <select> owns option "${optionName}"`);
-  return select;
-}
 
 describe("BreaksTab guided routines", () => {
   it("offers a 'None' guided-routine option for both break kinds", () => {
@@ -159,43 +148,28 @@ describe("BreaksTab guided routines", () => {
 });
 
 describe("BreaksTab break ideas", () => {
-  it("shows the micro and long mix selectors to free users", () => {
+  it("no longer hosts the hint mix selectors (round-6 feedback)", () => {
+    // The per-kind mix dials are gone: micro and long breaks draw from one
+    // merged reminder list, edited in the Reminders tab. The behaviour the
+    // old cases covered (which pool a break draws from) no longer exists.
     renderTab(false);
-    expect(screen.getByRole("heading", { name: "Break ideas" })).toBeTruthy();
-    // Options unique to each mix selector prove both render for free users:
-    // "Physical only" (micro) and "Social only" (long).
-    expect(screen.getByRole("option", { name: "Physical only" })).toBeTruthy();
-    expect(screen.getByRole("option", { name: "Social only" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Physical only" })).toBeNull();
+    expect(screen.queryByRole("option", { name: "Social only" })).toBeNull();
   });
 
-  it("free users can switch the long mix to drop social hints", () => {
-    const update = vi.fn();
-    renderTab(false, update);
-    fireEvent.change(selectWithOption("Social only"), {
-      target: { value: "solo" },
-    });
-    expect(update).toHaveBeenCalledWith("long_hint_mix", "solo");
-  });
-
-  it("free users can switch the micro mix", () => {
-    const update = vi.fn();
-    renderTab(false, update);
-    fireEvent.change(selectWithOption("Physical only"), {
-      target: { value: "physical" },
-    });
-    expect(update).toHaveBeenCalledWith("micro_hint_mix", "physical");
-  });
-
-  it("shows the editable hint textareas and Custom CSS to supporters", () => {
+  it("no longer hosts the hint pools (moved to Hints tab)", () => {
+    // spec-round6 stage 4: the five hint pools moved out of BreaksTab into
+    // a dedicated Hints tab. The mix selectors, routines, chores and
+    // content packs stay here. Behaviour they covered is re-asserted in
+    // hints-tab.fork-pools.test.tsx.
     renderTab(true);
     expect(
-      screen.getByText("Solo (stretch, fresh air, snack, tidy)"),
-    ).toBeTruthy();
+      screen.queryByText("Solo pool"),
+    ).toBeNull();
     expect(
-      screen.getByText("Social (call, walk together, share a coffee)"),
-    ).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Bedtime" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Custom CSS" })).toBeTruthy();
+      screen.queryByText("Social pool"),
+    ).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Bedtime" })).toBeNull();
   });
 
   it("offers the Today's chores editor to free users and saves on blur", async () => {

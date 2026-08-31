@@ -31,13 +31,11 @@ pub struct DerivedCaches {
     /// re-lowercasing every configured target for every running process.
     /// Empty targets are dropped (they never match).
     pub app_pause_targets_lower: Vec<String>,
-    /// Micro-break hint pool already resolved for the active
-    /// `micro_hint_mix` (see [`effective_micro_hints`]). Resolving the mix
-    /// concatenates two pools on every break fire otherwise; caching it
-    /// turns the fire path into a single clone of the finished vector.
-    pub micro_hints_resolved: Vec<String>,
-    /// Long-break hint pool resolved for the active `long_hint_mix`.
-    pub long_hints_resolved: Vec<String>,
+    /// Reminder pool for micro and long breaks, already merged. Round-6
+    /// feedback collapsed the per-kind pools and their `hint_mix` dials:
+    /// every micro or long break draws from the same combined list, so a
+    /// single cache turns the fire path into one clone.
+    pub break_hints_resolved: Vec<String>,
 }
 
 impl DerivedCaches {
@@ -63,8 +61,7 @@ impl DerivedCaches {
                 .map(|t| t.to_lowercase())
                 .filter(|t| !t.is_empty())
                 .collect(),
-            micro_hints_resolved: resolve_micro_hints(s),
-            long_hints_resolved: resolve_long_hints(s),
+            break_hints_resolved: resolve_break_hints(s),
         }
     }
 }
@@ -198,51 +195,6 @@ impl<'de> Deserialize<'de> for ScheduleMode {
     }
 }
 
-/// Which hint pool a break kind draws from. Micro mixes `physical` and
-/// `psychological`; long mixes `solo` and `social`; `Both` concatenates
-/// the kind's two pools. The vocabularies don't overlap, so one enum
-/// covers both kinds — `effective_*_hints` only ever asks "is this the
-/// mix, or one of my two pools?".
-///
-/// On-disk strings are lowercase; a corrupt or unknown value
-/// deserialises to [`HintMix::Both`] with a logged warning.
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "lowercase")]
-pub enum HintMix {
-    #[default]
-    Both,
-    Physical,
-    Psychological,
-    Solo,
-    Social,
-}
-
-impl HintMix {
-    fn from_disk_str(raw: &str) -> Option<Self> {
-        match raw {
-            "both" => Some(Self::Both),
-            "physical" => Some(Self::Physical),
-            "psychological" => Some(Self::Psychological),
-            "solo" => Some(Self::Solo),
-            "social" => Some(Self::Social),
-            _ => None,
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for HintMix {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        Ok(deserialize_with_fallback(
-            deserializer,
-            "hint_mix",
-            Self::from_disk_str,
-        ))
-    }
-}
-
 /// Deserialise a lowercase-tagged enum permissively: read the raw string
 /// and map it through `parse`, falling back to `T::default()` with a
 /// single logged warning on any unknown/corrupt value.
@@ -354,9 +306,13 @@ fn default_tray_countdown_target() -> String {
 #[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum TrayStyle {
-    #[default]
     IconAndCountdown,
     CountdownOnly,
+    // Stage 3 (spec-round6): the ring is the shipped look now — it carries
+    // progress without a number, which is what the menu bar is for. New
+    // installs (and the fixture below) start on it; existing settings.json
+    // keeps whatever the user or the legacy-boolean migration chose.
+    #[default]
     ProgressRing,
 }
 
@@ -652,11 +608,14 @@ pub struct Settings {
     #[serde(alias = "micro_hints")]
     pub micro_physical_hints: Vec<String>,
     pub micro_psychological_hints: Vec<String>,
-    pub micro_hint_mix: HintMix,
     pub long_hints: Vec<String>,
     pub long_social_hints: Vec<String>,
-    pub long_hint_mix: HintMix,
     pub sleep_hints: Vec<String>,
+    /// Daily reminders the user pins for themselves, shown as a block at
+    /// the top of the tray menu (above the profile submenu). Empty by
+    /// default and only ever user-authored — the app never writes here.
+    #[serde(default)]
+    pub daily_reminders: Vec<String>,
     /// Guided-routine mode for micro / long breaks: `""` (off, fall back to
     /// hint rotation), a routine id (always that routine), or `"random"` (the
     /// engine picks one per break from the filtered pool). See
@@ -737,15 +696,6 @@ pub struct Settings {
     pub tray_icon_enabled: bool,
     pub micro_break_mode: BreakMode,
     pub long_break_mode: BreakMode,
-    /// Supporter-only freeform stylesheet, applied to both the settings
-    /// window and the break overlay via the renderer's
-    /// `useCustomStylesheet` hook (which uses `adoptedStyleSheets` so we
-    /// don't need to weaken the strict `style-src 'self'` CSP). The
-    /// supporter gate lives in `commands::settings::gate_custom_css`,
-    /// and `sanitize_custom_css` strips `@import` / `expression(` on
-    /// every read+write.
-    #[serde(default)]
-    pub custom_css: String,
     /// Stable per-load derivations (parsed fixed times, etc.) resolved
     /// once via [`Settings::rebuild_derived`] rather than on every tick /
     /// fire. Never serialised: `#[serde(skip)]` keeps it off disk and out
@@ -816,11 +766,10 @@ impl Default for Settings {
             morning_chore_prompt_enabled: true,
             micro_physical_hints: default_micro_physical_hints(),
             micro_psychological_hints: default_micro_psychological_hints(),
-            micro_hint_mix: HintMix::default(),
             long_hints: default_long_hints(),
             long_social_hints: default_long_social_hints(),
-            long_hint_mix: HintMix::default(),
             sleep_hints: default_sleep_hints(),
+            daily_reminders: Vec::new(),
             micro_routine: String::new(),
             long_routine: String::new(),
             micro_routine_categories: Vec::new(),
@@ -856,7 +805,6 @@ impl Default for Settings {
             tray_icon_enabled: true,
             micro_break_mode: BreakMode::default(),
             long_break_mode: BreakMode::default(),
-            custom_css: String::new(),
             derived: DerivedCaches::default(),
         }
     }
@@ -1055,19 +1003,6 @@ impl Settings {
         if self.clock_format != "12h" && self.clock_format != "24h" {
             self.clock_format = default_clock_format();
         }
-        // Cap custom CSS at 64KiB so a corrupted or hand-edited
-        // settings.json can't bloat the renderer payload, then run the
-        // sanitiser so loaded-from-disk values get the same scrub as
-        // newly-saved ones. Walk back to a char boundary before
-        // truncating — `String::truncate` panics mid-codepoint.
-        if self.custom_css.len() > 65_536 {
-            let mut cut = 65_536;
-            while !self.custom_css.is_char_boundary(cut) {
-                cut -= 1;
-            }
-            self.custom_css.truncate(cut);
-        }
-        self.custom_css = sanitize_custom_css(&self.custom_css);
         // Source fields are now in their final clamped form; re-derive the
         // caches so a clamped load/update path never has to touch them
         // again.
@@ -1075,109 +1010,56 @@ impl Settings {
     }
 }
 
-/// Defence-in-depth scrub for user-supplied CSS. Even with a strict CSP
-/// in place we belt-and-braces:
-///
-/// - drop `@import` rules entirely (they could pull in further styles
-///   that we don't want to audit, and CSP-bypass via stylesheet chains
-///   has historically been a footgun);
-/// - strip the legacy IE `expression(...)` construct, which old WebKit
-///   forks have re-introduced for compatibility.
-///
-/// Comments are normalised first so the patterns can't be hidden behind
-/// `/* */` splits. Operates on `&str` throughout — `bytes`-indexing
-/// would mojibake non-ASCII content like `content: "→"`.
-pub fn sanitize_custom_css(css: &str) -> String {
-    let stripped = strip_css_comments(css);
-    let mut out = String::with_capacity(stripped.len());
-    for raw in stripped.split_inclusive(';') {
-        let lower = raw.trim_start().to_ascii_lowercase();
-        if lower.starts_with("@import") || lower.contains("expression(") {
-            continue;
-        }
-        out.push_str(raw);
+/// Pure resolver for the shared micro/long reminder pool: the four
+/// categories (physical, psychological, solo, social) concatenated in a
+/// fixed order. Every micro or long break draws from this one list —
+/// round-6 feedback removed the per-kind split and the `hint_mix` dials,
+/// so a reminder is never hidden from a break kind again. An empty list
+/// falls back to the built-in defaults, which keeps "reminders always
+/// show" true even if the user clears every entry. This does the
+/// allocating work; [`DerivedCaches`] caches the result so the fire path
+/// is a single clone.
+fn resolve_break_hints(s: &Settings) -> Vec<String> {
+    let mut combined = Vec::with_capacity(
+        s.micro_physical_hints.len()
+            + s.micro_psychological_hints.len()
+            + s.long_hints.len()
+            + s.long_social_hints.len(),
+    );
+    combined.extend(s.micro_physical_hints.iter().cloned());
+    combined.extend(s.micro_psychological_hints.iter().cloned());
+    combined.extend(s.long_hints.iter().cloned());
+    combined.extend(s.long_social_hints.iter().cloned());
+    if combined.is_empty() {
+        combined.extend(default_micro_physical_hints());
+        combined.extend(default_micro_psychological_hints());
+        combined.extend(default_long_hints());
+        combined.extend(default_long_social_hints());
     }
-    out
+    combined
 }
 
-fn strip_css_comments(css: &str) -> String {
-    let mut out = String::with_capacity(css.len());
-    let mut rest = css;
-    while let Some(start) = rest.find("/*") {
-        out.push_str(&rest[..start]);
-        rest = &rest[start + 2..];
-        match rest.find("*/") {
-            Some(end) => rest = &rest[end + 2..],
-            None => return out, // unterminated comment swallows the tail
-        }
+/// The resolved reminder pool for sleep breaks: the bedtime list, falling
+/// back to the built-in defaults when the user emptied it. Cached by
+/// [`DerivedCaches`] via the same reasoning as [`resolve_break_hints`].
+fn resolve_sleep_hints(s: &Settings) -> Vec<String> {
+    if s.sleep_hints.is_empty() {
+        default_sleep_hints()
+    } else {
+        s.sleep_hints.clone()
     }
-    out.push_str(rest);
-    out
-}
-
-/// Pure resolver for the micro-break hint pool, honouring
-/// `micro_hint_mix`. `Physical` / `Psychological` return only that pool;
-/// anything else (including `Both`) concatenates both in
-/// physical-then-psychological order. This does the allocating /
-/// concatenating work; [`DerivedCaches`] caches its result so the fire
-/// path doesn't repeat it.
-fn resolve_micro_hints(s: &Settings) -> Vec<String> {
-    match s.micro_hint_mix {
-        HintMix::Physical => s.micro_physical_hints.clone(),
-        HintMix::Psychological => s.micro_psychological_hints.clone(),
-        _ => {
-            let mut combined = Vec::with_capacity(
-                s.micro_physical_hints.len() + s.micro_psychological_hints.len(),
-            );
-            combined.extend(s.micro_physical_hints.iter().cloned());
-            combined.extend(s.micro_psychological_hints.iter().cloned());
-            combined
-        }
-    }
-}
-
-/// Pure resolver for the long-break hint pool, honouring `long_hint_mix`.
-/// `Solo` / `Social` filter to that pool; anything else (including
-/// `Both`) concatenates them in solo-then-social order. Cached by
-/// [`DerivedCaches`].
-fn resolve_long_hints(s: &Settings) -> Vec<String> {
-    match s.long_hint_mix {
-        HintMix::Solo => s.long_hints.clone(),
-        HintMix::Social => s.long_social_hints.clone(),
-        _ => {
-            let mut combined = Vec::with_capacity(s.long_hints.len() + s.long_social_hints.len());
-            combined.extend(s.long_hints.iter().cloned());
-            combined.extend(s.long_social_hints.iter().cloned());
-            combined
-        }
-    }
-}
-
-/// The resolved micro-break hint pool.
-///
-/// The hint *mix* is resolved (and its two pools concatenated) once at
-/// settings load/update into the cache; this accessor just clones the
-/// finished vector, so the per-fire cost is a single allocation rather
-/// than the re-concatenation the pre-cache version did on every break.
-pub fn effective_micro_hints(s: &Settings) -> Vec<String> {
-    s.derived.micro_hints_resolved.clone()
-}
-
-/// The resolved long-break hint pool. See [`effective_micro_hints`].
-pub fn effective_long_hints(s: &Settings) -> Vec<String> {
-    s.derived.long_hints_resolved.clone()
 }
 
 impl Settings {
-    /// The resolved hint pool to show for `kind`: the per-kind cache for
-    /// micro/long (honouring its hint mix), or the sleep pool for Sleep.
-    /// Collapses the `match kind { Micro => effective_micro_hints(s), … }`
-    /// ladder the fire paths used to repeat.
+    /// The resolved reminder pool to show for `kind`: the shared merged
+    /// cache for micro and long (identical by design — a reminder must
+    /// never be hidden from a break kind), or the bedtime list for Sleep.
+    /// Collapses the `match kind { … }` ladder the fire paths used to
+    /// repeat.
     pub fn effective_hints(&self, kind: BreakKind) -> Vec<String> {
         match kind {
-            BreakKind::Micro => effective_micro_hints(self),
-            BreakKind::Long => effective_long_hints(self),
-            BreakKind::Sleep => self.sleep_hints.clone(),
+            BreakKind::Micro | BreakKind::Long => self.derived.break_hints_resolved.clone(),
+            BreakKind::Sleep => resolve_sleep_hints(self),
         }
     }
 
@@ -1227,86 +1109,6 @@ pub fn windowed_fraction_for(kind: BreakKind, s: &Settings) -> f64 {
 }
 
 #[cfg(test)]
-mod sanitize_tests {
-    use super::sanitize_custom_css;
-
-    #[test]
-    fn passes_safe_css_through() {
-        let input = ".overlay-card { background: #111; color: white; }";
-        assert_eq!(sanitize_custom_css(input), input);
-    }
-
-    #[test]
-    fn drops_at_import_rules() {
-        let input = "@import url('https://evil.example/x.css'); .ok { color: red; }";
-        let out = sanitize_custom_css(input);
-        assert!(!out.contains("@import"), "got: {out}");
-        assert!(out.contains(".ok"));
-    }
-
-    #[test]
-    fn drops_at_import_even_when_obfuscated_with_comments() {
-        let input = "@/* hi */import url('https://evil/x.css'); .ok { color: red; }";
-        let out = sanitize_custom_css(input);
-        assert!(!out.to_ascii_lowercase().contains("@import"));
-        assert!(out.contains(".ok"));
-    }
-
-    #[test]
-    fn drops_expression_construct() {
-        let input = ".x { width: expression(alert(1)); } .ok { color: red; }";
-        let out = sanitize_custom_css(input);
-        assert!(!out.contains("expression("), "got: {out}");
-        assert!(out.contains(".ok"));
-    }
-
-    #[test]
-    fn empty_in_empty_out() {
-        assert_eq!(sanitize_custom_css(""), "");
-    }
-
-    #[test]
-    fn preserves_non_ascii_content() {
-        let input = ".x::before { content: \"→ café\"; } /* éhé */ .y { color: red; }";
-        let out = sanitize_custom_css(input);
-        assert!(out.contains("→ café"), "non-ASCII content corrupted: {out}");
-        assert!(out.contains(".y"));
-        assert!(!out.contains("éhé"), "comment should be stripped");
-    }
-
-    #[test]
-    fn unterminated_comment_swallows_tail() {
-        // Defensive: a hand-edited CSS with a runaway `/*` shouldn't
-        // panic or leak commented-out source into the output.
-        let out = sanitize_custom_css(".ok {} /* unterminated");
-        assert_eq!(out, ".ok {} ");
-    }
-}
-
-#[cfg(test)]
-mod clamp_custom_css_tests {
-    use super::*;
-
-    #[test]
-    fn truncates_at_64kib_without_panicking_on_multibyte_boundary() {
-        // Regression: `String::truncate(65_536)` panics if byte 65,536
-        // lands inside a multi-byte codepoint. Fill exactly to the cap
-        // with ASCII then append an emoji that straddles it.
-        let mut css = "a".repeat(65_535);
-        css.push('🎉'); // 4 bytes — pushes total to 65,539
-        let mut s = Settings {
-            custom_css: css,
-            ..Settings::default()
-        };
-        s.clamp();
-        assert!(s.custom_css.len() <= 65_536);
-        // Must remain valid UTF-8 — the test would already panic if
-        // truncate split the codepoint, but assert explicitly.
-        assert!(std::str::from_utf8(s.custom_css.as_bytes()).is_ok());
-    }
-}
-
-#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -1327,7 +1129,6 @@ mod tests {
         assert!(s.sound_volume >= 0.0 && s.sound_volume <= 1.0);
         assert!(!s.micro_physical_hints.is_empty());
         assert!(!s.micro_psychological_hints.is_empty());
-        assert_eq!(s.micro_hint_mix, HintMix::Both);
         assert!(!s.long_hints.is_empty());
         assert!(!s.sleep_hints.is_empty());
         assert_eq!(s.micro_idle_reset_secs, 300);
@@ -1571,62 +1372,39 @@ mod tests {
             s.micro_psychological_hints,
             Settings::default().micro_psychological_hints
         );
-        assert_eq!(s.micro_hint_mix, HintMix::Both);
     }
 
     #[test]
-    #[allow(clippy::field_reassign_with_default)]
-    fn effective_micro_hints_modes() {
-        // `effective_micro_hints` reads the cache, so each mix change has
-        // to be followed by `rebuild_derived` — exercising both the pure
-        // resolver and the cache plumbing.
+    fn break_reminders_merge_all_four_categories_for_both_kinds() {
+        // Round-6 feedback: pools and their mix dials are gone — micro and
+        // long breaks draw from one merged list, so no category can be
+        // hidden from a break kind again.
         let mut s = Settings::default();
-        s.micro_physical_hints = vec!["a".into(), "b".into()];
-        s.micro_psychological_hints = vec!["c".into()];
-
-        s.micro_hint_mix = HintMix::Physical;
+        s.micro_physical_hints = vec!["a".into()];
+        s.micro_psychological_hints = vec!["b".into()];
+        s.long_hints = vec!["c".into()];
+        s.long_social_hints = vec!["d".into()];
         s.rebuild_derived();
-        assert_eq!(effective_micro_hints(&s), ["a", "b"]);
-
-        s.micro_hint_mix = HintMix::Psychological;
-        s.rebuild_derived();
-        assert_eq!(effective_micro_hints(&s), ["c"]);
-
-        s.micro_hint_mix = HintMix::Both;
-        s.rebuild_derived();
-        assert_eq!(effective_micro_hints(&s), ["a", "b", "c"]);
-
-        // A long-only variant on a micro field falls through to the
-        // concatenated pool, matching the pre-enum "anything else" arm.
-        s.micro_hint_mix = HintMix::Social;
-        s.rebuild_derived();
-        assert_eq!(effective_micro_hints(&s), ["a", "b", "c"]);
+        let expected = vec!["a", "b", "c", "d"];
+        assert_eq!(s.effective_hints(BreakKind::Micro), expected);
+        assert_eq!(s.effective_hints(BreakKind::Long), expected);
     }
 
     #[test]
-    #[allow(clippy::field_reassign_with_default)]
-    fn effective_long_hints_modes() {
+    fn emptied_reminder_lists_fall_back_to_defaults() {
+        // "Reminders always show": a user who clears every entry still
+        // gets the built-in defaults instead of silent breaks.
         let mut s = Settings::default();
-        s.long_hints = vec!["solo1".into(), "solo2".into()];
-        s.long_social_hints = vec!["soc1".into()];
-
-        s.long_hint_mix = HintMix::Solo;
+        s.micro_physical_hints = vec![];
+        s.micro_psychological_hints = vec![];
+        s.long_hints = vec![];
+        s.long_social_hints = vec![];
         s.rebuild_derived();
-        assert_eq!(effective_long_hints(&s), ["solo1", "solo2"]);
+        assert!(!s.effective_hints(BreakKind::Micro).is_empty());
+        assert!(!s.effective_hints(BreakKind::Long).is_empty());
 
-        s.long_hint_mix = HintMix::Social;
-        s.rebuild_derived();
-        assert_eq!(effective_long_hints(&s), ["soc1"]);
-
-        s.long_hint_mix = HintMix::Both;
-        s.rebuild_derived();
-        assert_eq!(effective_long_hints(&s), ["solo1", "solo2", "soc1"]);
-
-        // A micro-only variant on a long field falls through to the
-        // concatenated pool, matching the pre-enum "anything else" arm.
-        s.long_hint_mix = HintMix::Physical;
-        s.rebuild_derived();
-        assert_eq!(effective_long_hints(&s), ["solo1", "solo2", "soc1"]);
+        s.sleep_hints = vec![];
+        assert!(!s.effective_hints(BreakKind::Sleep).is_empty());
     }
 
     #[test]
@@ -1635,15 +1413,14 @@ mod tests {
         // pools must be populated afterward without a separate call.
         let mut s = Settings::default();
         s.clamp();
-        assert!(!effective_micro_hints(&s).is_empty());
-        assert!(!effective_long_hints(&s).is_empty());
+        assert!(!s.effective_hints(BreakKind::Micro).is_empty());
+        assert!(!s.effective_hints(BreakKind::Long).is_empty());
     }
 
     #[test]
     fn default_long_social_hints_are_populated() {
         let s = Settings::default();
         assert!(!s.long_social_hints.is_empty());
-        assert_eq!(s.long_hint_mix, HintMix::Both);
     }
 
     #[test]
@@ -1891,30 +1668,12 @@ mod tests {
     }
 
     #[test]
-    fn hint_mix_serialises_to_lowercase_disk_strings() {
-        for (variant, expected) in [
-            (HintMix::Both, "both"),
-            (HintMix::Physical, "physical"),
-            (HintMix::Psychological, "psychological"),
-            (HintMix::Solo, "solo"),
-            (HintMix::Social, "social"),
-        ] {
-            assert_eq!(
-                serde_json::to_value(variant).unwrap(),
-                serde_json::json!(expected)
-            );
-        }
-    }
-
-    #[test]
     fn enum_fields_round_trip_through_settings_json() {
         let s = Settings {
             micro_break_mode: BreakMode::Notification,
             long_break_mode: BreakMode::Windowed,
             micro_schedule_mode: ScheduleMode::Fixed,
             long_schedule_mode: ScheduleMode::Both,
-            micro_hint_mix: HintMix::Physical,
-            long_hint_mix: HintMix::Social,
             ..Settings::default()
         };
 
@@ -1925,8 +1684,6 @@ mod tests {
         assert_eq!(back.long_break_mode, BreakMode::Windowed);
         assert_eq!(back.micro_schedule_mode, ScheduleMode::Fixed);
         assert_eq!(back.long_schedule_mode, ScheduleMode::Both);
-        assert_eq!(back.micro_hint_mix, HintMix::Physical);
-        assert_eq!(back.long_hint_mix, HintMix::Social);
     }
 
     #[test]
@@ -1946,11 +1703,13 @@ mod tests {
     }
 
     #[test]
-    fn corrupt_hint_mix_normalises_to_both_on_load() {
+    fn legacy_hint_mix_keys_are_ignored_on_load() {
+        // Round-6 removed the mix dials; a settings.json still carrying
+        // them loads fine with the unknown keys dropped.
         let json = r#"{"micro_hint_mix": "garbage", "long_hint_mix": null}"#;
-        let s: Settings = serde_json::from_str(json).unwrap();
-        assert_eq!(s.micro_hint_mix, HintMix::Both);
-        assert_eq!(s.long_hint_mix, HintMix::Both);
+        let mut s: Settings = serde_json::from_str(json).unwrap();
+        s.clamp();
+        assert!(!s.effective_hints(BreakKind::Micro).is_empty());
     }
 
     #[test]
@@ -1958,12 +1717,12 @@ mod tests {
         let json = r#"{
             "micro_break_mode": "windowed",
             "micro_schedule_mode": "fixed",
-            "long_hint_mix": "social"
+            "tray_style": "progress_ring"
         }"#;
         let s: Settings = serde_json::from_str(json).unwrap();
         assert_eq!(s.micro_break_mode, BreakMode::Windowed);
         assert_eq!(s.micro_schedule_mode, ScheduleMode::Fixed);
-        assert_eq!(s.long_hint_mix, HintMix::Social);
+        assert_eq!(s.tray_style, TrayStyle::ProgressRing);
     }
 
     #[test]
@@ -2241,6 +2000,21 @@ mod tests {
     }
 
     #[test]
+    fn legacy_settings_with_removed_custom_css_key_still_load() {
+        // Stage 5 (spec-round6) deleted the `custom_css` field. Settings
+        // has no `deny_unknown_fields`, so a settings.json still carrying
+        // the key (plus anything else unknown) must deserialise with the
+        // unknown keys silently dropped, not fail the whole load.
+        let legacy = r#"{
+            "micro_interval_secs": 600,
+            "custom_css": ".overlay-card { background: #111; }",
+            "some_future_unknown_key": 42
+        }"#;
+        let s: Settings = serde_json::from_str(legacy).unwrap();
+        assert_eq!(s.micro_interval_secs, 600);
+    }
+
+    #[test]
     fn postpone_available_for_requires_global_master_and_per_kind() {
         let mut s = Settings {
             postpone_enabled: true,
@@ -2316,17 +2090,15 @@ mod tests {
         let mut s = Settings {
             micro_physical_hints: vec!["m".into()],
             micro_psychological_hints: vec![],
-            micro_hint_mix: HintMix::Physical,
             long_hints: vec!["l".into()],
             long_social_hints: vec![],
-            long_hint_mix: HintMix::Solo,
             sleep_hints: vec!["z".into()],
             ..Settings::default()
         };
         s.rebuild_derived();
 
-        assert_eq!(s.effective_hints(BreakKind::Micro), ["m"]);
-        assert_eq!(s.effective_hints(BreakKind::Long), ["l"]);
+        assert_eq!(s.effective_hints(BreakKind::Micro), ["m", "l"]);
+        assert_eq!(s.effective_hints(BreakKind::Long), ["m", "l"]);
         assert_eq!(s.effective_hints(BreakKind::Sleep), ["z"]);
     }
 }
@@ -2494,7 +2266,7 @@ mod parity_tests {
 
     // -- Enum *value* parity. The field-name test above proves the keys
     //    line up; this proves the typed on-disk enums (`BreakMode`,
-    //    `ScheduleMode`, `HintMix`, `HotkeyAction`, `RoutineCategory`,
+    //    `ScheduleMode`, `HotkeyAction`, `RoutineCategory`,
     //    `RoutineDifficulty`) serialise to exactly the string literals the TS
     //    unions accept. Each parity array is built with `all_variants!`, whose
     //    compile-time exhaustiveness gate makes a new Rust variant fail to
@@ -2502,7 +2274,7 @@ mod parity_tests {
     //    versa) surfaces at unit-test time rather than as a runtime Zod
     //    rejection.
 
-    use super::{BreakMode, HintMix, ScheduleMode};
+    use super::{BreakMode, ScheduleMode};
     use crate::scheduler::routines::{RoutineCategory, RoutineDifficulty};
 
     /// All on-disk strings a Rust enum can serialise to. The caller passes the
@@ -2598,19 +2370,6 @@ mod parity_tests {
         ));
         let ts = ts_union_values(&ts_source(), "TrayStyle");
         assert_eq!(rust, ts, "TrayStyle value drift");
-    }
-
-    #[test]
-    fn hint_mix_values_match_ts_unions() {
-        // HintMix is one Rust enum but two TS unions (micro vs long); its
-        // value set is the union of both. Splitting per-kind is a TS-only
-        // nicety — Rust accepts any variant on either field.
-        let rust =
-            rust_enum_values(all_variants!(HintMix: Both, Physical, Psychological, Solo, Social));
-        let src = ts_source();
-        let mut ts = ts_union_values(&src, "MicroHintMix");
-        ts.extend(ts_union_values(&src, "LongHintMix"));
-        assert_eq!(rust, ts, "HintMix ↔ Micro/LongHintMix value drift");
     }
 
     #[test]

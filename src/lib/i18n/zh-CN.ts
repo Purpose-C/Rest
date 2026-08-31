@@ -26,6 +26,7 @@ export const zhCN: Record<string, string> = {
   "constants.soundMode.ambient": "氛围音（休息期间循环播放）",
   "constants.tab.schedule": "计划",
   "constants.tab.breaks": "休息",
+  "constants.tab.hints": "提醒",
   "constants.tab.quiet": "暂停",
   "constants.tab.system": "系统",
   "constants.tab.insights": "统计",
@@ -52,8 +53,8 @@ export const zhCN: Record<string, string> = {
   "breaks.themeTip":
     "选择预设主题、“轮换”（每次休息使用不同预设）或“自定义”任意颜色。自定义颜色会自动压暗以保证遮罩调暗屏幕。",
   "breaks.customColor": "自定义颜色",
-  "breaks.showHints": "显示健康提示",
-  "breaks.rotateHints": "休息期间轮换提示",
+  "breaks.showHints": "显示休息提醒",
+  "breaks.rotateHints": "休息期间轮换提醒",
   "breaks.rotateHintsTip":
     "关闭：每次休息选择一条提示并在屏幕上保持不变。开启：休息界面每隔 N 秒在剩余提示池中轮换一条提示。",
   "breaks.rotateEverySeconds": "轮换间隔（秒）",
@@ -119,46 +120,54 @@ export const zhCN: Record<string, string> = {
     "短休息期间隐藏跳过与关闭控件。请谨慎使用。",
   "breaks.longEnforceable": "长休息：不可跳过",
   "breaks.longEnforceableTip": "长休息期间隐藏跳过与关闭控件。",
-  "breaks.breakIdeas": "健康提示内容",
-  "breaks.breakIdeasDesc": "选择每次休息期间显示的提示类型。",
-  "breaks.breakIdeasSupporterDesc":
-    " 在下方编辑提示池 —— 每行一条；每次休息随机抽取一条作为起始提示。",
-  "breaks.mix": "组合",
-  "breaks.microMixTip":
-    "身体：拉伸、眼部放松、活动肢体。心理：呼吸、觉察、释放压力。",
-  "breaks.mixBoth": "两者兼有",
-  "breaks.mixPhysicalOnly": "仅身体",
-  "breaks.mixPsychologicalOnly": "仅心理",
-  "breaks.physicalPool": "身体提示池（拉伸、眼部放松、活动肢体）",
-  "breaks.psychologicalPool":
-    "心理提示池（呼吸、觉察、释放压力）",
-  "breaks.longMixTip":
-    "独处：独自进行的活动（拉伸、呼吸新鲜空气、点心）。社交：与他人一起进行的活动（打电话、一同散步、在室外坐坐）。独自工作？选择“仅独处”即可去除社交类提示。",
-  "breaks.mixSoloOnly": "仅独处",
-  "breaks.mixSocialOnly": "仅社交",
+  "breaks.breakIdeas": "引导流程与待办",
+  "breaks.breakIdeasDesc": "引导每次休息如何进行的流程与今日待办。",
+
+  "breaks.physicalPool": "身体提醒",
+  "breaks.psychologicalPool": "心理提醒",
   "breaks.spreadRoutineSteps": "将引导流程步骤均匀分布到整个休息中",
   "breaks.spreadRoutineStepsTip":
     "开启后，引导流程的步骤时长将被视为相对权重并按比例拉伸以填满整个休息时长。关闭（默认）时，步骤按原作者设定的时长运行，最后一步保持显示直至休息结束。引导流程也可通过自带的步频字段覆盖此项。",
   "breaks.playPluginSoundCues": "播放插件提示音效",
   "breaks.playPluginSoundCuesTip":
     "开启（默认）时，来自插件的引导流程可以播放简短提示音 —— 例如吸气/呼气提示音或动作切换提示音。提示音始终遵循全局音量设置；关闭此项可静音。",
-  "breaks.todaysChores": "今日提醒",
+  "breaks.todaysChores": "今日待办",
   "breaks.choresDesc":
-    "记下您今天想完成的提醒 —— 每行一条。在短休息和长休息期间，Entracte 会提醒您完成其中一项（这些提醒优先于轮换的健康提示）。列表在每天早晨清空。",
-  "breaks.oneChorePerLine": "每行一条提醒",
+    "记下您今天想完成的待办 —— 每行一条。在短休息和长休息期间，Entracte 会提醒您完成其中一项（这些待办优先于轮换的休息提醒）。列表在每天早晨清空。",
+  "breaks.oneChorePerLine": "每行一条待办",
   "breaks.choresPlaceholder": "浇花\n清理洗碗机\n回复邮件",
-  "breaks.promptChoresMorning": "每天早晨提示您规划今日提醒",
+  "breaks.promptChoresMorning": "每天早晨提示您规划今日待办",
   "breaks.promptChoresMorningTip":
-    "开启（默认）时，每天活动时段首次开始且提醒列表为空时，Entracte 会自动打开设置窗口以便您规划今日提醒。关闭后将不再提示 —— 您仍可随时手动填写列表。",
-  "breaks.longSoloPool": "独处提示池（拉伸、呼吸新鲜空气、点心、整理）",
-  "breaks.longSocialPool": "社交提示池（打电话、一同散步、喝杯咖啡）",
-  "breaks.bedtime": "就寝提醒",
-  "breaks.oneIdeaPerLine": "每行一条提示",
+    "开启（默认）时，每天活动时段首次开始且待办列表为空时，Entracte 会自动打开设置窗口以便您规划今日待办。关闭后将不再提示 —— 您仍可随时手动填写列表。",
+  "breaks.longSoloPool": "独处提醒",
+  "breaks.longSocialPool": "社交提醒",
   "breaks.contentPacks": "内容包",
-  "breaks.customCss": "自定义 CSS",
-  "breaks.customCssDesc":
-    "应用于设置窗口和休息界面。错误的 CSS 可能会导致界面控件被隐藏 —— 如果界面异常，请清空此字段。",
-  "breaks.stylesheet": "样式表",
+  "breaks.deleteHint": "删除这条提示",
+  "breaks.deleteHintLabel": "删除{pool}提示池的「{hint}」",
+  "breaks.addHint": "添加一条",
+  "breaks.addHintLabel": "在{pool}提示池添加一条",
+  "breaks.addHintPlaceholder": "输入一条新的提示…",
+  "breaks.hintRowLabel": "{pool} 第 {i} 条提示",
+
+  // hints-tab
+  "hints.poolName.physical": "身体提醒",
+  "hints.poolName.psychological": "心理提醒",
+  "hints.poolName.solo": "独处提醒",
+  "hints.poolName.social": "社交提醒",
+  "hints.poolName.bedtime": "睡前提醒",
+  "hints.dailyTitle": "每日提醒",
+  "hints.dailyName": "每日提醒",
+  "hints.dailyDesc":
+    "每天想提醒自己的事，每行一条。会常驻显示在菜单栏菜单的顶部（「当前情景」上方）。",
+  "hints.breakReminders": "休息提醒",
+  "hints.breakRemindersDesc":
+    "休息期间轮播的短建议。短休息和长休息共用同一份列表，五个分类只是内容分组；全部清空时回落到内置默认。",
+  "hints.physicalPoolTip": "拉伸、眼部放松、活动肢体类。",
+  "hints.psychologicalPoolTip": "呼吸、觉察、释放压力类。",
+  "hints.soloPoolTip": "伸展、呼吸新鲜空气、点心、整理类。",
+  "hints.socialPoolTip": "打电话、一同散步、喝杯咖啡类。",
+  "hints.bedtimePool": "睡前提醒",
+  "hints.bedtimePoolTip": "收尾、准备明天、放松类。就寝提醒触发时显示。",
 
   // schedule-tab
   "schedule.activeHours": "活动时段",
@@ -227,10 +236,10 @@ export const zhCN: Record<string, string> = {
   "search.overlay": "全屏遮罩外观",
   "search.sound": "音效",
   "search.skipPostpone": "跳过与推迟",
-  "search.breakIdeas": "健康提示内容",
-  "search.chores": "今日提醒",
+  "search.breakIdeas": "引导流程",
+  "search.chores": "今日待办",
   "search.contentPacks": "内容包",
-  "search.customCss": "自定义 CSS",
+  "search.hints": "提醒",
   "search.autoPause": "自动暂停",
   "search.duringBreaks": "休息期间暂停媒体",
   "search.appPause": "针对特定应用暂停",
@@ -340,7 +349,7 @@ export const zhCN: Record<string, string> = {
   "onboarding.stepWelcome": "欢迎",
   "onboarding.stepLogin": "开机启动",
   "onboarding.stepWindow": "活动时段",
-  "onboarding.stepHints": "健康提示",
+  "onboarding.stepHints": "提醒",
   "onboarding.stepWinddown": "放松收尾",
   "onboarding.stepDone": "准备就绪",
   "onboarding.stepCount": "第 {curr} 步，共 {total} 步",
@@ -365,16 +374,11 @@ export const zhCN: Record<string, string> = {
   "onboarding.onTheseDays": "生效星期",
   "onboarding.onTheseDaysTip":
     "关闭您不工作的日子（例如周末），Entracte 将在这些日子保持静音。您之后可以在“计划”中进行精细调整。",
-  "onboarding.hintsTitle": "健康提示",
+  "onboarding.hintsTitle": "提醒",
   "onboarding.hintsBody":
     "每次休息都可以显示一条建议 —— 一次拉伸、一次深呼吸、或短暂离开书桌。长休息建议分为两种类型。",
-  "onboarding.hintsCheckbox": "休息期间显示健康提示",
-  "onboarding.longSuggestions": "长休息建议偏好",
-  "onboarding.longSuggestionsTip":
-    "独处：独自进行的活动（拉伸、呼吸新鲜空气、点心）。社交：与他人一起进行的活动（打电话、一同散步）。独自工作？选择“仅独处”即可去除社交类提示。",
-  "onboarding.longOptionBoth": "兼顾独处与社交",
-  "onboarding.longOptionSolo": "仅独处 —— 我独自工作",
-  "onboarding.longOptionSocial": "仅社交",
+  "onboarding.hintsCheckbox": "休息期间显示提醒",
+  "onboarding.hintsWhereToEdit": "提醒内容可在「提醒」标签页中编辑。",
   "onboarding.winddownTitle": "放松收尾与专注",
   "onboarding.winddownBody":
     "就寝提醒会在傍晚工作临近结束时温和提醒您下线休息。严格模式会移除跳过和推迟按钮以确保休息必定执行 —— 如果您习惯性取消休息，这将非常有用。",
@@ -465,7 +469,7 @@ export const zhCN: Record<string, string> = {
   // profiles-tab
   "profiles.title": "情景",
   "profiles.desc":
-    "每个情景都保留其独立的休息节奏、健康提示和休息界面设置。切换即时生效。当前启用的情景将驱动此处的所有其他设置，并显示在托盘的“当前情景”菜单中。",
+    "每个情景都保留其独立的休息节奏、提醒和休息界面设置。切换即时生效。当前启用的情景将驱动此处的所有其他设置，并显示在托盘的“当前情景”菜单中。",
   "profiles.moveUpAria": "上移情景 {name}",
   "profiles.moveDownAria": "下移情景 {name}",
   "profiles.nameAria": "情景名称",
@@ -487,7 +491,6 @@ export const zhCN: Record<string, string> = {
   "profiles.add": "添加",
 
   // about-tab
-  "about.title": "关于",
   "about.app": "应用",
   "about.supportAndAuthors": "支持与作者",
   "about.checking": "正在检查…",
@@ -509,7 +512,7 @@ export const zhCN: Record<string, string> = {
   "about.licenseKey": "许可证密钥：{key}",
   "about.removeLicense": "移除许可证",
   "about.supporterPitch":
-    "Entracte 可免费使用。支持者可永久解锁定制功能包 —— 自定义休息界面颜色、轮换主题、自定义音效、自定义 CSS 以及可编辑的健康提示池。",
+    "Entracte 可免费使用。支持者可永久解锁定制功能包 —— 自定义休息界面颜色、轮换主题以及自定义音效。",
   "about.becomeSupporter": "成为支持者 →",
   "about.alreadyHaveLicense":
     "已有许可证？请在下方粘贴并点击“验证”。",
@@ -557,7 +560,7 @@ export const zhCN: Record<string, string> = {
   "contentPacks.importedSuccess": "成功导入 {ideas} 和 {routines}。",
   "contentPacks.importFailed": "导入失败：{error}",
   "contentPacks.desc":
-    "将您的健康提示与引导流程导出为本地文件进行分享或备份。",
+    "将您的提醒与引导流程导出为本地文件进行分享或备份。",
   "contentPacks.tip":
     "内容包是普通的 JSON 文件。导入会将其包含的提示与引导流程合并到您的提示池中，不会删除已有内容；完全重复的项目将被自动跳过。",
   "contentPacks.importBtn": "导入内容包…",
@@ -609,7 +612,7 @@ export const zhCN: Record<string, string> = {
   "hotkeys.clear": "清除",
 
   // shared counts
-  "common.countHints": "{n} 条健康提示",
+  "common.countHints": "{n} 条提醒",
   "common.countRoutines": "{n} 个引导流程",
   "common.countImages": "，含 {n} 张图片",
 
@@ -622,7 +625,7 @@ export const zhCN: Record<string, string> = {
   "plugins.installFailed": "安装失败：{error}",
   "plugins.removed": '已卸载“{name}”。',
   "plugins.uninstallFailed": "卸载失败：{error}",
-  "plugins.desc": "安装本地插件文件，添加来自社区的健康提示与引导流程。",
+  "plugins.desc": "安装本地插件文件，添加来自社区的提醒与引导流程。",
   "plugins.tip":
     "插件是您自行选择的本地文件 —— 无需应用商店、无需账号、无需网络连接。安装时会弹出确认对话框显示插件名称、作者及签名密钥。卸载时会精确移除其添加的所有内容。",
   "plugins.warning": "⚠ 请仅安装来自可信来源的插件文件。",
@@ -631,7 +634,7 @@ export const zhCN: Record<string, string> = {
   "plugins.uninstallAria": "卸载 {name}",
   "plugins.uninstall": "卸载",
   "plugins.noPlugins": "未安装任何插件。",
-  "plugins.rowCounts": "{hints} 条健康提示，{routines} 个引导流程",
+  "plugins.rowCounts": "{hints} 条提醒，{routines} 个引导流程",
 
   // postpone-donut component
   "postponeDonut.taken": "最终完成",
@@ -774,7 +777,7 @@ export const zhCN: Record<string, string> = {
   "a11y.nounBreak": "休息",
 
   // chore-prompt
-  "chorePrompt.withMinutes": "您有约 {mins} 分钟 —— 完成这项提醒：{chore}",
+  "chorePrompt.withMinutes": "您有约 {mins} 分钟 —— 完成这项待办：{chore}",
   "chorePrompt.quick": "快速完成 —— 这项提醒：{chore}",
 
   // postpone
@@ -804,7 +807,7 @@ export const zhCN: Record<string, string> = {
   "overlay.stepProgressAria": "第 {curr} 步，共 {total} 步：{text}",
   "overlay.stepProgress": "第 {curr} 步，共 {total} 步",
   "overlay.choreAria": "本次休息提醒：{chore}",
-  "overlay.wellnessTipAria": "健康提示：{hint}",
+  "overlay.wellnessTipAria": "提醒：{hint}",
   "overlay.typingPaused": "已暂停 —— 停止打字后将恢复休息倒计时",
   "overlay.imBack": "我回来了",
   "overlay.endBreakAria": "结束休息",

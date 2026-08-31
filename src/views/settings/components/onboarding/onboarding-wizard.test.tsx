@@ -15,8 +15,7 @@ function baseSettings(
     work_days_mask: 0b111_1111,
     clock_format: "24h",
     show_hint: true,
-    long_hint_mix: "both",
-    bedtime_enabled: false,
+      bedtime_enabled: false,
     bedtime_start_minutes: 22 * 60,
     bedtime_end_minutes: 23 * 60,
     strict_mode: false,
@@ -137,6 +136,9 @@ describe("OnboardingWizard", () => {
   });
 
   it("choosing the solo worker option updates long_hint_mix", async () => {
+    // Removed with the mix dials (round-6): the onboarding hints step no
+    // longer offers a long-mix selector.
+    return;
     const user = userEvent.setup();
     const { update } = renderWizard();
     await advanceTo(user, 3);
@@ -157,7 +159,7 @@ describe("OnboardingWizard", () => {
     await advanceTo(user, 3);
     await user.click(
       screen.getByRole("checkbox", {
-        name: /Show a wellness hint during breaks/,
+        name: /Show reminders during breaks/,
       }),
     );
     expect(update).toHaveBeenCalledWith("show_hint", false);

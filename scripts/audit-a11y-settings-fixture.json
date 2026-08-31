@@ -49,26 +49,44 @@
   "long_manual_finish": false,
   "autostart_enabled": false,
   "auto_check_updates": true,
-  "micro_sound": { "mode": "end_chime", "sound_id": "337048" },
-  "long_sound": { "mode": "ambient", "sound_id": "851196" },
+  "micro_sound": {
+    "mode": "end_chime",
+    "sound_id": "337048"
+  },
+  "long_sound": {
+    "mode": "ambient",
+    "sound_id": "851196"
+  },
   "sound_volume": 0.5,
   "app_pause_enabled": true,
-  "app_pause_list": ["zoom"],
+  "app_pause_list": [
+    "zoom"
+  ],
   "break_health_enabled": true,
   "morning_chore_prompt_enabled": true,
-  "micro_physical_hints": ["Look 20 feet away."],
-  "micro_psychological_hints": ["Unclench your jaw."],
-  "micro_hint_mix": "both",
-  "long_hints": ["Stand up. Stretch."],
+  "micro_physical_hints": [
+    "Look 20 feet away."
+  ],
+  "micro_psychological_hints": [
+    "Unclench your jaw."
+  ],
+  "long_hints": [
+    "Stand up. Stretch."
+  ],
   "long_social_hints": [
     "Call someone you love.",
     "Step outside with a colleague."
   ],
-  "long_hint_mix": "both",
-  "sleep_hints": ["Time to wind down."],
+  "sleep_hints": [
+    "Time to wind down."
+  ],
+  "daily_reminders": [],
   "micro_routine": "",
   "long_routine": "",
-  "micro_routine_categories": ["eyes", "mobility"],
+  "micro_routine_categories": [
+    "eyes",
+    "mobility"
+  ],
   "long_routine_categories": [],
   "micro_routine_max_difficulty": "moderate",
   "long_routine_max_difficulty": "active",
@@ -84,19 +102,29 @@
   "micro_schedule_mode": "both",
   "long_schedule_mode": "both",
   "hooks_enabled": true,
-  "hooks": [{ "event": "break_start", "command": "echo hi", "enabled": true }],
+  "hooks": [
+    {
+      "event": "break_start",
+      "command": "echo hi",
+      "enabled": true
+    }
+  ],
   "hotkeys_enabled": true,
-  "hotkeys": [{ "action": "pause", "accelerator": "CmdOrCtrl+Alt+P" }],
+  "hotkeys": [
+    {
+      "action": "pause",
+      "accelerator": "CmdOrCtrl+Alt+P"
+    }
+  ],
   "daily_screen_time_enabled": true,
   "daily_screen_time_budget_minutes": 480,
   "daily_screen_time_remind_again_minutes": 30,
   "tray_countdown_enabled": true,
   "tray_icon_enabled": true,
   "tray_countdown_target": "next",
-  "tray_style": "icon_and_countdown",
+  "tray_style": "progress_ring",
   "micro_break_mode": "overlay",
   "long_break_mode": "overlay",
   "routine_fill": false,
-  "allow_plugin_sounds": true,
-  "custom_css": ""
+  "allow_plugin_sounds": true
 }

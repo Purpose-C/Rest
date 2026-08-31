@@ -95,7 +95,6 @@
     "稍作停顿，感知身体此刻的需求。",
     "犒劳自己：感谢自己到目前为止的付出。"
   ],
-  "micro_hint_mix": "both",
   "long_hints": [
     "站起身，望向窗外，做做拉伸。",
     "走动走动 —— 哪怕一分钟也很有帮助。",
@@ -135,7 +134,6 @@
     "由衷地赞美某人一句。",
     "邀请他人和你一起进行下一次休息。"
   ],
-  "long_hint_mix": "both",
   "sleep_hints": [
     "是时候放松收尾了。",
     "今晚就到这里，离开屏幕吧。",
@@ -150,6 +148,7 @@
     "记下明天要做的第一件事 —— 然后就此停下。",
     "慢节奏拉伸 5 分钟，然后准备就寝。"
   ],
+  "daily_reminders": [],
   "micro_routine": "",
   "long_routine": "",
   "micro_routine_categories": [],
@@ -181,9 +180,8 @@
   "daily_screen_time_remind_again_minutes": 60,
   "tray_countdown_enabled": true,
   "tray_countdown_target": "next",
-  "tray_style": "icon_and_countdown",
+  "tray_style": "progress_ring",
   "tray_icon_enabled": true,
   "micro_break_mode": "overlay",
-  "long_break_mode": "overlay",
-  "custom_css": ""
+  "long_break_mode": "overlay"
 }

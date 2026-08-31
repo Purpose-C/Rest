@@ -400,9 +400,12 @@ mod tests {
     async fn tray_countdown_snapshot_running_when_idle_and_text_enabled() {
         // Fresh scheduler with the default interval settings → both timers
         // anchored at construction → countdown is ~micro_interval_secs.
+        // tray_style is pinned because the stage-3 default (ProgressRing)
+        // turns the text off — this test is about the text-on path.
         let s = Settings {
             tray_countdown_enabled: true,
             tray_countdown_target: "short".to_string(),
+            tray_style: TrayStyle::IconAndCountdown,
             ..Settings::default()
         };
         let micro = s.micro_interval_secs;
@@ -423,6 +426,7 @@ mod tests {
     async fn tray_countdown_snapshot_paused_when_scheduler_paused() {
         let s = Settings {
             tray_countdown_enabled: true,
+            tray_style: TrayStyle::IconAndCountdown,
             ..Settings::default()
         };
         let (_dir, sched) = build_test_scheduler(s);

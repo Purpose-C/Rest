@@ -151,6 +151,12 @@ export const TABS: { id: Tab; label: string }[] = [
     },
   },
   {
+    id: "hints",
+    get label() {
+      return t("constants.tab.hints");
+    },
+  },
+  {
     id: "quiet",
     get label() {
       return t("constants.tab.quiet");

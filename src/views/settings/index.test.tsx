@@ -69,9 +69,6 @@ vi.mock("./hooks/use-supporter", () => ({
     setMessage: vi.fn(),
   }),
 }));
-vi.mock("../../lib/use-custom-stylesheet", () => ({
-  useCustomStylesheet: () => undefined,
-}));
 
 vi.mock("./tabs/schedule-tab", () => ({
   ScheduleTab: () => <div data-testid="content-schedule">schedule-content</div>,
@@ -170,7 +167,7 @@ describe("Settings shell ARIA + keyboard", () => {
     mockSettings = null;
     render(<Settings />);
     const tabs = screen.getAllByRole("tab");
-    expect(tabs).toHaveLength(7);
+    expect(tabs).toHaveLength(8);
     expect(tabs[0].textContent).toBe("Schedule");
     expect(tabs[0].getAttribute("aria-selected")).toBe("true");
     expect(tabs[0].getAttribute("tabindex")).toBe("0");
@@ -184,7 +181,7 @@ describe("Settings shell ARIA + keyboard", () => {
     mockSettings = hydratedSettings;
     const { container } = render(<Settings />);
     const tabs = screen.getAllByRole("tab");
-    expect(tabs).toHaveLength(7);
+    expect(tabs).toHaveLength(8);
     for (const tab of tabs) {
       const controlledId = tab.getAttribute("aria-controls");
       expect(controlledId).toBeTruthy();
@@ -199,19 +196,10 @@ describe("Settings shell ARIA + keyboard", () => {
     mockSettings = hydratedSettings;
     const { container } = render(<Settings />);
     const panels = container.querySelectorAll<HTMLElement>('[role="tabpanel"]');
-    expect(panels).toHaveLength(7);
+    expect(panels).toHaveLength(8);
     const visible = Array.from(panels).filter((p) => !p.hasAttribute("hidden"));
     expect(visible).toHaveLength(1);
     expect(visible[0].id).toBe("settings-tabpanel-schedule");
-  });
-
-  it("keeps search and tabs in the same header so short panels do not jump the chrome", () => {
-    mockSettings = hydratedSettings;
-    const { container } = render(<Settings />);
-    const header = container.querySelector(".settings-header");
-    expect(header).not.toBeNull();
-    expect(header?.querySelector(".settings-search")).not.toBeNull();
-    expect(header?.querySelector(".tabs")).not.toBeNull();
   });
 
   it("shows a Loading… message instead of any tabpanel while settings are unresolved", () => {

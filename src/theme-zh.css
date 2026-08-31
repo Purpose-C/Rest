@@ -331,3 +331,77 @@ html:has(.settings),
 #root .settings .screen-time-progress.over-budget .screen-time-bar > span {
   background: var(--warning-color);
 }
+
+/* spec-round6 stage 4, restyled after on-device feedback: per-item hint
+ * pool editor (Hints tab). Pool names are section headings (h3, styled by
+ * settings.css); rows reuse the design-system input treatment — same
+ * --input-bg/--input-border, 6px radius and accent focus ring as every
+ * other field — with a quiet icon-only delete button that picks up the
+ * warning colour on hover. */
+.hint-list {
+  margin-block: 0.75rem;
+}
+
+.hint-list-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.hint-list-items {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hint-list-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: stretch;
+}
+
+#root .settings .hint-list-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: inherit;
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+#root .settings .hint-list-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+#root .settings .hint-list-delete {
+  flex: none;
+  align-self: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  line-height: 1;
+  font-size: 0.8rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--muted-fg);
+  cursor: pointer;
+}
+
+#root .settings .hint-list-delete:hover {
+  background: color-mix(in srgb, var(--warning-color) 14%, transparent);
+  color: var(--warning-color);
+}
+
+.hint-list-add {
+  display: flex;
+  gap: 0.4rem;
+  align-items: stretch;
+  margin-top: 0.45rem;
+}

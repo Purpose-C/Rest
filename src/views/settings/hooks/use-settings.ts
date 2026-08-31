@@ -122,11 +122,10 @@ export const schedulerSettingsSchema = z.object({
   morning_chore_prompt_enabled: z.boolean(),
   micro_physical_hints: z.array(z.string()),
   micro_psychological_hints: z.array(z.string()),
-  micro_hint_mix: z.enum(["both", "physical", "psychological"]),
   long_hints: z.array(z.string()),
   long_social_hints: z.array(z.string()),
-  long_hint_mix: z.enum(["both", "solo", "social"]),
   sleep_hints: z.array(z.string()),
+  daily_reminders: z.array(z.string()),
   micro_routine: z.string(),
   long_routine: z.string(),
   micro_routine_categories: z.array(routineCategorySchema),
@@ -162,7 +161,6 @@ export const schedulerSettingsSchema = z.object({
   long_break_mode: z.enum(["overlay", "windowed", "notification"]),
   routine_fill: z.boolean(),
   allow_plugin_sounds: z.boolean(),
-  custom_css: z.string(),
 }) satisfies z.ZodType<SchedulerSettings>;
 
 const PERSIST_DEBOUNCE_MS = 250;
