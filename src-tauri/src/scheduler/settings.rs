@@ -602,7 +602,6 @@ pub struct Settings {
     /// chore list, Entracte opens Preferences to the chores input so the user
     /// can plan the day's chores. On by default; the Breaks tab can disable
     /// it. See `scheduler::chores::should_prompt_morning_chores`.
-    pub morning_chore_prompt_enabled: bool,
     // alias keeps pre-split settings.json (single `micro_hints`) loading cleanly into the physical pool.
     #[serde(alias = "micro_hints")]
     pub micro_physical_hints: Vec<String>,
@@ -762,7 +761,6 @@ impl Default for Settings {
             app_pause_enabled: false,
             app_pause_list: Vec::new(),
             break_health_enabled: true,
-            morning_chore_prompt_enabled: true,
             micro_physical_hints: default_micro_physical_hints(),
             micro_psychological_hints: default_micro_psychological_hints(),
             long_hints: default_long_hints(),

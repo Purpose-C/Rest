@@ -4,7 +4,6 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { SchedulerSettings } from "./types";
@@ -150,18 +149,6 @@ describe("Settings shell ARIA + keyboard", () => {
     expect(tablist.getAttribute("aria-orientation")).toBe("horizontal");
   });
 
-  it("the morning chore prompt switches to the Breaks tab", async () => {
-    mockSettings = hydratedSettings;
-    render(<Settings />);
-    const breaksTab = screen
-      .getAllByRole("tab")
-      .find((t) => t.id === "settings-tab-breaks");
-    if (!breaksTab) throw new Error("breaks tab not found");
-    expect(breaksTab.getAttribute("aria-selected")).toBe("false");
-    await waitFor(() => expect(eventHandlers.has("chores:prompt")).toBe(true));
-    act(() => eventHandlers.get("chores:prompt")!({ payload: undefined }));
-    expect(breaksTab.getAttribute("aria-selected")).toBe("true");
-  });
 
   it("marks the initial Schedule tab selected and gives the rest tabindex=-1", () => {
     mockSettings = null;

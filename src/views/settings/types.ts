@@ -175,7 +175,6 @@ export type SchedulerSettings = {
   app_pause_enabled: boolean;
   app_pause_list: string[];
   break_health_enabled: boolean;
-  morning_chore_prompt_enabled: boolean;
   micro_physical_hints: string[];
   micro_psychological_hints: string[];
   long_hints: string[];

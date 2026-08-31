@@ -34,17 +34,6 @@ const tabPanelId = (id: Tab) => `settings-tabpanel-${id}`;
  * available, then renders the active tab. */
 export default function Settings() {
   const [tab, setTab] = useState<Tab>("schedule");
-  // Bumped when the backend's morning chore prompt fires; switches to the
-  // Breaks tab and pulls focus to the chores input (see BreaksTab).
-  const [chorePromptNonce, setChorePromptNonce] = useState(0);
-  useTauriListen(
-    "chores:prompt",
-    () => {
-      setTab("breaks");
-      setChorePromptNonce((n) => n + 1);
-    },
-    [],
-  );
   const { settings, update, reloadFromActive, setAutostart } = useSettings();
   const pauseInfo = usePause();
   const stats = useStats();
@@ -68,17 +57,9 @@ export default function Settings() {
     setTab(entry.tabId);
     setNavNonce((n) => n + 1);
   }, []);
-  // Tray "今日提醒" rows: same navigation path as search — switch to the
-  // Breaks tab, scroll to the chores section, flash it. The entry object is
+  // Tray reminder rows: same navigation path as search — switch to the
+  // Hints tab, scroll to the reminder list, flash it. The entry object is
   // the single source of the section's coordinates (see search-index).
-  useTauriListen(
-    "chores:open",
-    () => {
-      const entry = SETTINGS_INDEX.find((e) => e.id === "chores");
-      if (entry) onSearchNavigate(entry);
-    },
-    [onSearchNavigate],
-  );
   useTauriListen(
     "daily-reminders:open",
     () => {
@@ -166,7 +147,6 @@ export default function Settings() {
                 update={update}
                 supporter={supporter.status}
                 reload={reloadFromActive}
-                focusChoresNonce={chorePromptNonce}
               />
             </div>
             <div

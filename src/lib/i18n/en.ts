@@ -125,7 +125,7 @@ export const en: Record<string, string> = {
   "breaks.longEnforceable": "Long: cannot be dismissed",
   "breaks.longEnforceableTip":
     "Skip and close controls are hidden during the long break.",
-  "breaks.breakIdeas": "Break ideas",
+  "breaks.breakIdeas": "Guided routines",
   "breaks.breakIdeasDesc":
     "Guided routines that steer each break, plus today's to-dos.",
   "hints.physicalPool": "Body reminders",
@@ -137,16 +137,6 @@ export const en: Record<string, string> = {
   "breaks.playPluginSoundCues": "Play plugin sound cues",
   "breaks.playPluginSoundCuesTip":
     "When on (default), routines from plugins may play their own short sound cues — a breathing in/out tone, or a chime between exercises. Cues always follow your overall sound volume; turn this off to silence them.",
-  "breaks.todaysChores": "Today's chores",
-  "breaks.choresDesc":
-    "Jot down chores you'd like done today — one per line. During a long break, Entracte nudges you to knock one out (these take precedence over the rotating wellness tips). The list clears each morning.",
-  "breaks.oneChorePerLine": "One chore per line",
-  "breaks.choresPlaceholder":
-    "Water the plants\nEmpty the dishwasher\nReply to Sam",
-  "breaks.promptChoresMorning":
-    "Prompt me to plan chores each morning",
-  "breaks.promptChoresMorningTip":
-    "When on (default), the first time your work window opens each day with an empty list, Entracte opens this Preferences window here so you can jot down the day's chores. Turn it off to never be prompted — you can still fill the list in yourself any time.",
   "hints.soloPool": "Solo reminders",
   "hints.socialPool": "Social reminders",
   "breaks.contentPacks": "Content packs",
@@ -251,7 +241,6 @@ export const en: Record<string, string> = {
   "search.sound": "Sound",
   "search.skipPostpone": "Skip & postpone",
   "search.breakIdeas": "Routines & to-dos",
-  "search.chores": "Today's chores",
   "search.contentPacks": "Content packs",
   "search.hints": "Reminders",
   "search.autoPause": "Auto-pause",

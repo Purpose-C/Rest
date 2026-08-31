@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { t } from "../../../lib/i18n";
 import { CollapsibleSection } from "../components/collapsible-section";
@@ -8,7 +7,6 @@ import {
   normalizeHexInput,
   rgbCsvToHex,
 } from "../../../lib/color";
-import { useLocalDraft } from "../../../lib/use-local-draft";
 import { BREAK_MODE_OPTIONS, type BreakMode } from "../../../lib/break-mode";
 import { Advanced } from "../components/advanced";
 import { CheckboxRow, NumberRow } from "../components/rows";
@@ -24,25 +22,16 @@ import {
 } from "../constants";
 import type { UseSettings } from "../hooks/use-settings";
 import { useRoutines } from "../hooks/use-routines";
-import { useChores } from "../hooks/use-chores";
 import type {
   MonitorPlacement,
   SchedulerSettings,
   SupporterStatus,
 } from "../types";
-import { linesToList, listToLines } from "../utils";
-
-// Persist the chore draft this long after the last keystroke (#225). Short
-// enough that a list jotted at the morning prompt is cached well before the
-// laptop sleeps or shuts down, long enough not to fire a `set_chores` on every
-// keystroke.
-const CHORES_AUTOSAVE_DELAY_MS = 800;
 
 export function BreaksTab({
   settings,
   update,
   reload,
-  focusChoresNonce = 0,
 }: {
   settings: SchedulerSettings;
   update: UseSettings["update"];
@@ -51,48 +40,12 @@ export function BreaksTab({
    * upstream call sites and tests keep type-checking. */
   supporter: SupporterStatus;
   reload: () => Promise<unknown>;
-  /// Bumped by the shell when the morning chore prompt fires, to pull focus
-  /// to the chores input. `0` is the initial value and never focuses.
-  focusChoresNonce?: number;
 }) {
   // Personal fork: unlock the supporter-only appearance features (hint
   // pools, rotate/custom overlay themes, custom CSS) for local use.
   // Apache-2.0 permits this; upstream gates them to fund development.
   const isSupporter: boolean = true;
   const { routines, reload: reloadRoutines } = useRoutines();
-  const { chores, save: saveChores } = useChores();
-  const [choreLines, setChoreLines] = useLocalDraft(
-    () => listToLines(chores?.items ?? []),
-    [chores?.items],
-  );
-  const choresRef = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    if (focusChoresNonce > 0) {
-      choresRef.current?.scrollIntoView?.({ block: "center" });
-      choresRef.current?.focus();
-    }
-  }, [focusChoresNonce]);
-  // Cache chores as they're typed, not only on blur (#225). The morning prompt
-  // focuses this textarea; a user who jots chores then closes the window or
-  // sleeps the laptop without clicking away would otherwise lose them — and
-  // since the morning prompt already persisted today's `prompted_date`, they'd
-  // get no re-prompt the next day either. Persist a short beat after typing
-  // stops, gated on a real change so the initial load and a re-seed from the
-  // saved (sanitized) list never trigger a redundant save.
-  useEffect(() => {
-    if (!chores) return;
-    const current = linesToList(choreLines);
-    const saved = chores.items;
-    const unchanged =
-      current.length === saved.length &&
-      current.every((item, i) => item === saved[i]);
-    if (unchanged) return;
-    const timer = setTimeout(() => {
-      void saveChores(current);
-    }, CHORES_AUTOSAVE_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [choreLines, chores, saveChores]);
-  // Local drafts re-seed when the active profile swaps the setting out.
 
   const transparencyPct = Math.round((1 - settings.overlay_opacity) * 100);
   const fontScalePct = Math.round(settings.overlay_font_scale * 100);
@@ -526,26 +479,6 @@ export function BreaksTab({
           value={settings.allow_plugin_sounds}
           onChange={(v) => update("allow_plugin_sounds", v)}
           tip={t("breaks.playPluginSoundCuesTip")}
-        />
-        <h3 id="settings-chores">{t("breaks.todaysChores")}</h3>
-        <p className="placeholder">{t("breaks.choresDesc")}</p>
-        <label className="row stacked">
-          <span>{t("breaks.oneChorePerLine")}</span>
-          <textarea
-            ref={choresRef}
-            className="textarea"
-            rows={6}
-            value={choreLines}
-            placeholder={t("breaks.choresPlaceholder")}
-            onChange={(e) => setChoreLines(e.target.value)}
-            onBlur={() => saveChores(linesToList(choreLines))}
-          />
-        </label>
-        <CheckboxRow
-          label={t("breaks.promptChoresMorning")}
-          value={settings.morning_chore_prompt_enabled}
-          onChange={(v) => update("morning_chore_prompt_enabled", v)}
-          tip={t("breaks.promptChoresMorningTip")}
         />
         <h3 id="settings-content-packs">{t("breaks.contentPacks")}</h3>
         <ContentPacks

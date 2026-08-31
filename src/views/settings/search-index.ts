@@ -146,18 +146,6 @@ export const SETTINGS_INDEX: SettingsSearchEntry[] = [
     ),
   },
   {
-    id: "chores",
-    get label() {
-      return t("search.chores");
-    },
-    tabId: "breaks",
-    anchorId: "settings-chores",
-    keywords: kw(
-      "search.chores",
-      "tasks post-it morning prompt to do list 杂事 待办 提醒 晨间 列表",
-    ),
-  },
-  {
     id: "content-packs",
     get label() {
       return t("search.contentPacks");
@@ -179,7 +167,7 @@ export const SETTINGS_INDEX: SettingsSearchEntry[] = [
     anchorId: "settings-daily-reminders",
     keywords: kw(
       "hints.dailyTitle",
-      "daily reminders todo tray menu 每日 提醒 待办 托盘 菜单",
+      "daily reminders todo tasks post-it list tray menu 每日 提醒 待办 杂事 列表 托盘 菜单",
     ),
   },
   {

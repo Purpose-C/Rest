@@ -120,7 +120,7 @@ export const zhCN: Record<string, string> = {
     "短休息期间隐藏跳过与关闭控件。请谨慎使用。",
   "breaks.longEnforceable": "长休息：不可跳过",
   "breaks.longEnforceableTip": "长休息期间隐藏跳过与关闭控件。",
-  "breaks.breakIdeas": "引导流程与待办",
+  "breaks.breakIdeas": "引导流程",
   "breaks.breakIdeasDesc": "引导每次休息如何进行的流程与今日待办。",
 
   "hints.physicalPool": "身体提醒",
@@ -131,14 +131,6 @@ export const zhCN: Record<string, string> = {
   "breaks.playPluginSoundCues": "播放插件提示音效",
   "breaks.playPluginSoundCuesTip":
     "开启（默认）时，来自插件的引导流程可以播放简短提示音 —— 例如吸气/呼气提示音或动作切换提示音。提示音始终遵循全局音量设置；关闭此项可静音。",
-  "breaks.todaysChores": "今日待办",
-  "breaks.choresDesc":
-    "记下您今天想完成的待办 —— 每行一条。在短休息和长休息期间，Entracte 会提醒您完成其中一项（这些待办优先于轮换的休息提醒）。列表在每天早晨清空。",
-  "breaks.oneChorePerLine": "每行一条待办",
-  "breaks.choresPlaceholder": "浇花\n清理洗碗机\n回复邮件",
-  "breaks.promptChoresMorning": "每天早晨提示您规划今日待办",
-  "breaks.promptChoresMorningTip":
-    "开启（默认）时，每天活动时段首次开始且待办列表为空时，Entracte 会自动打开设置窗口以便您规划今日待办。关闭后将不再提示 —— 您仍可随时手动填写列表。",
   "hints.soloPool": "独处提醒",
   "hints.socialPool": "社交提醒",
   "breaks.contentPacks": "内容包",
@@ -237,7 +229,6 @@ export const zhCN: Record<string, string> = {
   "search.sound": "音效",
   "search.skipPostpone": "跳过与推迟",
   "search.breakIdeas": "引导流程",
-  "search.chores": "今日待办",
   "search.contentPacks": "内容包",
   "search.hints": "提醒",
   "search.autoPause": "自动暂停",

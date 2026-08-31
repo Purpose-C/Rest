@@ -60,7 +60,6 @@
   "app_pause_enabled": false,
   "app_pause_list": [],
   "break_health_enabled": true,
-  "morning_chore_prompt_enabled": true,
   "micro_physical_hints": [
     "望向 6 米（20 英尺）以外的物体。",
     "缓慢眨眼 10 次。",

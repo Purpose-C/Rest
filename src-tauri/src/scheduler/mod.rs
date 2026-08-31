@@ -271,11 +271,18 @@ impl Scheduler {
     /// manual-trigger paths so the rollover/rotation logic lives in exactly
     /// one place.
     pub(crate) async fn resolve_chore_prompt(&self, kind: BreakKind) -> Option<String> {
-        let today = local_today_string();
+        // The list itself lives in `settings.daily_reminders`; `chores.json`
+        // is kept only as the rotation cursor, so consecutive breaks don't
+        // surface the same reminder. Editing the list resets the cursor —
+        // otherwise a shortened list would start mid-way through.
+        let items = self.settings.lock().await.daily_reminders.clone();
         let mut c = self.chores.lock().await;
-        let rolled = chores::rollover_if_new_day(&mut c, &today);
+        if c.items != items {
+            c.items = items;
+            c.rotation = 0;
+        }
         let picked = chores::prompt_for_break(kind, &mut c);
-        if rolled || picked.is_some() {
+        if picked.is_some() {
             chores::persist_chores(&self.chores_path, &c);
         }
         picked

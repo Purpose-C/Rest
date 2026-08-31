@@ -22,7 +22,6 @@ const baseSettings = {
   overlay_custom_rgb: "20, 24, 32",
   overlay_high_contrast: false,
   break_health_enabled: false,
-  morning_chore_prompt_enabled: true,
   show_hint: true,
   hint_rotate_seconds: 0,
   show_current_time: true,
@@ -156,88 +155,9 @@ describe("BreaksTab break ideas", () => {
     expect(screen.queryByRole("option", { name: "Social only" })).toBeNull();
   });
 
-  it("no longer hosts the hint pools (moved to Hints tab)", () => {
-    // spec-round6 stage 4: the five hint pools moved out of BreaksTab into
-    // a dedicated Hints tab. The mix selectors, routines, chores and
-    // content packs stay here. Behaviour they covered is re-asserted in
-    // hints-tab.fork-pools.test.tsx.
-    renderTab(true);
-    expect(
-      screen.queryByText("Solo pool"),
-    ).toBeNull();
-    expect(
-      screen.queryByText("Social pool"),
-    ).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Bedtime" })).toBeNull();
-  });
 
-  it("offers the Today's chores editor to free users and saves on blur", async () => {
-    renderTab(false);
-    expect(
-      screen.getByRole("heading", { name: "Today's chores" }),
-    ).toBeTruthy();
-    const textarea = screen.getByPlaceholderText(/Water the plants/);
-    fireEvent.change(textarea, { target: { value: "Mow the lawn" } });
-    fireEvent.blur(textarea);
-    await waitFor(() =>
-      expect(invokeMock).toHaveBeenCalledWith("set_chores", {
-        items: ["Mow the lawn"],
-      }),
-    );
-  });
 
-  it("autosaves typed chores after a pause, without a blur (#225)", async () => {
-    // Reproduces the lost-chores path: chores jotted at the morning prompt
-    // must persist even if the window closes / the laptop sleeps before the
-    // textarea loses focus. No blur is fired here.
-    const emptyToday = {
-      date: "2026-06-19",
-      items: [] as string[],
-      rotation: 0,
-      prompted_date: "",
-      ever_used_chores: false,
-    };
-    invokeMock.mockImplementation(async (cmd: string) => {
-      if (cmd === "get_chores") return emptyToday;
-      if (cmd === "set_chores")
-        return { ...emptyToday, items: ["Mow the lawn"] };
-      return undefined;
-    });
-    renderTab(false);
-    const textarea = await screen.findByPlaceholderText(/Water the plants/);
-    // Let the get_chores load settle so the autosave has a baseline to diff.
-    await waitFor(() => expect(invokeMock).toHaveBeenCalledWith("get_chores"));
-    fireEvent.change(textarea, { target: { value: "Mow the lawn" } });
-    await waitFor(() =>
-      expect(invokeMock).toHaveBeenCalledWith("set_chores", {
-        items: ["Mow the lawn"],
-      }),
-    );
-  });
 
-  it("does not autosave the chore list it just loaded (#225)", async () => {
-    // A pure load (no edit) must not trigger a write — the re-seed of the
-    // draft from the saved list is not a user change.
-    const today = {
-      date: "2026-06-19",
-      items: ["Water the plants"],
-      rotation: 0,
-      prompted_date: "",
-      ever_used_chores: false,
-    };
-    invokeMock.mockImplementation(async (cmd: string) => {
-      if (cmd === "get_chores") return today;
-      return undefined;
-    });
-    renderTab(false);
-    await screen.findByDisplayValue("Water the plants");
-    // Wait past the 800ms autosave debounce to prove nothing is written.
-    await new Promise((r) => setTimeout(r, 1000));
-    expect(invokeMock).not.toHaveBeenCalledWith(
-      "set_chores",
-      expect.anything(),
-    );
-  });
 });
 
 /** The checkbox owned by the CheckboxRow whose label text matches. */
@@ -499,48 +419,5 @@ describe("BreaksTab enforcement", () => {
     expect(update).toHaveBeenCalledWith("micro_enforceable", true);
     fireEvent.click(checkboxForLabel("Long: cannot be dismissed"));
     expect(update).toHaveBeenCalledWith("long_enforceable", true);
-  });
-});
-
-describe("BreaksTab morning chore prompt", () => {
-  it("toggling the morning-prompt checkbox persists the setting", () => {
-    const update = vi.fn();
-    renderTab(false, update);
-    const toggle = screen.getByRole("checkbox", {
-      name: /Prompt me to plan chores each morning/,
-    }) as HTMLInputElement;
-    expect(toggle.checked).toBe(true); // baseSettings has it on
-    fireEvent.click(toggle);
-    expect(update).toHaveBeenCalledWith("morning_chore_prompt_enabled", false);
-  });
-
-  it("pulls focus to the chores input when the prompt nonce bumps", () => {
-    const supporter: SupporterStatus = {
-      is_supporter: false,
-      masked_key: null,
-      last_validated_at: null,
-    };
-    const { rerender } = render(
-      <BreaksTab
-        settings={baseSettings}
-        update={(() => {}) as never}
-        supporter={supporter}
-        reload={async () => {}}
-        focusChoresNonce={0}
-      />,
-    );
-    const textarea = screen.getByLabelText("One chore per line");
-    expect(document.activeElement).not.toBe(textarea);
-    // The shell bumps the nonce when the backend's morning prompt fires.
-    rerender(
-      <BreaksTab
-        settings={baseSettings}
-        update={(() => {}) as never}
-        supporter={supporter}
-        reload={async () => {}}
-        focusChoresNonce={1}
-      />,
-    );
-    expect(document.activeElement).toBe(textarea);
   });
 });

@@ -85,33 +85,6 @@ pub fn rollover_if_new_day(state: &mut ChoresState, today: &str) -> bool {
     }
 }
 
-/// Earliest local minute-of-day the morning chore prompt may fire. Guards the
-/// all-day work-window case (`work_start = 00:00`) so the prompt lands in the
-/// morning rather than at the post-midnight rollover tick.
-const MORNING_PROMPT_FLOOR_MIN: u32 = 5 * 60;
-
-/// Whether to surface the morning chore prompt this tick. Fires once per
-/// local day — the first time the user is inside their work window (past an
-/// early-morning floor), while today's list is still empty and we haven't
-/// already prompted today. Only nudges users who have *ever* used chores:
-/// the list resets empty every morning, so without this a user who never
-/// touches chores would have Preferences popped open every single work-day
-/// on a permanently-empty list. Pure so the gating is unit-testable without
-/// a scheduler or clock.
-pub fn should_prompt_morning_chores(
-    enabled: bool,
-    in_work_window: bool,
-    now_min: u32,
-    state: &ChoresState,
-    today: &str,
-) -> bool {
-    enabled
-        && state.ever_used_chores
-        && in_work_window
-        && now_min >= MORNING_PROMPT_FLOOR_MIN
-        && state.items.is_empty()
-        && state.prompted_date != today
-}
 
 /// Persist `state` to disk, logging (never panicking) on failure — a chore
 /// list is best-effort, and a write error must not take down the scheduler.
@@ -158,16 +131,6 @@ mod tests {
             // A state built with items is a chore-user; keep the flag in sync
             // so the rotation / "already has chores" tests act like real use.
             ever_used_chores: !items.is_empty(),
-        }
-    }
-
-    /// A returning chore-user whose daily list has reset to empty this
-    /// morning: empty today, but `ever_used_chores` is set, so the morning
-    /// prompt should still nudge them. This is the case the gate allows.
-    fn returning_user_empty() -> ChoresState {
-        ChoresState {
-            ever_used_chores: true,
-            ..state_with(&[], 0)
         }
     }
 
@@ -240,112 +203,6 @@ mod tests {
         // the app running across midnight would stop getting the morning
         // nudge every day.
         assert!(st.ever_used_chores);
-    }
-
-    #[test]
-    fn morning_prompt_fires_for_returning_user_with_empty_list() {
-        let st = returning_user_empty();
-        assert!(should_prompt_morning_chores(
-            true,
-            true,
-            9 * 60,
-            &st,
-            "2026-06-11"
-        ));
-    }
-
-    #[test]
-    fn morning_prompt_skips_when_user_never_used_chores() {
-        // Empty list + never used chores: every other condition is met, but a
-        // user who doesn't use chores must not have Preferences popped open
-        // every morning on a permanently-empty list.
-        let st = state_with(&[], 0);
-        assert!(!st.ever_used_chores);
-        assert!(!should_prompt_morning_chores(
-            true,
-            true,
-            9 * 60,
-            &st,
-            "2026-06-11"
-        ));
-    }
-
-    #[test]
-    fn morning_prompt_skips_when_disabled() {
-        let st = returning_user_empty();
-        assert!(!should_prompt_morning_chores(
-            false,
-            true,
-            9 * 60,
-            &st,
-            "2026-06-11"
-        ));
-    }
-
-    #[test]
-    fn morning_prompt_skips_outside_work_window() {
-        let st = returning_user_empty();
-        assert!(!should_prompt_morning_chores(
-            true,
-            false,
-            9 * 60,
-            &st,
-            "2026-06-11"
-        ));
-    }
-
-    #[test]
-    fn morning_prompt_skips_before_the_morning_floor() {
-        // All-day work window: in_window is true even at 02:00, but the floor
-        // keeps the prompt from firing at the post-midnight rollover.
-        let st = returning_user_empty();
-        assert!(!should_prompt_morning_chores(
-            true,
-            true,
-            2 * 60,
-            &st,
-            "2026-06-11"
-        ));
-        assert!(should_prompt_morning_chores(
-            true,
-            true,
-            MORNING_PROMPT_FLOOR_MIN,
-            &st,
-            "2026-06-11"
-        ));
-    }
-
-    #[test]
-    fn morning_prompt_skips_when_list_already_has_chores() {
-        let st = state_with(&["Water the plants"], 0);
-        assert!(!should_prompt_morning_chores(
-            true,
-            true,
-            9 * 60,
-            &st,
-            "2026-06-11"
-        ));
-    }
-
-    #[test]
-    fn morning_prompt_skips_when_already_prompted_today() {
-        let mut st = returning_user_empty();
-        st.prompted_date = "2026-06-11".to_string();
-        assert!(!should_prompt_morning_chores(
-            true,
-            true,
-            9 * 60,
-            &st,
-            "2026-06-11"
-        ));
-        // …but a new day re-enables it.
-        assert!(should_prompt_morning_chores(
-            true,
-            true,
-            9 * 60,
-            &st,
-            "2026-06-12"
-        ));
     }
 
     #[test]

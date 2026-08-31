@@ -116,7 +116,9 @@ mod tests {
         // Empty list: no nudge even on a long break.
         assert_eq!(sched.resolve_chore_prompt(BreakKind::Long).await, None);
 
-        set_chores_impl(&sched, vec!["a".to_string(), "b".to_string()]).await;
+        // The list now lives in settings; `chores.json` only carries the
+        // rotation cursor, so seed the reminders the way the UI does.
+        sched.settings.lock().await.daily_reminders = vec!["a".to_string(), "b".to_string()];
         assert_eq!(
             sched.resolve_chore_prompt(BreakKind::Long).await.as_deref(),
             Some("a")

@@ -63,7 +63,6 @@
     "zoom"
   ],
   "break_health_enabled": true,
-  "morning_chore_prompt_enabled": true,
   "micro_physical_hints": [
     "Look 20 feet away."
   ],

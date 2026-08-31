@@ -132,32 +132,9 @@ fn build_profile_submenu(
     Submenu::with_items(app, "当前情景", true, &item_refs)
 }
 
-/// Chore rows shown in the tray menu before the rest collapse into a
-/// "还有 N 条…" row.
-const TRAY_CHORES_SHOWN: usize = 3;
-/// A chore longer than this many characters is truncated with an ellipsis;
-/// the full text lives in the settings window.
-const TRAY_CHORES_MAX_CHARS: usize = 20;
 // Daily reminders are prose rather than terse to-dos, so their menu rows
 // get a little more room before truncating.
 const TRAY_REMINDER_MAX_CHARS: usize = 42;
-
-/// The tray menu's chore group: up to [`TRAY_CHORES_SHOWN`] chore labels
-/// (sanitised + truncated) and, when more exist, a final "还有 N 条…" row.
-/// Empty when there are no chores today — the caller then omits the whole
-/// group and its trailing separator. Pure so the shape is unit-testable.
-fn chore_menu_rows(items: &[String]) -> Vec<String> {
-    let mut rows: Vec<String> = items
-        .iter()
-        .take(TRAY_CHORES_SHOWN)
-        .map(|c| truncate_label(c, TRAY_CHORES_MAX_CHARS))
-        .collect();
-    let hidden = items.len().saturating_sub(TRAY_CHORES_SHOWN);
-    if hidden > 0 {
-        rows.push(format!("还有 {hidden} 条…"));
-    }
-    rows
-}
 
 /// Flatten a chore to one menu-safe line and truncate past `max` characters
 /// with an ellipsis. Pure.
@@ -169,38 +146,6 @@ fn truncate_label(s: &str, max_chars: usize) -> String {
         let cut: String = flat.chars().take(max_chars).collect();
         format!("{cut}…")
     }
-}
-
-/// Build the tray's chore menu items for `items`, disabled group header
-/// first. Every row shares one click behaviour (open Settings at the chore
-/// section), so the ids only need to share the `chore` prefix. Empty input
-/// builds nothing — the caller omits the group entirely.
-fn build_chore_menu_items(
-    app: &AppHandle,
-    items: &[String],
-) -> tauri::Result<Vec<MenuItem<tauri::Wry>>> {
-    let rows = chore_menu_rows(items);
-    if rows.is_empty() {
-        return Ok(Vec::new());
-    }
-    let mut out = Vec::with_capacity(rows.len() + 1);
-    out.push(MenuItem::with_id(
-        app,
-        "chores_header",
-        "今日待办",
-        false,
-        None::<&str>,
-    )?);
-    for (i, row) in rows.iter().enumerate() {
-        out.push(MenuItem::with_id(
-            app,
-            format!("chore_{i}"),
-            row,
-            true,
-            None::<&str>,
-        )?);
-    }
-    Ok(out)
 }
 
 /// The menu items that never change across rebuilds. Cloned per rebuild —
@@ -218,7 +163,6 @@ struct FixedTrayItems {
     sep3: PredefinedMenuItem<tauri::Wry>,
     sep4: PredefinedMenuItem<tauri::Wry>,
     sep5: PredefinedMenuItem<tauri::Wry>,
-    sep_chores_end: PredefinedMenuItem<tauri::Wry>,
     quit: MenuItem<tauri::Wry>,
 }
 
@@ -273,9 +217,7 @@ fn assemble_menu(
     fixed: &FixedTrayItems,
     profile_submenu: &Submenu<tauri::Wry>,
     daily_reminders: &[String],
-    chores: &[String],
 ) -> tauri::Result<Menu<tauri::Wry>> {
-    let chore_items = build_chore_menu_items(app, chores)?;
     let reminder_submenu = build_daily_reminder_submenu(app, daily_reminders)?;
     let reminder_sep;
     let mut items: Vec<&dyn tauri::menu::IsMenuItem<tauri::Wry>> = vec![
@@ -299,12 +241,6 @@ fn assemble_menu(
     items.push(&fixed.sep4);
     items.push(&fixed.resume_break);
     items.push(&fixed.sep5);
-    for chore in &chore_items {
-        items.push(chore);
-    }
-    if !chore_items.is_empty() {
-        items.push(&fixed.sep_chores_end);
-    }
     items.push(&fixed.quit);
     Menu::with_items(app, &items)
 }
@@ -329,11 +265,10 @@ async fn rebuild_tray_menu(
         .collect();
     let active = scheduler.active_profile_name.lock().await.clone();
     let daily_reminders = scheduler.settings.lock().await.daily_reminders.clone();
-    let chores = scheduler.chores.lock().await.items.clone();
     let Ok(new_submenu) = build_profile_submenu(app, &profiles, &active) else {
         return;
     };
-    let Ok(new_menu) = assemble_menu(app, fixed, &new_submenu, &daily_reminders, &chores) else {
+    let Ok(new_menu) = assemble_menu(app, fixed, &new_submenu, &daily_reminders) else {
         return;
     };
     let _ = tray.set_menu(Some(new_menu.clone()));
@@ -394,10 +329,8 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     let sep3 = PredefinedMenuItem::separator(app)?;
     let sep4 = PredefinedMenuItem::separator(app)?;
     let sep5 = PredefinedMenuItem::separator(app)?;
-    let sep_chores_end = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, "quit", "退出 Entracte", true, None::<&str>)?;
 
-    let initial_chores = read_chores_blocking(app);
     let fixed = FixedTrayItems {
         countdown: countdown.clone(),
         prefs: prefs.clone(),
@@ -409,10 +342,9 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         sep3: sep3.clone(),
         sep4: sep4.clone(),
         sep5: sep5.clone(),
-        sep_chores_end: sep_chores_end.clone(),
         quit: quit.clone(),
     };
-    let menu = assemble_menu(app, &fixed, &profile_submenu, &initial_reminders, &initial_chores)?;
+    let menu = assemble_menu(app, &fixed, &profile_submenu, &initial_reminders)?;
 
     let pause_submenu_for_event = pause_submenu.clone();
     let resume_for_event = resume.clone();
@@ -1192,12 +1124,6 @@ fn read_profiles_blocking(app: &AppHandle) -> (Vec<String>, String) {
     })
 }
 
-/// Today's chore list, read synchronously for the initial menu build.
-fn read_chores_blocking(app: &AppHandle) -> Vec<String> {
-    let scheduler = app.state::<Scheduler>().inner().clone();
-    tauri::async_runtime::block_on(async move { scheduler.chores.lock().await.items.clone() })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1208,54 +1134,6 @@ mod tests {
         let secs = seconds_until_tomorrow_morning();
         assert!(secs >= 60);
         assert!(secs <= 36 * 60 * 60);
-    }
-
-    #[test]
-    fn chore_rows_empty_list_builds_nothing() {
-        assert!(chore_menu_rows(&[]).is_empty());
-    }
-
-    #[test]
-    fn chore_rows_short_list_has_no_more_row() {
-        let rows = chore_menu_rows(&["a".to_string(), "b".to_string()]);
-        assert_eq!(rows, vec!["a", "b"]);
-    }
-
-    #[test]
-    fn chore_rows_collapse_overflow_into_more_row() {
-        let items: Vec<String> = ["一", "二", "三", "四", "五"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect();
-        let rows = chore_menu_rows(&items);
-        assert_eq!(rows.len(), 4);
-        assert_eq!(rows[3], "还有 2 条…");
-    }
-
-    #[test]
-    fn chore_rows_truncate_long_text_with_ellipsis() {
-        let long = "这是一条特别长的提醒内容远超二十个字的限制".to_string();
-        assert!(long.chars().count() > TRAY_CHORES_MAX_CHARS);
-        let rows = chore_menu_rows(std::slice::from_ref(&long));
-        let shown = &rows[0];
-        assert!(shown.ends_with('…'));
-        assert_eq!(shown.chars().count(), TRAY_CHORES_MAX_CHARS + 1);
-        assert!(
-            long.starts_with(shown.trim_end_matches('…')),
-            "kept prefix must be the label's head"
-        );
-    }
-
-    #[test]
-    fn chore_rows_flatten_newlines_to_one_menu_line() {
-        let rows = chore_menu_rows(&["浇花\n然后\n拖地".to_string()]);
-        assert_eq!(rows[0], "浇花 然后 拖地");
-    }
-
-    #[test]
-    fn truncate_label_keeps_exactly_at_limit() {
-        let exact: String = "字".repeat(TRAY_CHORES_MAX_CHARS);
-        assert_eq!(truncate_label(&exact, TRAY_CHORES_MAX_CHARS), exact);
     }
 
     #[test]
