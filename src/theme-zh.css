@@ -332,12 +332,10 @@ html:has(.settings),
   background: var(--warning-color);
 }
 
-/* spec-round6 stage 4, restyled after on-device feedback: per-item hint
- * pool editor (Hints tab). Pool names are section headings (h3, styled by
- * settings.css); rows reuse the design-system input treatment — same
- * --input-bg/--input-border, 6px radius and accent focus ring as every
- * other field — with a quiet icon-only delete button that picks up the
- * warning colour on hover. */
+/* Per-item reminder list editor (Reminders tab). Rows reuse the
+ * design-system input treatment — the same --input-bg/--input-border,
+ * 6px radius and accent focus ring as every other field — with a quiet
+ * icon-only delete button that picks up the warning colour on hover. */
 .hint-list {
   margin-block: 0.75rem;
 }

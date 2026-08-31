@@ -69,7 +69,7 @@ export function HintListEditor({
               className="hint-list-input"
               value={hint}
               placeholder={placeholder}
-              aria-label={t("breaks.hintRowLabel", { pool: name, i: i + 1 })}
+              aria-label={t("hints.hintRowLabel", { pool: name, i: i + 1 })}
               onChange={(e) => {
                 const next = items.slice();
                 next[i] = e.target.value;
@@ -85,11 +85,11 @@ export function HintListEditor({
             <button
               type="button"
               className="hint-list-delete"
-              aria-label={t("breaks.deleteHintLabel", {
+              aria-label={t("hints.deleteHintLabel", {
                 pool: name,
                 hint,
               })}
-              title={t("breaks.deleteHint")}
+              title={t("hints.deleteHint")}
               onClick={() => commit(items.filter((_, idx) => idx !== i))}
             >
               ✕
@@ -102,8 +102,8 @@ export function HintListEditor({
           type="text"
           className="hint-list-input"
           value={draft}
-          placeholder={t("breaks.addHintPlaceholder")}
-          aria-label={t("breaks.addHintLabel", { pool: name })}
+          placeholder={t("hints.addHintPlaceholder")}
+          aria-label={t("hints.addHintLabel", { pool: name })}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") addDraft();
@@ -115,7 +115,7 @@ export function HintListEditor({
           onClick={addDraft}
           disabled={!draft.trim()}
         >
-          {t("breaks.addHint")}
+          {t("hints.addHint")}
         </button>
       </div>
     </div>

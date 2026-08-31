@@ -1,8 +1,7 @@
-// Stage 6 (spec-round6 L3): the double-comet progress ring rasteriser,
-// extracted from tray.rs. tray.rs owns the tray chrome (menu, ticker,
-// macOS polishing); this module owns nothing but pure geometry: given a
+// The double-comet progress ring rasteriser. Pure geometry: given a
 // progress fraction it produces the ring's RGBA pixels. No AppKit, no
 // Tauri, no scheduler state — which is what makes it unit-testable.
+// tray.rs owns the tray chrome (menu, ticker, macOS polishing).
 
 pub(super) const PROGRESS_RING_SIZE: u32 = 200;
 // Two clockwise comets on a slightly wide ellipse, tilted 30°. Template
@@ -13,12 +12,10 @@ pub(super) const COMET_HEAD_HALF: f64 = 23.0;
 pub(super) const COMET_GAP: f64 = 22.0 * std::f64::consts::PI / 180.0;
 pub(super) const COMET_TILT: f64 = std::f64::consts::FRAC_PI_6;
 pub(super) const COMET_TAPER: f64 = 0.85;
-// Stage 1 revisited after on-device feedback: the silhouette stays the
-// original full-width double comet at every progress — only the *tint
-// weight* encodes fill. The round-5 alphas (200/118) sat too close to the
-// fill's 255 for the step to read on a light menu bar, so the resting
-// comets are darkened instead: 150->255 (1.7x) and 90->255 (2.8x) are
-// both visible steps, and the icon keeps its original shape at 0%.
+// Fill is encoded purely by tint weight: the silhouette is the
+// full-width double comet at every progress. The resting alphas sit well
+// below the fill's 255 so both fill steps read on a light menu bar
+// (150->255 and 90->255).
 pub(super) const COMET_UPPER_ALPHA: u8 = 150;
 pub(super) const COMET_LOWER_ALPHA: u8 = 90;
 pub(super) const COMET_FILL_ALPHA: u8 = 255;
@@ -254,9 +251,11 @@ mod tests {
         let n0 = painted_count(&empty);
         let n100 = painted_count(&full);
         assert!(n0 > 2_000, "0% already paints both comets, got {n0}");
-        // Stage 1 (spec-round6): fill must now change the silhouette too —
-        // the unfilled track is narrow, the filled arc full width. The old
-        // assertion demanded the opposite (alpha-only encoding).
+        // Progress rides on alpha, not on shape: both comets are painted at
+        // every bucket so the ring keeps one stable silhouette from 0% to
+        // 100%. A large swing here would mean the glyph is changing outline
+        // as it fills, which reads as a different icon rather than a
+        // progressing one.
         assert!(
             (n0 as i32 - n100 as i32).unsigned_abs() < n0 as u32 / 3,
             "fill changes alpha, not the silhouette, {n0} vs {n100}"

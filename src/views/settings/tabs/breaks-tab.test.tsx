@@ -60,7 +60,6 @@ const baseSettings = {
   micro_routine_max_difficulty: "active",
   long_routine_max_difficulty: "active",
   custom_routines: [],
-  custom_css: "",
 } as unknown as SchedulerSettings;
 
 function renderTab(

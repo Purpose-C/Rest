@@ -227,6 +227,16 @@ struct FixedTrayItems {
 /// Rows are disabled — the submenu is a notice board, not actions — and
 /// each entry is truncated to keep the menu from over-widening. An empty
 /// list builds nothing.
+/// Row labels for the daily-reminder submenu: the entries verbatim, each
+/// truncated to [`TRAY_REMINDER_MAX_CHARS`]. Pure so the truncation rule
+/// is unit-testable without a Tauri app handle.
+fn daily_reminder_row_labels(items: &[String]) -> Vec<String> {
+    items
+        .iter()
+        .map(|row| truncate_label(row, TRAY_REMINDER_MAX_CHARS))
+        .collect()
+}
+
 fn build_daily_reminder_submenu(
     app: &AppHandle,
     items: &[String],
@@ -234,14 +244,15 @@ fn build_daily_reminder_submenu(
     if items.is_empty() {
         return Ok(None);
     }
-    let rows: Vec<MenuItem<tauri::Wry>> = items
+    let labels = daily_reminder_row_labels(items);
+    let rows: Vec<MenuItem<tauri::Wry>> = labels
         .iter()
         .enumerate()
         .map(|(i, row)| {
             MenuItem::with_id(
                 app,
                 format!("daily_reminder_{i}"),
-                truncate_label(row, TRAY_REMINDER_MAX_CHARS),
+                row.clone(),
                 false,
                 None::<&str>,
             )
@@ -1059,8 +1070,8 @@ fn polish_macos_tray() {
     use objc2::runtime::AnyObject;
     use objc2::AnyThread;
     use objc2_app_kit::{
-        NSColor, NSFont, NSFontAttributeName, NSForegroundColorAttributeName, NSImageScaling,
-        NSStatusBar,
+        NSApplication, NSColor, NSFont, NSFontAttributeName, NSForegroundColorAttributeName,
+        NSImageScaling, NSStatusBar,
     };
     use objc2_foundation::{MainThreadMarker, NSAttributedString, NSDictionary, NSSize, NSString};
 
@@ -1082,7 +1093,24 @@ fn polish_macos_tray() {
         }
 
         let font = NSFont::menuFontOfSize(0.0);
-        let color = NSColor::systemBlueColor();
+        // Dark menus keep the original blue; light menus go green. The
+        // light variant is hand-picked: brighter and more saturated than
+        // systemGreen so it still reads after the ~35% disabled dimming.
+        // Re-checked every tick, so an appearance switch recolours within
+        // a second.
+        let dark_appearance = {
+            let appearance = NSApplication::sharedApplication(mtm).effectiveAppearance();
+            appearance.name().to_string().contains("Dark")
+        };
+        // The light-mode green is deepened until it clears 4.5:1 against both
+        // the popup's #f2f2f2 body (4.86:1) and a plain white sheet (5.42:1).
+        // The previous 0.65/0.30 sat at 2.87:1 — legible only if you looked
+        // for it. Anything darker starts reading as black rather than green.
+        let color = if dark_appearance {
+            NSColor::systemBlueColor()
+        } else {
+            NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.48, 0.24, 1.0)
+        };
         let attrs = NSDictionary::from_slices::<NSString>(
             &[NSForegroundColorAttributeName, NSFontAttributeName],
             &[&*color as &AnyObject, &*font as &AnyObject],
@@ -1570,4 +1598,21 @@ mod tests {
         assert_ne!(TRAY_ICON_BYTES, TRAY_ICON_INACTIVE_BYTES);
         assert_ne!(TRAY_ICON_INACTIVE_BYTES, TRAY_ICON_BEDTIME_BYTES);
     }
+    #[test]
+    fn daily_reminder_labels_empty_list_yields_no_rows() {
+        assert!(daily_reminder_row_labels(&[]).is_empty());
+    }
+
+    #[test]
+    fn daily_reminder_labels_truncate_long_entries() {
+        let long = "这是一条特别长的每日提醒内容它远远超过了四十二个字符的截断上限因此必须被截断并加上省略号".to_string();
+        assert!(long.chars().count() > TRAY_REMINDER_MAX_CHARS);
+        let rows = daily_reminder_row_labels(&["短的".to_string(), long.clone()]);
+        assert_eq!(rows[0], "短的");
+        let expected = truncate_label(&long, TRAY_REMINDER_MAX_CHARS);
+        assert_eq!(rows[1], expected);
+        // truncate_label appends the ellipsis on top of the cap.
+        assert!(expected.chars().count() <= TRAY_REMINDER_MAX_CHARS + 1);
+    }
+
 }

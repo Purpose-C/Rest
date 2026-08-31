@@ -135,24 +135,6 @@ describe("OnboardingWizard", () => {
     expect(update).toHaveBeenCalledWith("work_days_mask", 0b011_1111);
   });
 
-  it("choosing the solo worker option updates long_hint_mix", async () => {
-    // Removed with the mix dials (round-6): the onboarding hints step no
-    // longer offers a long-mix selector.
-    return;
-    const user = userEvent.setup();
-    const { update } = renderWizard();
-    await advanceTo(user, 3);
-    await user.selectOptions(screen.getByRole("combobox"), "solo");
-    expect(update).toHaveBeenCalledWith("long_hint_mix", "solo");
-  });
-
-  it("hides the long-break mix selector when hints are off", async () => {
-    const user = userEvent.setup();
-    renderWizard({ show_hint: false });
-    await advanceTo(user, 3);
-    expect(screen.queryByRole("combobox")).toBeNull();
-  });
-
   it("toggling the wellness-hint checkbox updates show_hint", async () => {
     const user = userEvent.setup();
     const { update } = renderWizard();

@@ -128,8 +128,8 @@ export const en: Record<string, string> = {
   "breaks.breakIdeas": "Break ideas",
   "breaks.breakIdeasDesc":
     "Guided routines that steer each break, plus today's to-dos.",
-  "breaks.physicalPool": "Body reminders",
-  "breaks.psychologicalPool": "Mind reminders",
+  "hints.physicalPool": "Body reminders",
+  "hints.psychologicalPool": "Mind reminders",
   "breaks.spreadRoutineSteps":
     "Spread routine steps across the whole break",
   "breaks.spreadRoutineStepsTip":
@@ -147,15 +147,14 @@ export const en: Record<string, string> = {
     "Prompt me to plan chores each morning",
   "breaks.promptChoresMorningTip":
     "When on (default), the first time your work window opens each day with an empty list, Entracte opens this Preferences window here so you can jot down the day's chores. Turn it off to never be prompted — you can still fill the list in yourself any time.",
-  "breaks.longSoloPool": "Solo reminders",
-  "breaks.longSocialPool": "Social reminders",
+  "hints.soloPool": "Solo reminders",
+  "hints.socialPool": "Social reminders",
   "breaks.contentPacks": "Content packs",
-  "breaks.deleteHint": "Delete this hint",
-  "breaks.deleteHintLabel": "Delete \u201c{hint}\u201d from {pool}",
-  "breaks.addHint": "Add one",
-  "breaks.addHintLabel": "Add a hint to {pool}",
-  "breaks.addHintPlaceholder": "Type a new hint…",
-  "breaks.hintRowLabel": "{pool} hint {i}",
+  "hints.deleteHint": "Delete this hint",
+  "hints.deleteHintLabel": "Delete \u201c{hint}\u201d from {pool}",
+  "hints.addHintLabel": "Add a hint to {pool}",
+  "hints.addHintPlaceholder": "Type a new hint…",
+  "hints.hintRowLabel": "{pool} hint {i}",
 
   // hints-tab
   "hints.poolName.physical": "Body reminders",
@@ -451,7 +450,6 @@ export const en: Record<string, string> = {
 
   // system-tab
   "system.general": "General",
-  "system.startup": "Startup",
   "system.autostart": "Start Entracte at login",
   "system.display": "Display",
   "system.timeFormat": "Time format",
@@ -467,12 +465,6 @@ export const en: Record<string, string> = {
   "system.trayStyle.iconAndCountdown": "Icon + countdown",
   "system.trayStyle.countdownOnly": "Countdown only",
   "system.trayStyle.progressRing": "Progress ring",
-  "system.trayCountdown": "Show countdown to next break in the tray",
-  "system.trayCountdownTip":
-    "Shows the minutes until the next break next to the tray icon. macOS and Linux only — Windows doesn't support tray text.",
-  "system.trayIcon": "Show the tray icon",
-  "system.trayIconTip":
-    "Off leaves just the countdown number in the menu bar. The icon comes back whenever there is no number to show — paused, bedtime, or during a break — so the menu stays reachable. Requires the countdown above: with no number, the icon is all there is.",
   "system.countdownTo": "Count down to",
   "system.plugins": "Plugins",
   "system.showAdvancedHooks": "Show advanced (hooks)",
@@ -746,13 +738,11 @@ export const en: Record<string, string> = {
   // window-kind
   "windowTitle.overlay": "Entracte — Break",
   "windowTitle.pause": "Entracte — Pause",
-  "windowTitle.quick": "Entracte — Quick Panel",
   "windowTitle.settings": "Entracte — Settings",
 
   // app areas
   "app.areaOverlay": "Break overlay",
   "app.areaPause": "Pause picker",
-  "app.areaQuick": "Quick panel",
   "app.areaSettings": "Settings",
 
   // error-boundary

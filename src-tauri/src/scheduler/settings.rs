@@ -31,10 +31,9 @@ pub struct DerivedCaches {
     /// re-lowercasing every configured target for every running process.
     /// Empty targets are dropped (they never match).
     pub app_pause_targets_lower: Vec<String>,
-    /// Reminder pool for micro and long breaks, already merged. Round-6
-    /// feedback collapsed the per-kind pools and their `hint_mix` dials:
-    /// every micro or long break draws from the same combined list, so a
-    /// single cache turns the fire path into one clone.
+    /// Reminder pool for micro and long breaks, already merged (every
+    /// break kind draws the same combined list). One cache turns the fire
+    /// path into a single clone.
     pub break_hints_resolved: Vec<String>,
 }
 
@@ -1012,13 +1011,12 @@ impl Settings {
 
 /// Pure resolver for the shared micro/long reminder pool: the four
 /// categories (physical, psychological, solo, social) concatenated in a
-/// fixed order. Every micro or long break draws from this one list —
-/// round-6 feedback removed the per-kind split and the `hint_mix` dials,
-/// so a reminder is never hidden from a break kind again. An empty list
-/// falls back to the built-in defaults, which keeps "reminders always
-/// show" true even if the user clears every entry. This does the
-/// allocating work; [`DerivedCaches`] caches the result so the fire path
-/// is a single clone.
+/// fixed order. Micro and long breaks draw from this one list, so no
+/// reminder is ever hidden from a break kind. An empty list falls back to
+/// the built-in defaults, which keeps "reminders always show" true even
+/// if the user clears every entry. This does the allocating work;
+/// [`DerivedCaches`] caches the result so the fire path is a single
+/// clone.
 fn resolve_break_hints(s: &Settings) -> Vec<String> {
     let mut combined = Vec::with_capacity(
         s.micro_physical_hints.len()

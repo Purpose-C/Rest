@@ -123,8 +123,8 @@ export const zhCN: Record<string, string> = {
   "breaks.breakIdeas": "引导流程与待办",
   "breaks.breakIdeasDesc": "引导每次休息如何进行的流程与今日待办。",
 
-  "breaks.physicalPool": "身体提醒",
-  "breaks.psychologicalPool": "心理提醒",
+  "hints.physicalPool": "身体提醒",
+  "hints.psychologicalPool": "心理提醒",
   "breaks.spreadRoutineSteps": "将引导流程步骤均匀分布到整个休息中",
   "breaks.spreadRoutineStepsTip":
     "开启后，引导流程的步骤时长将被视为相对权重并按比例拉伸以填满整个休息时长。关闭（默认）时，步骤按原作者设定的时长运行，最后一步保持显示直至休息结束。引导流程也可通过自带的步频字段覆盖此项。",
@@ -139,15 +139,14 @@ export const zhCN: Record<string, string> = {
   "breaks.promptChoresMorning": "每天早晨提示您规划今日待办",
   "breaks.promptChoresMorningTip":
     "开启（默认）时，每天活动时段首次开始且待办列表为空时，Entracte 会自动打开设置窗口以便您规划今日待办。关闭后将不再提示 —— 您仍可随时手动填写列表。",
-  "breaks.longSoloPool": "独处提醒",
-  "breaks.longSocialPool": "社交提醒",
+  "hints.soloPool": "独处提醒",
+  "hints.socialPool": "社交提醒",
   "breaks.contentPacks": "内容包",
-  "breaks.deleteHint": "删除这条提示",
-  "breaks.deleteHintLabel": "删除{pool}提示池的「{hint}」",
-  "breaks.addHint": "添加一条",
-  "breaks.addHintLabel": "在{pool}提示池添加一条",
-  "breaks.addHintPlaceholder": "输入一条新的提示…",
-  "breaks.hintRowLabel": "{pool} 第 {i} 条提示",
+  "hints.deleteHint": "删除这条提示",
+  "hints.deleteHintLabel": "删除{pool}提示池的「{hint}」",
+  "hints.addHintLabel": "在{pool}提示池添加一条",
+  "hints.addHintPlaceholder": "输入一条新的提示…",
+  "hints.hintRowLabel": "{pool} 第 {i} 条提示",
 
   // hints-tab
   "hints.poolName.physical": "身体提醒",
@@ -432,7 +431,6 @@ export const zhCN: Record<string, string> = {
 
   // system-tab
   "system.general": "常规",
-  "system.startup": "启动",
   "system.autostart": "登录系统时启动 Entracte",
   "system.display": "显示",
   "system.timeFormat": "时间格式",
@@ -448,12 +446,6 @@ export const zhCN: Record<string, string> = {
   "system.trayStyle.iconAndCountdown": "图标 + 数字",
   "system.trayStyle.countdownOnly": "仅数字",
   "system.trayStyle.progressRing": "进度环",
-  "system.trayCountdown": "在系统托盘图标旁显示下次休息倒计时",
-  "system.trayCountdownTip":
-    "在托盘图标旁显示距下次休息还有多少分钟。仅支持 macOS 和 Linux —— Windows 托盘不支持文字显示。",
-  "system.trayIcon": "显示托盘图标",
-  "system.trayIconTip":
-    "关闭后菜单栏只保留倒计时数字。在没有数字可显示时图标会自动出现——已暂停、就寝提醒、正在休息——以保证菜单始终可点击。需先开启上方的倒计时：没有数字时，图标是菜单栏上唯一的内容。",
   "system.countdownTo": "倒计时目标",
   "system.plugins": "插件",
   "system.showAdvancedHooks": "显示高级设置（事件钩子）",
@@ -723,13 +715,11 @@ export const zhCN: Record<string, string> = {
   // window-kind
   "windowTitle.overlay": "Entracte — 休息",
   "windowTitle.pause": "Entracte — 暂停",
-  "windowTitle.quick": "Entracte — 快速面板",
   "windowTitle.settings": "Entracte — 设置",
 
   // app areas
   "app.areaOverlay": "休息界面",
   "app.areaPause": "暂停选择器",
-  "app.areaQuick": "快速面板",
   "app.areaSettings": "设置",
 
   // error-boundary
