@@ -79,6 +79,14 @@ export default function Settings() {
     },
     [onSearchNavigate],
   );
+  useTauriListen(
+    "daily-reminders:open",
+    () => {
+      const entry = SETTINGS_INDEX.find((e) => e.id === "daily-reminders");
+      if (entry) onSearchNavigate(entry);
+    },
+    [onSearchNavigate],
+  );
   // After the target tab renders (its panel is no longer `hidden`), scroll the
   // matched section into view and flash it briefly.
   useEffect(() => {

@@ -249,11 +249,13 @@ fn build_daily_reminder_submenu(
         .iter()
         .enumerate()
         .map(|(i, row)| {
+            // Enabled so the rows read as live entries rather than greyed-out
+            // chrome; clicking any of them jumps to the list that owns them.
             MenuItem::with_id(
                 app,
                 format!("daily_reminder_{i}"),
                 row.clone(),
-                false,
+                true,
                 None::<&str>,
             )
         })
@@ -456,6 +458,11 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
             if id.starts_with("chore") {
                 crate::window::show_main_window(app);
                 let _ = app.emit("chores:open", ());
+                return;
+            }
+            if id.starts_with("daily_reminder") {
+                crate::window::show_main_window(app);
+                let _ = app.emit("daily-reminders:open", ());
                 return;
             }
             match id {
@@ -1102,14 +1109,16 @@ fn polish_macos_tray() {
             let appearance = NSApplication::sharedApplication(mtm).effectiveAppearance();
             appearance.name().to_string().contains("Dark")
         };
-        // The light-mode green is deepened until it clears 4.5:1 against both
-        // the popup's #f2f2f2 body (4.86:1) and a plain white sheet (5.42:1).
-        // The previous 0.65/0.30 sat at 2.87:1 — legible only if you looked
-        // for it. Anything darker starts reading as black rather than green.
+        // Light mode needs a much deeper green than the menu's own text: the
+        // row sits on translucent vibrancy, which lifts whatever is behind it
+        // and washes mid-tones out. This clears 6.38:1 on the popup's #f2f2f2
+        // body and 7.12:1 on white — comfortably past the 4.5 floor, which
+        // earlier values (2.87:1, then 4.86:1) still read as faint through
+        // the blur.
         let color = if dark_appearance {
             NSColor::systemBlueColor()
         } else {
-            NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.48, 0.24, 1.0)
+            NSColor::colorWithSRGBRed_green_blue_alpha(0.0, 0.40, 0.20, 1.0)
         };
         let attrs = NSDictionary::from_slices::<NSString>(
             &[NSForegroundColorAttributeName, NSFontAttributeName],

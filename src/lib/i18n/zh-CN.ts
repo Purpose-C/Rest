@@ -144,6 +144,7 @@ export const zhCN: Record<string, string> = {
   "breaks.contentPacks": "内容包",
   "hints.deleteHint": "删除这条提示",
   "hints.deleteHintLabel": "删除{pool}提示池的「{hint}」",
+  "hints.addHint": "添加",
   "hints.addHintLabel": "在{pool}提示池添加一条",
   "hints.addHintPlaceholder": "输入一条新的提示…",
   "hints.hintRowLabel": "{pool} 第 {i} 条提示",

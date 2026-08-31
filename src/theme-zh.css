@@ -346,12 +346,20 @@ html:has(.settings),
   gap: 0.35rem;
 }
 
+/* A pool holds dozens of entries, so the list scrolls inside a fixed frame
+   rather than pushing the "add" box and every section below it off-screen.
+   The cap is ~7 rows; `padding-right` keeps the scrollbar off the delete
+   buttons, and `overscroll-behavior` stops a flick at the end from also
+   scrolling the settings page. */
 .hint-list-items {
   display: grid;
   gap: 0.35rem;
   margin: 0.4rem 0 0;
-  padding: 0;
+  padding: 0 0.35rem 0 0;
   list-style: none;
+  max-height: 17.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .hint-list-row {

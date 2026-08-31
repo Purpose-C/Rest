@@ -171,6 +171,18 @@ export const SETTINGS_INDEX: SettingsSearchEntry[] = [
   },
   // Hints
   {
+    id: "daily-reminders",
+    get label() {
+      return t("hints.dailyTitle");
+    },
+    tabId: "hints",
+    anchorId: "settings-daily-reminders",
+    keywords: kw(
+      "hints.dailyTitle",
+      "daily reminders todo tray menu 每日 提醒 待办 托盘 菜单",
+    ),
+  },
+  {
     id: "hint-pools",
     get label() {
       return t("search.hints");

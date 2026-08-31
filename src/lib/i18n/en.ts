@@ -152,6 +152,7 @@ export const en: Record<string, string> = {
   "breaks.contentPacks": "Content packs",
   "hints.deleteHint": "Delete this hint",
   "hints.deleteHintLabel": "Delete \u201c{hint}\u201d from {pool}",
+  "hints.addHint": "Add",
   "hints.addHintLabel": "Add a hint to {pool}",
   "hints.addHintPlaceholder": "Type a new hint…",
   "hints.hintRowLabel": "{pool} hint {i}",
